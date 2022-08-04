@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "build": "tsc",
-    "start": "tsc && node ./bin/www"
+    "serve": "tsc && node ./build/server",
+    "index": "ts-node indexer/start.ts"
   },
   "dependencies": {
     "@ragetrade/sdk": "^0.9.7",
