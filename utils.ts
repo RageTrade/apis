@@ -51,7 +51,8 @@ export function handleRuntimeErrors(
 ): express.RequestHandler {
   return async (req, res, next) => {
     try {
-      await fn(req, res, next);
+      const result = await fn(req, res, next);
+      res.json({ result });
     } catch (e: any) {
       next(createError(e.status ?? 500, e.message));
     }

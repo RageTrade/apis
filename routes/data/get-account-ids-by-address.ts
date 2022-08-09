@@ -12,12 +12,12 @@ const router = express.Router();
 router.get(
   "/get-account-ids-by-address",
   handleRuntimeErrors(async function (req, res) {
-    const address = parseAddress(req.query.address, "address");
     const networkName = parseNetworkName(req.query.networkName);
+    const address = parseAddress(req.query.address, "address");
 
     const store = AccountCreatedIndexer.getStore(networkName);
-    const result = (await store.get(address)) ?? [];
-    res.json({ result });
+    const accountIds = await store.get(address);
+    return accountIds ?? [];
   })
 );
 
