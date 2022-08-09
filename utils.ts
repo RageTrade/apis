@@ -18,6 +18,14 @@ export function parseString(input: any, paramName: string): string {
   return input;
 }
 
+export function parseInteger(input: any, paramName: string): number {
+  input = parseInt(input);
+  if (typeof input !== "number" || !Number.isInteger(input)) {
+    throwInvalidInputError(paramName);
+  }
+  return input;
+}
+
 export function parseNetworkName(input: any): NetworkName {
   const str = parseString(input, "networkName");
   if (!["arbmain", "arbtest"].includes(str)) {
