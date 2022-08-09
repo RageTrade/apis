@@ -1,35 +1,17 @@
-import { isAddress } from "ethers/lib/utils";
 import express from "express";
-import createError from "http-errors";
-import { JsonStore } from "../../store/json-store";
 
-const testnetStore = new JsonStore<number[]>(
-  "data/testnet/account-created.json"
-);
+import { AccountCreatedIndexer } from "../../indexer/account-created";
+import { parseAddress, parseNetworkName } from "../../utils";
 
 const router = express.Router();
 
-router.get(
-  "/arbtest/get-account-ids-by-address",
-  generateRequestHandler(testnetStore)
-);
-// router.get("arbmain/get-account-ids-by address", generateRequestHandler(testnetStore));
+router.get("/get-account-ids-by-address", async function (req, res, next) {
+  const address = parseAddress(req.query.address, "address");
+  const networkName = parseNetworkName(req.query.networkName);
+
+  const store = AccountCreatedIndexer.getStore(networkName);
+  const result = (await store.get(address)) ?? [];
+  res.json({ result });
+});
 
 export default router;
-
-function generateRequestHandler(
-  store: JsonStore<number[]>
-): express.RequestHandler {
-  return async function (req, res, next) {
-    const address = req.query.address as string;
-    if (!isAddress(address)) {
-      next(createError(400, "Invalid address"));
-      return;
-    }
-    console.log("address valud", address);
-
-    const result = (await store.get(address)) ?? [];
-    console.log({ result });
-    res.json({ result });
-  };
-}

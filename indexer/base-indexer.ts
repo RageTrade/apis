@@ -1,27 +1,45 @@
 import { ethers, EventFilter } from "ethers";
 
+import { NetworkName } from "@ragetrade/sdk";
+
+import { getProvider } from "../providers";
 import { BaseStore } from "../store/base-store";
 
 /**
  * @description BaseIndexer is a base class for indexers.
- *  This should be inherited and `getFilter` and `forEachLog` should be implemented.
+ *  This should be inherited and `static getStore`, `getFilter`, `forEachLog` should be implemented.
  */
 export class BaseIndexer<DataStoreType> {
+  _networkName: NetworkName;
+  _provider: ethers.providers.Provider;
   _syncedBlock: number;
   _blockInterval: number;
   _store: BaseStore<DataStoreType>;
-  _provider: ethers.providers.Provider;
 
   constructor(
+    networkName: NetworkName,
     startBlock: number,
-    blockInterval: number,
-    store: BaseStore<DataStoreType>,
-    provider: ethers.providers.Provider
+    blockInterval: number
   ) {
     this._syncedBlock = startBlock - 1;
     this._blockInterval = blockInterval;
-    this._store = store;
-    this._provider = provider;
+    this._networkName = networkName;
+    this._store = (this.constructor as any).getStore(this._networkName);
+    this._provider = getProvider(networkName);
+  }
+
+  static getStore(networkName: NetworkName): BaseStore<any> {
+    throw new Error("static BaseIndexer.getStore: method not implemented.");
+  }
+
+  async getFilter(
+    _provider: ethers.providers.Provider
+  ): Promise<ethers.EventFilter> {
+    throw new Error("BaseIndexer.getFilter: method not implemented.");
+  }
+
+  async forEachLog(_log: ethers.providers.Log) {
+    throw new Error("BaseIndexer.forEachLog: method not implemented.");
   }
 
   async ready() {
@@ -33,9 +51,24 @@ export class BaseIndexer<DataStoreType> {
     );
   }
 
-  async resume() {
+  async start(iterWait?: number, err?: (err: any) => void) {
+    while (1) {
+      try {
+        await this.run();
+      } catch (e) {
+        if (err) {
+          err(e);
+        } else {
+          console.error(e);
+        }
+      }
+      await new Promise((resolve) => setTimeout(resolve, iterWait ?? 5000));
+    }
+  }
+
+  async run() {
     await this.ready();
-    console.log("indexer ready");
+    console.log(this._networkName, "indexer ready");
 
     const filter = await this.getFilter(this._provider);
 
@@ -78,7 +111,7 @@ export class BaseIndexer<DataStoreType> {
 
     while (logs === undefined) {
       try {
-        console.log("getLogs", fromBlock, toBlock);
+        console.log(this._networkName, "getLogs", fromBlock, toBlock);
         logs = await this._provider.getLogs({
           ...filter,
           fromBlock,
@@ -93,15 +126,5 @@ export class BaseIndexer<DataStoreType> {
     }
 
     return { logs, fromBlock, toBlock };
-  }
-
-  async getFilter(
-    _provider: ethers.providers.Provider
-  ): Promise<ethers.EventFilter> {
-    throw new Error("LogIndexer.getFilter: method not implemented.");
-  }
-
-  async forEachLog(_log: ethers.providers.Log) {
-    throw new Error("LogIndexer.forEachLog: method not implemented.");
   }
 }
