@@ -1,3 +1,4 @@
+import "./fetch-polyfill";
 import { app } from "./app";
 import Debugger from "debug";
 import http from "http";

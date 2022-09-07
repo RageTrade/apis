@@ -1,33 +1,37 @@
 import { getAddress, isAddress } from "ethers/lib/utils";
 import express from "express";
 import createError from "http-errors";
+import { Request } from "express";
 
 import { NetworkName } from "@ragetrade/sdk";
 
-export function parseAddress(input: any, paramName: string): string {
+export function getParamAsAddress(req: Request, paramName: string): string {
+  const input = getParamAsString(req, paramName);
   if (!isAddress(input)) {
-    throwInvalidInputError(paramName);
+    throw invalidInputError({ paramName, type: "Address", value: input });
   }
   return getAddress(input);
 }
 
-export function parseString(input: any, paramName: string): string {
-  if (typeof input !== "string") {
-    throwInvalidInputError(paramName);
+export function getParamAsNumber(req: Request, paramName: string): number {
+  const input = getParamAsString(req, paramName);
+  const parsed = parseInt(input);
+  if (isNaN(parsed)) {
+    throw invalidInputError({ paramName, type: "Number", value: input });
+  }
+  return parsed;
+}
+
+export function getParamAsInteger(req: Request, paramName: string): number {
+  const input = getParamAsNumber(req, paramName);
+  if (!Number.isInteger(input)) {
+    throw invalidInputError({ paramName, type: "Integer", value: input });
   }
   return input;
 }
 
-export function parseInteger(input: any, paramName: string): number {
-  input = parseInt(input);
-  if (typeof input !== "number" || !Number.isInteger(input)) {
-    throwInvalidInputError(paramName);
-  }
-  return input;
-}
-
-export function parseNetworkName(input: any): NetworkName {
-  const str = parseString(input, "networkName");
+export function getNetworkName(req: Request): NetworkName {
+  const str = getParamAsString(req, "networkName");
   if (!["arbmain", "arbtest"].includes(str)) {
     throw new ErrorWithStatusCode(
       'networkName must be "arbmain" or "arbtest"',
@@ -38,6 +42,28 @@ export function parseNetworkName(input: any): NetworkName {
   return str as NetworkName;
 }
 
+export function getParamAsString(req: Request, paramName: string): string {
+  const input = getParam(req, paramName);
+  if (typeof input !== "string") {
+    throw invalidInputError({ paramName, value: input, type: "string" });
+  }
+  return input;
+}
+export function getParam(
+  req: Request,
+  paramName: string,
+  required: boolean = true
+) {
+  const input = req.query[paramName];
+  if (required && input === undefined) {
+    throw new ErrorWithStatusCode(
+      '"${paramName}" param is required but not provided',
+      400
+    );
+  }
+  return input;
+}
+
 export class ErrorWithStatusCode extends Error {
   status: number;
   constructor(message: string, statusCode: number) {
@@ -46,12 +72,18 @@ export class ErrorWithStatusCode extends Error {
   }
 }
 
-export function throwInvalidInputError(name: string, type?: string) {
+export function invalidInputError(opts: {
+  paramName: string;
+  type?: string;
+  value?: any;
+}) {
   const error = new ErrorWithStatusCode(
-    `Invalid ${type ?? "value"} passed for ${name}`,
+    `Invalid ${opts.type ?? "value"} ${
+      opts.value || true ? `(${String(opts.value)}) ` : ""
+    }passed for ${opts.paramName}`,
     400
   );
-  throw error;
+  return error;
 }
 
 export function handleRuntimeErrors(
@@ -65,4 +97,30 @@ export function handleRuntimeErrors(
       next(createError(e.status ?? 500, e.message));
     }
   };
+}
+
+export async function retry<R>(
+  fn: () => R | Promise<R>,
+  failedValue?: R
+): Promise<R> {
+  const delay: number = 2000;
+  let lastError: any;
+  let i = 3;
+  while (i--) {
+    try {
+      const res = await fn();
+      console.log("success", fn.toString(), res);
+      return res;
+    } catch (e) {
+      lastError = e;
+      console.log("failed", fn.toString(), lastError.message);
+
+      await new Promise((resolve) => setTimeout(resolve, delay));
+    }
+  }
+  if (failedValue === undefined) {
+    throw lastError;
+  } else {
+    return failedValue;
+  }
 }

@@ -9,6 +9,7 @@ export const arbmain = new ethers.providers.StaticJsonRpcProvider(
 );
 export const arbtest = new ethers.providers.StaticJsonRpcProvider(
   "https://rinkeby.arbitrum.io/rpc"
+  // "https://arb-rinkeby.g.alchemy.com/v2/" + process.env.ALCHEMY_KEY
 );
 
 export function getProvider(
