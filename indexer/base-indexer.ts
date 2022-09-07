@@ -44,7 +44,7 @@ export class BaseIndexer<DataStoreType> {
 
   async ready() {
     this._syncedBlock = Number(
-      await this._store.getOrSetInternal(
+      await this._store.getOrSet<string>(
         "synced-block",
         String(this._syncedBlock - 1)
       )
@@ -85,7 +85,7 @@ export class BaseIndexer<DataStoreType> {
         await this.forEachLog(log);
       }
       this._syncedBlock = toBlock;
-      await this._store.setInternal(
+      await this._store.set<string>(
         "synced-block",
         // store the block in which we got logs
         String(Math.max(this._syncedBlock, latestBlockWithLogs))

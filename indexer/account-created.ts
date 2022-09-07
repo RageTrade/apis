@@ -27,7 +27,10 @@ export class AccountCreatedIndexer extends BaseIndexer<number[]> {
   async forEachLog(log: ethers.providers.Log) {
     console.log("for each");
     const parsed = iface.parseLog(log) as unknown as AccountCreatedEvent;
-    const accountIds = await this._store.getOrSet(parsed.args.ownerAddress, []);
+    const accountIds = await this._store.getOrSet<number[]>(
+      parsed.args.ownerAddress,
+      []
+    );
     accountIds.push(parsed.args.accountId.toNumber());
     await this._store.set(parsed.args.ownerAddress, accountIds);
   }
