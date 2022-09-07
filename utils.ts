@@ -92,7 +92,13 @@ export function handleRuntimeErrors(
 ): express.RequestHandler {
   return async (req, res, next) => {
     try {
-      const result = await fn(req, res, next);
+      let result = (await fn(req, res, next)) as any;
+      if (result.error) {
+        throw result.error;
+      }
+      if (result.result) {
+        result = result.result;
+      }
       res.json({ result });
     } catch (e: any) {
       next(createError(e.status ?? 500, removeApiKeysFromString(e.message)));

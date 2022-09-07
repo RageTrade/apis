@@ -32,7 +32,9 @@ router.get(
   handleRuntimeErrors(async (req) => {
     const networkName = getNetworkName(req);
     const timestamp = getParamAsInteger(req, "timestamp");
-    return await getBlockByTimestamp(networkName, timestamp);
+    return cacheFunctionResult(getBlockByTimestamp, [networkName, timestamp], {
+      cacheSeconds: -1,
+    });
   })
 );
 
@@ -41,26 +43,18 @@ router.get(
   handleRuntimeErrors(async (req) => {
     const networkName = getNetworkName(req);
     const poolId = getParamAsNumber(req, "poolId");
-    const { result, error } = await cacheFunctionResult(
-      getPrices,
-      [networkName, poolId],
-      15
-    );
-    if (error) throw error;
-    if (result) return result;
+    return cacheFunctionResult(getPrices, [networkName, poolId], {
+      cacheSeconds: 15,
+    });
   })
 );
 
 router.get(
   "/get-gmx-data",
   handleRuntimeErrors(async () => {
-    const { result, error } = await cacheFunctionResult(
-      getGmxData,
-      [],
-      60 * 60 // 1 hour
-    );
-    if (error) throw error;
-    if (result) return result;
+    return cacheFunctionResult(getGmxData, [], {
+      cacheSeconds: 60 * 60, // 1 hour
+    });
   })
 );
 

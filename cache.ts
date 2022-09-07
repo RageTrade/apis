@@ -1,10 +1,14 @@
 import { MemoryStore } from "./store/memory-store";
 
+interface Options {
+  cacheSeconds: number;
+}
+
 const cache = new MemoryStore<any>("cache");
 export function cacheFunctionResult<F extends (...args: any[]) => any>(
   fn: F,
   args: Parameters<F>,
-  cacheSeconds: number
+  { cacheSeconds }: Options
 ) {
   return cache.getOrSet(
     fn.name + args.map((a) => String(a)).join("-"),
