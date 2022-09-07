@@ -2,6 +2,7 @@ import express from "express";
 
 import { cacheFunctionResult } from "../cache";
 import { AccountCreatedIndexer } from "../indexer/account-created";
+import { getAvgVaultMarketValue } from "../scripts/get-avg-vault-market-value";
 import { getBlockByTimestamp } from "../scripts/get-block-by-timestamp";
 import { getPrices } from "../scripts/get-prices";
 import { getGmxData } from "../scripts/protodev-gmx-staking-info-frontend/script";
@@ -53,6 +54,16 @@ router.get(
   "/get-gmx-data",
   handleRuntimeErrors(async () => {
     return cacheFunctionResult(getGmxData, [], {
+      cacheSeconds: 60 * 60, // 1 hour
+    });
+  })
+);
+
+router.get(
+  "/get-avg-vault-market-value",
+  handleRuntimeErrors(async (req) => {
+    const networkName = getNetworkName(req);
+    return cacheFunctionResult(getAvgVaultMarketValue, [networkName], {
       cacheSeconds: 60 * 60, // 1 hour
     });
   })
