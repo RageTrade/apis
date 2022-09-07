@@ -1,28 +1,5 @@
 import { NetworkName } from "@ragetrade/sdk";
-import { config } from "dotenv";
 import { fetchJson } from "ethers/lib/utils";
-import express from "express";
-
-import {
-  getNetworkName,
-  getParamAsInteger,
-  handleRuntimeErrors,
-} from "../../utils";
-
-config();
-
-const router = express.Router();
-
-router.get(
-  "/get-block-by-timestamp",
-  handleRuntimeErrors(async (req) => {
-    const networkName = getNetworkName(req);
-    const timestamp = getParamAsInteger(req, "timestamp");
-    return await getBlockByTimestamp(networkName, timestamp);
-  })
-);
-
-export default router;
 
 export async function getBlockByTimestamp(
   networkName: NetworkName,

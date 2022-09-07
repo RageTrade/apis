@@ -1,42 +1,11 @@
-import { config } from "dotenv";
-import { ethers } from "ethers";
-import express from "express";
-
 import {
-  getContracts,
   NetworkName,
-  priceX128ToPrice,
+  getContracts,
   sqrtPriceX96ToPrice,
+  priceX128ToPrice,
 } from "@ragetrade/sdk";
-
-import { cacheFunctionResult } from "../../cache";
-import { getProvider } from "../../providers";
-import {
-  getNetworkName,
-  getParamAsNumber,
-  handleRuntimeErrors,
-} from "../../utils";
-
-config();
-
-const router = express.Router();
-
-router.get(
-  "/get-prices",
-  handleRuntimeErrors(async (req) => {
-    const networkName = getNetworkName(req);
-    const poolId = getParamAsNumber(req, "poolId");
-    const { result, error } = await cacheFunctionResult(
-      getPrices,
-      [networkName, poolId],
-      6
-    );
-    if (error) throw error;
-    if (result) return result;
-  })
-);
-
-export default router;
+import { ethers } from "ethers";
+import { getProvider } from "../providers";
 
 export async function getPrices(networkName: NetworkName, poolId: number) {
   const provider = getProvider(networkName);
