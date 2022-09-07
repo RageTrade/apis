@@ -16,6 +16,7 @@ export async function getAvgVaultMarketValue(networkName: NetworkName) {
       blockTag: blockNumber,
     });
     vmvSum = vmvSum.add(vmv);
+    timestamp -= 3600;
   }
 
   return {
