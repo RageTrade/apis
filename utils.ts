@@ -49,6 +49,7 @@ export function getParamAsString(req: Request, paramName: string): string {
   }
   return input;
 }
+
 export function getParam(
   req: Request,
   paramName: string,
@@ -57,7 +58,7 @@ export function getParam(
   const input = req.query[paramName];
   if (required && input === undefined) {
     throw new ErrorWithStatusCode(
-      '"${paramName}" param is required but not provided',
+      `"${paramName}" param is required but not provided`,
       400
     );
   }
@@ -94,7 +95,7 @@ export function handleRuntimeErrors(
       const result = await fn(req, res, next);
       res.json({ result });
     } catch (e: any) {
-      next(createError(e.status ?? 500, e.message));
+      next(createError(e.status ?? 500, removeApiKeysFromString(e.message)));
     }
   };
 }
@@ -109,12 +110,9 @@ export async function retry<R>(
   while (i--) {
     try {
       const res = await fn();
-      console.log("success", fn.toString(), res);
       return res;
     } catch (e) {
       lastError = e;
-      console.log("failed", fn.toString(), lastError.message);
-
       await new Promise((resolve) => setTimeout(resolve, delay));
     }
   }
@@ -123,4 +121,21 @@ export async function retry<R>(
   } else {
     return failedValue;
   }
+}
+
+export function removeApiKeysFromString(msg: string): string {
+  const apiKeys = [
+    process.env.ALCHEMY_KEY,
+    process.env.INFURA_KEY,
+    process.env.ARBISCAN_KEY,
+  ].filter((v) => !!v) as string[];
+  let prevLength = msg.length;
+
+  for (const apiKey of apiKeys) {
+    do {
+      prevLength = msg.length;
+      msg = msg.replace(apiKey, "<api-key-removed>");
+    } while (msg.length !== prevLength);
+  }
+  return msg;
 }

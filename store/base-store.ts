@@ -1,9 +1,11 @@
+import Debugger from "debug";
+const debug = Debugger("apis:base-store");
 export interface Internal {
   [key: string]: string;
 }
 
 export class BaseStore<Value> {
-  _promises: { [key: string]: Promise<any> | undefined } = {};
+  _promises = new Map<string, any>();
   _timestampPrepend = "__timestamp_";
 
   /**
@@ -18,26 +20,29 @@ export class BaseStore<Value> {
     secondsOld?: number
   ): Promise<V> {
     const read = await this.get<V>(key, secondsOld);
+
+    let valuePromise = this._promises.get(key);
     if (read !== undefined) {
-      // is value present in storage just return it
+      debug("getOrSet: returning the value present in storage");
       return read;
-    } else if (this._promises[key]) {
-      // is value being queried by another request, wait for it
-      const valuePromise = this._promises[key];
+    } else if (valuePromise) {
+      debug("getOrSet: value being queried already, waiting for it");
       return await valuePromise;
     } else {
-      // is value not present in storage, not even being fetched, fetch it
-      const valuePromise = valueFn();
+      debug("getOrSet: value not present in storage, fetching it");
+      valuePromise = valueFn();
       if (valuePromise instanceof Promise) {
-        // set
-        this._promises[key] = valuePromise;
-        valuePromise.finally(() => {
-          delete this._promises[key];
-        });
+        this._promises.set(key, valuePromise);
       }
-      const value = await valuePromise;
-      await this.set<V>(key, value);
-      return value;
+      try {
+        const value = await valuePromise;
+        await this.set<V>(key, value);
+        this._promises.set(key, undefined);
+        return value;
+      } catch (e) {
+        this._promises.set(key, undefined);
+        throw e;
+      }
     }
   }
 
