@@ -44,8 +44,7 @@ export class BaseIndexer<DataStoreType> {
 
   async ready() {
     this._syncedBlock = Number(
-      await this._store.getOrSet<string>(
-        "synced-block",
+      await this._store.getOrSet<string>("synced-block", () =>
         String(this._syncedBlock - 1)
       )
     );

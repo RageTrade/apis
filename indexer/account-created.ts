@@ -29,7 +29,7 @@ export class AccountCreatedIndexer extends BaseIndexer<number[]> {
     const parsed = iface.parseLog(log) as unknown as AccountCreatedEvent;
     const accountIds = await this._store.getOrSet<number[]>(
       parsed.args.ownerAddress,
-      []
+      () => []
     );
     accountIds.push(parsed.args.accountId.toNumber());
     await this._store.set(parsed.args.ownerAddress, accountIds);

@@ -19,24 +19,14 @@ export class JsonStore<Value> extends BaseStore<Value> {
     }
   }
 
-  async get<V = Value>(key: string): Promise<V> {
+  async _get<V = Value>(key: string): Promise<V> {
     const json = await readJSON(this._path);
     return json[key];
   }
 
-  async set<V = Value>(key: string, value: V): Promise<void> {
+  async _set<V = Value>(key: string, value: V): Promise<void> {
     const json = await readJSON(this._path);
     json[key] = value;
     await writeJSON(this._path, json, { spaces: 2 });
-  }
-
-  async getOrSet<V = Value>(key: string, value: V): Promise<V> {
-    const read = await this.get<V>(key);
-    if (read !== undefined) {
-      return read;
-    } else {
-      await this.set<V>(key, value);
-      return value;
-    }
   }
 }
