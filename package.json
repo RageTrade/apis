@@ -12,7 +12,7 @@
     "start": "yarn build && yarn start:nobuild",
     "start:nobuild": "yarn serve && yarn index",
     "restart": "yarn build && yarn stop && yarn start:nobuild",
-    "stop": "pm2 delete all"
+    "stop": "pm2 delete all 2>&1 || true"
   },
   "dependencies": {
     "@ragetrade/sdk": "0.10.0-alpha.5",
