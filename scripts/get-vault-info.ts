@@ -43,14 +43,18 @@ export async function getVaultInfo(
   // formatting
   const totalSupply = Number(formatEther(totalSupplyD18));
   const totalAssets = Number(formatEther(totalAssetsD18));
-  const assetPrice = (await priceX128ToPrice(assetPriceX128, 6, 18)).toFixed(6);
-  const sharePrice = (
-    await priceX128ToPrice(
-      assetPriceX128.mul(assetsPerShareD18).div(parseEther("1")),
-      6,
-      18
-    )
-  ).toFixed(6);
+  const assetPrice = Number(
+    (await priceX128ToPrice(assetPriceX128, 6, 18)).toFixed(6)
+  );
+  const sharePrice = Number(
+    (
+      await priceX128ToPrice(
+        assetPriceX128.mul(assetsPerShareD18).div(parseEther("1")),
+        6,
+        18
+      )
+    ).toFixed(6)
+  );
   const depositCap = Number(formatEther(depositCapD18));
   const vaultMarketValue = Number(formatUsdc(vaultMarketValueD6));
   return {
