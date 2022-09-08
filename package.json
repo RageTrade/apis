@@ -9,8 +9,9 @@
     "serve:dev": "nodemon ./server.ts",
     "index": "pm2 start ./build/indexer/start.js",
     "index:stop": "pm2 stop ./build/indexer/start.js",
-    "start": "yarn build && yarn serve && yarn index",
-    "restart": "yarn build && yarn stop && yarn serve && yarn index",
+    "start": "yarn build && yarn start:nobuild",
+    "start:nobuild": "yarn serve && yarn index",
+    "restart": "yarn build && yarn stop && yarn start:nobuild",
     "stop": "pm2 delete all"
   },
   "dependencies": {
