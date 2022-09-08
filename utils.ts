@@ -130,6 +130,7 @@ export async function retry<R>(
 }
 
 export function removeApiKeysFromString(msg: string): string {
+  if (!msg) return msg;
   const apiKeys = [
     process.env.ALCHEMY_KEY,
     process.env.INFURA_KEY,
