@@ -2,13 +2,13 @@ import express from "express";
 
 import { cacheFunctionResult } from "../cache";
 import { AccountCreatedIndexer } from "../indexer/account-created";
-import { Candle, getAvgVaultMarketValue } from "../scripts/get-avg-vault-market-value";
+import { getAvgVaultMarketValue } from "../scripts/get-avg-vault-market-value";
 import { getBlockByTimestamp } from "../scripts/get-block-by-timestamp";
 import { getPrices } from "../scripts/get-prices";
+import { getVaultApyInfo } from "../scripts/get-vault-apy-info";
 import { getGmxData } from "../scripts/protodev-gmx-staking-info-frontend/script";
 import {
   getNetworkName,
-  getParam,
   getParamAsAddress,
   getParamAsInteger,
   getParamAsNumber,
@@ -63,9 +63,18 @@ router.get(
 router.get(
   "/get-avg-vault-market-value",
   handleRuntimeErrors(async (req) => {
-    const candles = getParam(req, 'candles')
     const networkName = getNetworkName(req);
-    return cacheFunctionResult(getAvgVaultMarketValue, [networkName, (JSON.parse(candles as string)) as Candle[]], {
+    return cacheFunctionResult(getAvgVaultMarketValue, [networkName], {
+      cacheSeconds: 60 * 60, // 1 hour
+    });
+  })
+);
+
+router.get(
+  "/get-vault-apy-info",
+  handleRuntimeErrors(async (req) => {
+    const networkName = getNetworkName(req);
+    return cacheFunctionResult(getVaultApyInfo, [networkName], {
       cacheSeconds: 60 * 60, // 1 hour
     });
   })

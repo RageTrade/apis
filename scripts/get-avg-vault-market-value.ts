@@ -1,30 +1,25 @@
+import { NetworkName, getVaultContracts, formatUsdc } from "@ragetrade/sdk";
+import { BigNumber, ethers } from "ethers";
 import { getProvider } from "../providers";
 import { getBlockByTimestamp } from "./get-block-by-timestamp";
-import { NetworkName, getVaultContracts, formatUsdc } from "@ragetrade/sdk";
 
-export type Candle = {
-  id: string,
-  volumeUSDC: string,
-  periodStartUnix: number
-}
-
-export async function getAvgVaultMarketValue(networkName: NetworkName, candles: Candle[]) {
+export async function getAvgVaultMarketValue(networkName: NetworkName) {
   const provider = getProvider(networkName);
   const { curveYieldStrategy } = await getVaultContracts(provider);
 
-  let apySum = 0;
+  let timestamp = Math.floor(Date.now() / 1000);
+  let vmvSum = BigNumber.from(0);
 
-  for (const candle of candles) {
-    const blockNumber = await getBlockByTimestamp(networkName, candle.periodStartUnix);
+  for (let i = 0; i < 24; i++) {
+    const blockNumber = await getBlockByTimestamp(networkName, timestamp);
     const vmv = await curveYieldStrategy.getVaultMarketValue({
       blockTag: blockNumber,
     });
-    apySum += Number(candle.volumeUSDC) * 24 * 365 * 0.001 / Number(formatUsdc(vmv));
+    vmvSum = vmvSum.add(vmv);
+    timestamp -= 3600;
   }
 
-  console.log(apySum / 24)
-
   return {
-    curveYieldStrategyApy: (apySum / 24) * 100
+    curveYieldStrategy: formatUsdc(vmvSum.div(24)),
   };
 }
