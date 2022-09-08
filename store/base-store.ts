@@ -65,7 +65,10 @@ export class BaseStore<Value> {
       if (creationTimestamp === undefined) {
         // if there is no timestamp, set current timestamp
         await this._set(this._timestampPrepend + _key, currentTimestamp());
-      } else if (creationTimestamp + secondsOld < currentTimestamp()) {
+      } else if (
+        creationTimestamp !== -1 &&
+        creationTimestamp + secondsOld < currentTimestamp()
+      ) {
         // if the timestamp is older than the secondsOld, delete the value
         await this._set(_key, undefined);
         return undefined;
