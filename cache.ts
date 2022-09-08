@@ -1,10 +1,13 @@
-import { MemoryStore } from "./store/memory-store";
+// import { MemoryStore } from "./store/memory-store";
+
+import { RedisStore } from "./store/redis-store";
 
 interface Options {
   cacheSeconds: number;
 }
 
-const cache = new MemoryStore<any>("cache");
+// const cache = new MemoryStore<any>("cache");
+const cache = new RedisStore<any>();
 export function cacheFunctionResult<F extends (...args: any[]) => any>(
   fn: F,
   args: Parameters<F>,
