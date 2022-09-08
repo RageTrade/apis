@@ -6,12 +6,14 @@ import { getAvgVaultMarketValue } from "../scripts/get-avg-vault-market-value";
 import { getBlockByTimestamp } from "../scripts/get-block-by-timestamp";
 import { getPrices } from "../scripts/get-prices";
 import { getVaultApyInfo } from "../scripts/get-vault-apy-info";
+import { getVaultInfo } from "../scripts/get-vault-info";
 import { getGmxData } from "../scripts/protodev-gmx-staking-info-frontend/script";
 import {
   getNetworkName,
   getParamAsAddress,
   getParamAsInteger,
   getParamAsNumber,
+  getVaultName,
   handleRuntimeErrors,
 } from "../utils";
 
@@ -75,6 +77,17 @@ router.get(
   handleRuntimeErrors(async (req) => {
     const networkName = getNetworkName(req);
     return cacheFunctionResult(getVaultApyInfo, [networkName], {
+      cacheSeconds: 60 * 60, // 1 hour
+    });
+  })
+);
+
+router.get(
+  "/get-vault-info",
+  handleRuntimeErrors(async (req) => {
+    const networkName = getNetworkName(req);
+    const vaultName = getVaultName(req);
+    return cacheFunctionResult(getVaultInfo, [networkName, vaultName], {
       cacheSeconds: 60 * 60, // 1 hour
     });
   })

@@ -42,6 +42,21 @@ export function getNetworkName(req: Request): NetworkName {
   return str as NetworkName;
 }
 
+// import from sdk
+export type VaultName = "tricrypto" | "gmx" | "unknown";
+
+export function getVaultName(req: Request): VaultName {
+  const str = getParamAsString(req, "vaultName");
+  if (!["tricrypto", "gmx"].includes(str)) {
+    throw new ErrorWithStatusCode(
+      'networkName must be "tricrypto" or "gmx"',
+      400
+    );
+  }
+
+  return str as VaultName;
+}
+
 export function getParamAsString(req: Request, paramName: string): string {
   const input = getParam(req, paramName);
   if (typeof input !== "string") {
