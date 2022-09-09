@@ -471,10 +471,10 @@
   dependencies:
     debug "^4.3.1"
 
-"@ragetrade/sdk@0.10.0-alpha.5":
-  version "0.10.0-alpha.5"
-  resolved "https://registry.yarnpkg.com/@ragetrade/sdk/-/sdk-0.10.0-alpha.5.tgz#d79bc5a37140e6598443a771c800ffacc1022046"
-  integrity sha512-JIsYmtZNOedLRkrZtGsjQl5LfYVq7hbjeZZAOESUR/4MnCInmTcxvWdaZWCugDWnJWARTDpQyIHy7MwiY7N+ng==
+"@ragetrade/sdk@^0.11.1":
+  version "0.11.1"
+  resolved "https://registry.yarnpkg.com/@ragetrade/sdk/-/sdk-0.11.1.tgz#f55bc79b5448f62a9913c4b2894c864df2a4216a"
+  integrity sha512-7+1EOYoM7nh4dwqpX/LeyLe/vU4pg0rhj5VAVthvIetAXtMEn1KcrogXXWwfxPL0yMdb+Xk9UdWlN1Yb/xJ+xw==
   dependencies:
     "@uniswap/v3-sdk" "^3.8.2"
     ethers "^5.6.2"

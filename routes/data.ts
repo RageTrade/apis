@@ -4,6 +4,7 @@ import { cacheFunctionResult } from "../cache";
 import { AccountCreatedIndexer } from "../indexer/account-created";
 import { getAvgVaultMarketValue } from "../scripts/get-avg-vault-market-value";
 import { getBlockByTimestamp } from "../scripts/get-block-by-timestamp";
+import { getPoolInfo } from "../scripts/get-pool-info";
 import { getPrices } from "../scripts/get-prices";
 import { getVaultApyInfo } from "../scripts/get-vault-apy-info";
 import { getVaultInfo } from "../scripts/get-vault-info";
@@ -48,6 +49,17 @@ router.get(
     const networkName = getNetworkName(req);
     const poolId = getParamAsNumber(req, "poolId");
     return cacheFunctionResult(getPrices, [networkName, poolId], {
+      cacheSeconds: 15,
+    });
+  })
+);
+
+router.get(
+  "/get-pool-info",
+  handleRuntimeErrors(async (req) => {
+    const networkName = getNetworkName(req);
+    const poolId = getParamAsNumber(req, "poolId");
+    return cacheFunctionResult(getPoolInfo, [networkName, poolId], {
       cacheSeconds: 15,
     });
   })
