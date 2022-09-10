@@ -1,5 +1,3 @@
-// import { MemoryStore } from "./store/memory-store";
-
 import { RedisStore } from "./store/redis-store";
 import { getTimestamp } from "./utils";
 
@@ -27,7 +25,11 @@ export function cacheFunctionResult<F extends (...args: any[]) => any>(
 async function generateResponse(fn: Function, args: any[]) {
   try {
     const result = await fn(...args);
-    return { result, cacheTimestamp: getTimestamp() };
+    if (result.result) {
+      return { ...result, cacheTimestamp: getTimestamp() };
+    } else {
+      return { result, cacheTimestamp: getTimestamp() };
+    }
   } catch (error: any) {
     return { error, cacheTimestamp: getTimestamp() };
   }
