@@ -24,10 +24,11 @@ export function cacheFunctionResult<F extends (...args: any[]) => any>(
 // this is needed for preventing someone to abuse
 // an endpoint which does not cache due to revert
 async function generateResponse(fn: Function, args: any[]) {
+  const cacheTimestamp = Math.floor(Date.now() / 1000);
   try {
     const result = await fn(...args);
-    return { result };
+    return { result, cacheTimestamp };
   } catch (error: any) {
-    return { error };
+    return { error, cacheTimestamp };
   }
 }
