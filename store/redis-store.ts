@@ -21,20 +21,20 @@ export class RedisStore<Value> extends BaseStore<Value> {
 
     let valuePromise = this._promises.get(key);
     if (read !== undefined) {
-      debug("getOrSet: returning the value present in storage");
+      debug("RedisStore.getOrSet: returning the value present in storage");
       return read;
     } else if (valuePromise) {
-      debug("getOrSet: value being queried already, waiting for it");
+      debug("RedisStore.getOrSet: value being queried already, waiting for it");
       return await valuePromise;
     } else {
-      debug("getOrSet: value not present in storage, fetching it");
+      debug("RedisStore.getOrSet: value not present in storage, fetching it");
       valuePromise = valueFn();
       if (valuePromise instanceof Promise) {
         this._promises.set(key, valuePromise);
       }
       try {
         const value = await valuePromise;
-        await this.set<V>(key, value);
+        await this.set<V>(key, value, expirySeconds);
         this._promises.set(key, undefined);
         return value;
       } catch (e) {
@@ -56,8 +56,12 @@ export class RedisStore<Value> extends BaseStore<Value> {
     expirySeconds?: number
   ): Promise<void> {
     if (expirySeconds) {
+      debug(
+        `RedisStore.set: setting key ${_key} with expiry ${expirySeconds} seconds`
+      );
       this.client.set(_key, JSON.stringify(_value), "EX", expirySeconds);
     } else {
+      debug(`RedisStore.set: setting key ${_key} with no expiry`);
       this.client.set(_key, JSON.stringify(_value));
     }
   }

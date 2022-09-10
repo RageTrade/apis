@@ -107,14 +107,16 @@ export function handleRuntimeErrors(
 ): express.RequestHandler {
   return async (req, res, next) => {
     try {
-      let result = (await fn(req, res, next)) as any;
-      if (result.error) {
-        throw result.error;
+      let response = (await fn(req, res, next)) as any;
+      if (response.error) {
+        response.error = removeApiKeysFromString(response.error?.message);
+      } else if (!response.result) {
+        // TODO improve types
+        throw new Error(
+          'There was no error but function did not return a "result" value'
+        );
       }
-      if (result.result) {
-        result = result.result;
-      }
-      res.json({ result });
+      res.status(response?.error?.status ?? 200).json(response);
     } catch (e: any) {
       next(createError(e.status ?? 500, removeApiKeysFromString(e.message)));
     }
@@ -160,4 +162,8 @@ export function removeApiKeysFromString(msg: string): string {
     } while (msg.length !== prevLength);
   }
   return msg;
+}
+
+export function getTimestamp() {
+  return Math.floor(Date.now() / 1000);
 }

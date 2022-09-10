@@ -28,7 +28,10 @@ router.get(
 
     const store = AccountCreatedIndexer.getStore(networkName);
     const accountIds = await store.get(userAddress);
-    return accountIds ?? [];
+    return {
+      result: accountIds ?? [],
+      syncedBlock: Number(await store.get("synced-block")),
+    };
   })
 );
 
@@ -37,9 +40,7 @@ router.get(
   handleRuntimeErrors(async (req) => {
     const networkName = getNetworkName(req);
     const timestamp = getParamAsInteger(req, "timestamp");
-    return cacheFunctionResult(getBlockByTimestamp, [networkName, timestamp], {
-      cacheSeconds: -1,
-    });
+    return cacheFunctionResult(getBlockByTimestamp, [networkName, timestamp]);
   })
 );
 
