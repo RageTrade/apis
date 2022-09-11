@@ -164,6 +164,6 @@ export function removeApiKeysFromString(msg: string): string {
   return msg;
 }
 
-export function getTimestamp() {
+export function currentTimestamp() {
   return Math.floor(Date.now() / 1000);
 }

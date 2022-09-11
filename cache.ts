@@ -1,5 +1,5 @@
 import { RedisStore } from "./store/redis-store";
-import { getTimestamp } from "./utils";
+import { currentTimestamp } from "./utils";
 
 interface Options {
   cacheSeconds?: number;
@@ -26,11 +26,11 @@ async function generateResponse(fn: Function, args: any[]) {
   try {
     const result = await fn(...args);
     if (result.result) {
-      return { ...result, cacheTimestamp: getTimestamp() };
+      return { ...result, cacheTimestamp: currentTimestamp() };
     } else {
-      return { result, cacheTimestamp: getTimestamp() };
+      return { result, cacheTimestamp: currentTimestamp() };
     }
   } catch (error: any) {
-    return { error, cacheTimestamp: getTimestamp() };
+    return { error, cacheTimestamp: currentTimestamp() };
   }
 }
