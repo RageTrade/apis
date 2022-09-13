@@ -5,12 +5,12 @@ import { ethers } from "ethers";
 config();
 
 export const arbmain = new ethers.providers.StaticJsonRpcProvider(
-  "https://arb1.arbitrum.io/rpc"
-  // "https://arb-mainnet.g.alchemy.com/v2/" + process.env.ALCHEMY_KEY
+  // "https://arb1.arbitrum.io/rpc"
+  "https://arb-mainnet.g.alchemy.com/v2/" + process.env.ALCHEMY_KEY
 );
 export const arbtest = new ethers.providers.StaticJsonRpcProvider(
-  "https://rinkeby.arbitrum.io/rpc"
-  // "https://arb-rinkeby.g.alchemy.com/v2/" + process.env.ALCHEMY_KEY
+  // "https://rinkeby.arbitrum.io/rpc"
+  "https://arb-rinkeby.g.alchemy.com/v2/" + process.env.ALCHEMY_KEY
 );
 
 export function getProvider(
