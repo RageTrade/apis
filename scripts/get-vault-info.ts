@@ -10,7 +10,7 @@ import {
   BaseVault__factory,
 } from "@ragetrade/sdk";
 import { vaults } from "@ragetrade/sdk";
-import { ethers, BigNumber } from "ethers";
+import { ethers } from "ethers";
 import { formatEther, parseEther, parseUnits } from "ethers/lib/utils";
 import { getProvider } from "../providers";
 import { safeDiv, VaultName } from "../utils";
@@ -51,8 +51,7 @@ export async function _getVaultInfo(
   depositCapD18: string;
   vaultMarketValueD6: string;
 }> {
-  let vaultAddress = await getVaultAddressFromVaultName(provider, vaultName);
-  // TODO move switch to getParam
+  const vaultAddress = await getVaultAddressFromVaultName(provider, vaultName);
 
   const vault = vaults.BaseVault__factory.connect(vaultAddress, provider);
 
@@ -81,7 +80,6 @@ export async function _getVaultInfo(
   const depositCap = Number(formatEther(depositCapD18));
   const vaultMarketValue = Number(formatUsdc(vaultMarketValueD6));
 
-  // try {
   const poolComposition = await getPoolComposition(provider, vaultName);
   return {
     poolComposition,
@@ -102,10 +100,6 @@ export async function _getVaultInfo(
     depositCapD18: depositCapD18.toString(),
     vaultMarketValueD6: vaultMarketValueD6.toString(),
   };
-  // } catch (e) {
-  //   console.log(e);
-  //   throw e;
-  // }
 }
 
 export async function getPoolComposition(
