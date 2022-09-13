@@ -2,13 +2,18 @@ import {
   NetworkName,
   formatUsdc,
   priceX128ToPrice,
-  getVaultContracts,
+  getCoreContracts,
+  getTricryptoVaultContracts,
+  truncate,
+  Q128,
+  getGmxVaultContracts,
+  BaseVault__factory,
 } from "@ragetrade/sdk";
 import { vaults } from "@ragetrade/sdk";
 import { ethers, BigNumber } from "ethers";
 import { formatEther, parseEther, parseUnits } from "ethers/lib/utils";
 import { getProvider } from "../providers";
-import { VaultName } from "../utils";
+import { safeDiv, VaultName } from "../utils";
 
 export async function getVaultInfo(
   networkName: NetworkName,
@@ -22,6 +27,14 @@ export async function _getVaultInfo(
   provider: ethers.providers.Provider,
   vaultName: VaultName
 ): Promise<{
+  poolComposition: {
+    rageAmount: string;
+    nativeAmount: string;
+    ragePercentage: string;
+    nativePercentage: string;
+    nativeProtocolName: string;
+  };
+
   totalSupply: number;
   totalShares: number;
   totalAssets: number;
@@ -38,21 +51,8 @@ export async function _getVaultInfo(
   depositCapD18: string;
   vaultMarketValueD6: string;
 }> {
-  let vaultAddress = "";
+  let vaultAddress = await getVaultAddressFromVaultName(provider, vaultName);
   // TODO move switch to getParam
-  switch (vaultName) {
-    case "tricrypto":
-      const { curveYieldStrategy } = await getVaultContracts(provider);
-      vaultAddress = curveYieldStrategy.address;
-      break;
-    case "gmx":
-      //   const { gmxYieldStrategy } = await getGmxVaultContracts(provider);
-      //   vaultAddress = gmxYieldStrategy.address;
-      throw new Error("gmx not implemented");
-      break;
-    default:
-      throw new Error(`vaultName should be either tricrypto or gmx`);
-  }
 
   const vault = vaults.BaseVault__factory.connect(vaultAddress, provider);
 
@@ -80,7 +80,12 @@ export async function _getVaultInfo(
   );
   const depositCap = Number(formatEther(depositCapD18));
   const vaultMarketValue = Number(formatUsdc(vaultMarketValueD6));
+
+  // try {
+  const poolComposition = await getPoolComposition(provider, vaultName);
   return {
+    poolComposition,
+
     totalSupply,
     totalShares: totalSupply,
     totalAssets,
@@ -97,4 +102,81 @@ export async function _getVaultInfo(
     depositCapD18: depositCapD18.toString(),
     vaultMarketValueD6: vaultMarketValueD6.toString(),
   };
+  // } catch (e) {
+  //   console.log(e);
+  //   throw e;
+  // }
+}
+
+export async function getPoolComposition(
+  provider: ethers.providers.Provider,
+  vaultName: VaultName
+): Promise<{
+  rageAmount: string;
+  nativeAmount: string;
+  ragePercentage: string;
+  nativePercentage: string;
+  nativeProtocolName: string;
+}> {
+  const { clearingHouse, eth_vToken } = await getCoreContracts(provider);
+  // const { curveYieldStrategy } = await getTricryptoVaultContracts(provider);
+
+  const vaultStrategy = BaseVault__factory.connect(
+    await getVaultAddressFromVaultName(provider, vaultName),
+    provider
+  );
+  const poolId = truncate(eth_vToken.address);
+
+  // TODO
+  const vaultAccountId = await vaultStrategy.rageAccountNo();
+
+  // net position of eth * twap price
+  const netPosition = await clearingHouse.getAccountNetTokenPosition(
+    vaultAccountId,
+    poolId
+  );
+  const virtualPriceX128 = await clearingHouse.getVirtualTwapPriceX128(poolId);
+
+  const rageAmount = netPosition.abs().mul(virtualPriceX128).div(Q128);
+  const nativeAmount = (await vaultStrategy.getVaultMarketValue()).sub(
+    rageAmount
+  );
+
+  const sum = nativeAmount.add(rageAmount);
+  const oneEth = parseEther("1");
+
+  return {
+    rageAmount: formatUsdc(rageAmount),
+    nativeAmount: formatUsdc(nativeAmount),
+    ragePercentage: formatEther(safeDiv(oneEth.mul(rageAmount), sum)),
+    nativePercentage: formatEther(safeDiv(oneEth.mul(nativeAmount), sum)),
+    nativeProtocolName: getNativeProtocolName(vaultName),
+  };
+}
+
+async function getVaultAddressFromVaultName(
+  provider: ethers.providers.Provider,
+  vaultName: VaultName
+): Promise<string> {
+  switch (vaultName) {
+    case "tricrypto":
+      const { curveYieldStrategy } = await getTricryptoVaultContracts(provider);
+      return curveYieldStrategy.address;
+    case "gmx":
+      const { gmxYieldStrategy } = await getGmxVaultContracts(provider);
+      return gmxYieldStrategy.address;
+    default:
+      throw new Error(`vaultName should be either tricrypto or gmx`);
+  }
+}
+
+function getNativeProtocolName(vaultName: VaultName) {
+  switch (vaultName) {
+    case "tricrypto":
+      return "Curve";
+    case "gmx":
+      return "GMX";
+    default:
+      throw new Error(`vaultName should be either tricrypto or gmx`);
+  }
 }

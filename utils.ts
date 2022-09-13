@@ -4,6 +4,7 @@ import createError from "http-errors";
 import { Request } from "express";
 
 import { NetworkName } from "@ragetrade/sdk";
+import { BigNumber, ethers } from "ethers";
 
 export function getParamAsAddress(req: Request, paramName: string): string {
   const input = getParamAsString(req, paramName);
@@ -166,4 +167,8 @@ export function removeApiKeysFromString(msg: string): string {
 
 export function currentTimestamp() {
   return Math.floor(Date.now() / 1000);
+}
+
+export function safeDiv(numerator: BigNumber, denominator: BigNumber) {
+  return denominator.eq(0) ? ethers.constants.Zero : numerator.div(denominator);
 }

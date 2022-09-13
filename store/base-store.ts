@@ -1,4 +1,5 @@
 import Debugger from "debug";
+import { currentTimestamp } from "../utils";
 const debug = Debugger("apis:base-store");
 export interface Internal {
   [key: string]: string;
@@ -103,8 +104,4 @@ export class BaseStore<Value> {
   async _set<V = Value>(_key: string, _value: V): Promise<void> {
     throw new Error("BaseStore._set: method not implemented.");
   }
-}
-
-function currentTimestamp() {
-  return Math.floor(Date.now() / 1000);
 }
