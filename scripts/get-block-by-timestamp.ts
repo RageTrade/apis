@@ -1,5 +1,8 @@
 import { NetworkName } from "@ragetrade/sdk";
+import Debugger from "debug";
 import { fetchJson } from "ethers/lib/utils";
+
+const debug = Debugger("apis:scripts:getBlockByTimestamp");
 
 export async function getBlockByTimestamp(
   networkName: NetworkName,
@@ -10,12 +13,21 @@ export async function getBlockByTimestamp(
       ? "https://api.arbiscan.io"
       : "https://api-testnet.arbiscan.io";
 
-  const resp = await fetchJson(
-    `${baseUrl}/api?module=block&action=getblocknobytime&timestamp=${timestamp}&closest=before&apikey=${process.env.ARBISCAN_KEY}`
-  );
-  if (resp.status === "1") {
-    return parseInt(resp.result);
-  } else {
-    throw new Error(`Arbiscan Api Failed: ${JSON.stringify(resp)}`);
+  while (1) {
+    const resp = await fetchJson(
+      `${baseUrl}/api?module=block&action=getblocknobytime&timestamp=${timestamp}&closest=before&apikey=${process.env.ARBISCAN_KEY}`
+    );
+    if (resp.status === "1") {
+      return parseInt(resp.result);
+    }
+    if (JSON.stringify(resp).includes("Max rate limit reached")) {
+      debug("Arbiscan retry");
+      continue; // try again
+    } else {
+      throw new Error(`Arbiscan Api Failed: ${JSON.stringify(resp)}`);
+    }
   }
+
+  debug("this cannot happen");
+  throw new Error("This cannot happen, in scripts/getBlockByTimestamp");
 }
