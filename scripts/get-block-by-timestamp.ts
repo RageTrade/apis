@@ -21,6 +21,9 @@ export async function getBlockByTimestamp(
       return parseInt(resp.result);
     }
     if (JSON.stringify(resp).includes("Max rate limit reached")) {
+      await new Promise((res) =>
+        setTimeout(res, 1000 + Math.floor(Math.random() * 100))
+      );
       debug("Arbiscan retry");
       continue; // try again
     } else {
