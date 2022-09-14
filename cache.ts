@@ -31,6 +31,11 @@ async function generateResponse(fn: Function, args: any[]) {
       return { result, cacheTimestamp: currentTimestamp() };
     }
   } catch (error: any) {
+    // if it's an error with status code, it should not be cached
+    if (error.status) {
+      throw error;
+    }
+    // cache the error resp (to prevent DoS, hitting with an input which reverts in middle
     return { error, cacheTimestamp: currentTimestamp() };
   }
 }
