@@ -4,6 +4,8 @@ import { cacheFunctionResult } from "../cache";
 import { getAccountIdsByAddress } from "../scripts/get-account-ids-by-address";
 import { getAvgVaultMarketValue } from "../scripts/get-avg-vault-market-value";
 import { getBlockByTimestamp } from "../scripts/get-block-by-timestamp";
+import { getGmxVaultInfo } from "../scripts/get-gmx-vault-info";
+import { getGmxVaultInfoByTokenAddress } from "../scripts/get-gmx-vault-info-by-token-address";
 import { getPoolInfo } from "../scripts/get-pool-info";
 import { getPrices } from "../scripts/get-prices";
 import { getVaultApyInfo } from "../scripts/get-vault-apy-info";
@@ -64,6 +66,7 @@ router.get(
   })
 );
 
+// gives arbmain staking data
 router.get(
   "/get-gmx-data",
   handleRuntimeErrors(async () => {
@@ -100,6 +103,31 @@ router.get(
     const vaultName = getVaultName(req);
     return cacheFunctionResult(getVaultInfo, [networkName, vaultName], {
       cacheSeconds: 5 * 60, // 5 mins
+    });
+  })
+);
+
+router.get(
+  "/get-gmx-vault-info-by-token-address",
+  handleRuntimeErrors(async (req) => {
+    const networkName = getNetworkName(req);
+    const tokenAddress = getParamAsAddress(req, "tokenAddress");
+    return cacheFunctionResult(
+      getGmxVaultInfoByTokenAddress,
+      [networkName, tokenAddress],
+      {
+        cacheSeconds: 60, // 1 mins
+      }
+    );
+  })
+);
+
+router.get(
+  "/get-gmx-vault-info",
+  handleRuntimeErrors(async (req) => {
+    const networkName = getNetworkName(req);
+    return cacheFunctionResult(getGmxVaultInfo, [networkName], {
+      cacheSeconds: 10 * 60, // 10 mins
     });
   })
 );
