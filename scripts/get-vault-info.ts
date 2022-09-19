@@ -8,12 +8,15 @@ import {
   Q128,
   getGmxVaultContracts,
   BaseVault__factory,
+  getNetworkNameFromProvider,
 } from "@ragetrade/sdk";
 import { vaults } from "@ragetrade/sdk";
-import { ethers } from "ethers";
+import { BaseVault } from "@ragetrade/sdk/dist/typechain/vaults";
+import { BigNumber, ethers } from "ethers";
 import { formatEther, parseEther, parseUnits } from "ethers/lib/utils";
 import { getProvider } from "../providers";
 import { safeDiv, VaultName } from "../utils";
+import { getBlockByTimestamp } from "./get-block-by-timestamp";
 
 export async function getVaultInfo(
   networkName: NetworkName,
@@ -42,6 +45,7 @@ export async function _getVaultInfo(
   sharePrice: number;
   depositCap: number;
   vaultMarketValue: number;
+  avgVaultMarketValue: number;
 
   totalSupplyD18: string;
   totalSharesD18: string;
@@ -50,6 +54,7 @@ export async function _getVaultInfo(
   sharePriceD18: string;
   depositCapD18: string;
   vaultMarketValueD6: string;
+  avgVaultMarketValueD6: string;
 }> {
   const vaultAddress = await getVaultAddressFromVaultName(provider, vaultName);
 
@@ -80,6 +85,11 @@ export async function _getVaultInfo(
   const depositCap = Number(formatEther(depositCapD18));
   const vaultMarketValue = Number(formatUsdc(vaultMarketValueD6));
 
+  const avgVaultMarketValueD6 = await getAvgVaultMarketValue(
+    await getNetworkNameFromProvider(provider),
+    vault
+  );
+
   const poolComposition = await getPoolComposition(provider, vaultName);
   return {
     poolComposition,
@@ -91,6 +101,7 @@ export async function _getVaultInfo(
     sharePrice,
     depositCap,
     vaultMarketValue,
+    avgVaultMarketValue: Number(formatUsdc(avgVaultMarketValueD6)),
 
     totalSupplyD18: totalSupplyD18.toString(),
     totalSharesD18: totalSupplyD18.toString(),
@@ -99,6 +110,7 @@ export async function _getVaultInfo(
     sharePriceD18: parseUnits(String(sharePrice), 18).toString(),
     depositCapD18: depositCapD18.toString(),
     vaultMarketValueD6: vaultMarketValueD6.toString(),
+    avgVaultMarketValueD6: avgVaultMarketValueD6.toString(),
   };
 }
 
@@ -113,7 +125,6 @@ export async function getPoolComposition(
   nativeProtocolName: string;
 }> {
   const { clearingHouse, eth_vToken } = await getCoreContracts(provider);
-  // const { curveYieldStrategy } = await getTricryptoVaultContracts(provider);
 
   const vaultStrategy = BaseVault__factory.connect(
     await getVaultAddressFromVaultName(provider, vaultName),
@@ -146,6 +157,25 @@ export async function getPoolComposition(
     nativePercentage: formatEther(safeDiv(oneEth.mul(nativeAmount), sum)),
     nativeProtocolName: getNativeProtocolName(vaultName),
   };
+}
+
+async function getAvgVaultMarketValue(
+  networkName: NetworkName,
+  vault: BaseVault
+): Promise<BigNumber> {
+  let timestamp = Math.floor(Date.now() / 1000);
+  let vmvSum = BigNumber.from(0);
+
+  for (let i = 0; i < 24; i++) {
+    const blockNumber = await getBlockByTimestamp(networkName, timestamp);
+    const vmv = await vault.getVaultMarketValue({
+      blockTag: blockNumber,
+    });
+    vmvSum = vmvSum.add(vmv);
+    timestamp -= 3600;
+  }
+
+  return vmvSum.div(24);
 }
 
 async function getVaultAddressFromVaultName(
