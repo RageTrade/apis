@@ -2,10 +2,10 @@ import { getProvider } from "../providers";
 import { getBlockByTimestamp } from "./get-block-by-timestamp";
 import {
   NetworkName,
-  getVaultContracts,
+  tricryptoVault,
   formatUsdc,
   truncate,
-  getContracts,
+  core,
 } from "@ragetrade/sdk";
 import { getSubgraph } from "../subgraphs";
 import { gql } from "urql";
@@ -18,8 +18,8 @@ export type Candle = {
 
 export async function getVaultApyInfo(networkName: NetworkName) {
   const provider = getProvider(networkName);
-  const { eth_vToken } = await getContracts(provider);
-  const { curveYieldStrategy } = await getVaultContracts(provider);
+  const { eth_vToken } = await core.getContracts(provider);
+  const { curveYieldStrategy } = await tricryptoVault.getContracts(provider);
   const graphqlClient = await getSubgraph(networkName);
 
   const candles = await graphqlClient

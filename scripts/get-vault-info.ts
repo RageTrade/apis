@@ -9,9 +9,8 @@ import {
   getGmxVaultContracts,
   BaseVault__factory,
   getNetworkNameFromProvider,
+  BaseVault,
 } from "@ragetrade/sdk";
-import { vaults } from "@ragetrade/sdk";
-import { BaseVault } from "@ragetrade/sdk/dist/typechain/vaults";
 import { BigNumber, ethers } from "ethers";
 import { formatEther, parseEther, parseUnits } from "ethers/lib/utils";
 import { getProvider } from "../providers";
@@ -58,7 +57,7 @@ export async function _getVaultInfo(
 }> {
   const vaultAddress = await getVaultAddressFromVaultName(provider, vaultName);
 
-  const vault = vaults.BaseVault__factory.connect(vaultAddress, provider);
+  const vault = BaseVault__factory.connect(vaultAddress, provider);
 
   const totalSupplyD18 = await vault.totalSupply();
   const totalAssetsD18 = await vault.totalAssets();

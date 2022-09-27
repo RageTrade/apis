@@ -12,6 +12,10 @@ export const arbtest = new ethers.providers.StaticJsonRpcProvider(
   // "https://rinkeby.arbitrum.io/rpc"
   "https://arb-rinkeby.g.alchemy.com/v2/" + process.env.ALCHEMY_KEY
 );
+export const arbgoerli = new ethers.providers.StaticJsonRpcProvider(
+  // "https://rinkeby.arbitrum.io/rpc"
+  "https://arb-rinkeby.g.alchemy.com/v2/" + process.env.ALCHEMY_KEY
+);
 
 export function getProvider(
   networkName: NetworkName
@@ -20,7 +24,10 @@ export function getProvider(
     case "arbmain":
       return arbmain;
     case "arbtest":
+    case "arbrinkeby":
       return arbtest;
+    case "arbgoerli":
+      return arbgoerli;
     default:
       throw new Error(`Provider not available for the network: ${networkName}`);
   }

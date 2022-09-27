@@ -1,10 +1,6 @@
 import { ethers } from "ethers";
 
-import {
-  ClearingHouse__factory,
-  getContracts,
-  NetworkName,
-} from "@ragetrade/sdk";
+import { ClearingHouse__factory, core, NetworkName } from "@ragetrade/sdk";
 import { AccountCreatedEvent } from "@ragetrade/sdk/dist/typechain/core/contracts/interfaces/IClearingHouse";
 
 import { JsonStore } from "../store/json-store";
@@ -20,7 +16,7 @@ export class AccountCreatedIndexer extends BaseIndexer<number[]> {
   async getFilter(
     provider: ethers.providers.Provider
   ): Promise<ethers.EventFilter> {
-    const { clearingHouse } = await getContracts(provider);
+    const { clearingHouse } = await core.getContracts(provider);
     return clearingHouse.filters.AccountCreated();
   }
 

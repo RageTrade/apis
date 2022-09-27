@@ -1,11 +1,12 @@
-import { NetworkName, getVaultContracts, formatUsdc } from "@ragetrade/sdk";
-import { BigNumber, ethers } from "ethers";
+import { NetworkName, tricryptoVault, formatUsdc } from "@ragetrade/sdk";
+import { BigNumber } from "ethers";
 import { getProvider } from "../providers";
 import { getBlockByTimestamp } from "./get-block-by-timestamp";
 
+// TODO delete this
 export async function getAvgVaultMarketValue(networkName: NetworkName) {
   const provider = getProvider(networkName);
-  const { curveYieldStrategy } = await getVaultContracts(provider);
+  const { curveYieldStrategy } = await tricryptoVault.getContracts(provider);
 
   let timestamp = Math.floor(Date.now() / 1000);
   let vmvSum = BigNumber.from(0);

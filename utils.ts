@@ -3,7 +3,10 @@ import express from "express";
 import createError from "http-errors";
 import { Request } from "express";
 
-import { NetworkName } from "@ragetrade/sdk";
+import {
+  NetworkName,
+  getNetworkName as getNetworkNameSdk,
+} from "@ragetrade/sdk";
 import { BigNumber, ethers } from "ethers";
 
 export function getParamAsAddress(req: Request, paramName: string): string {
@@ -33,14 +36,7 @@ export function getParamAsInteger(req: Request, paramName: string): number {
 
 export function getNetworkName(req: Request): NetworkName {
   const str = getParamAsString(req, "networkName");
-  if (!["arbmain", "arbtest"].includes(str)) {
-    throw new ErrorWithStatusCode(
-      'networkName must be "arbmain" or "arbtest"',
-      400
-    );
-  }
-
-  return str as NetworkName;
+  return getNetworkNameSdk(str as NetworkName);
 }
 
 // import from sdk
