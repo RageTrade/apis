@@ -1,4 +1,4 @@
-import { NetworkName } from "@ragetrade/sdk";
+import { NetworkName, sdk } from "@ragetrade/sdk";
 import { config } from "dotenv";
 import { ethers } from "ethers";
 
@@ -12,10 +12,9 @@ export const arbtest = new ethers.providers.StaticJsonRpcProvider(
   // "https://rinkeby.arbitrum.io/rpc"
   "https://arb-rinkeby.g.alchemy.com/v2/" + process.env.ALCHEMY_KEY
 );
-export const arbgoerli = new ethers.providers.StaticJsonRpcProvider(
-  // "https://rinkeby.arbitrum.io/rpc"
-  "https://arb-rinkeby.g.alchemy.com/v2/" + process.env.ALCHEMY_KEY
-);
+export const arbgoerli = sdk.getProvider("arbgoerli");
+// "https://rinkeby.arbitrum.io/rpc"
+// "https://arb-goerli.g.alchemy.com/v2/" + process.env.ALCHEMY_KEY
 
 export function getProvider(
   networkName: NetworkName

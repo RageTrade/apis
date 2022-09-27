@@ -11,16 +11,18 @@ export async function getAvgVaultMarketValue(networkName: NetworkName) {
   let timestamp = Math.floor(Date.now() / 1000);
   let vmvSum = BigNumber.from(0);
 
-  for (let i = 0; i < 24; i++) {
+  const hourDelay = 2;
+  let i = 0;
+  for (; i < 24 / hourDelay; i++) {
     const blockNumber = await getBlockByTimestamp(networkName, timestamp);
     const vmv = await curveYieldStrategy.getVaultMarketValue({
       blockTag: blockNumber,
     });
     vmvSum = vmvSum.add(vmv);
-    timestamp -= 3600;
+    timestamp -= 3600 * hourDelay;
   }
 
   return {
-    curveYieldStrategy: formatUsdc(vmvSum.div(24)),
+    curveYieldStrategy: formatUsdc(vmvSum.div(i)),
   };
 }

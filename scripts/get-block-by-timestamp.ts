@@ -1,6 +1,7 @@
-import { NetworkName } from "@ragetrade/sdk";
+import { NetworkName, findBlockByTimestamp } from "@ragetrade/sdk";
 import Debugger from "debug";
 import { fetchJson } from "ethers/lib/utils";
+import { getProvider } from "../providers";
 
 const debug = Debugger("apis:scripts:getBlockByTimestamp");
 
@@ -8,6 +9,18 @@ export async function getBlockByTimestamp(
   networkName: NetworkName,
   timestamp: number
 ): Promise<number> {
+  //  TODO change once etherscan supports this network
+  if (networkName === "arbgoerli") {
+    const block = await findBlockByTimestamp(
+      getProvider("arbgoerli"),
+      timestamp,
+      {
+        allowFutureTimestamp: true,
+      }
+    );
+    return block.number;
+  }
+
   const baseUrl: string =
     networkName === "arbmain"
       ? "https://api.arbiscan.io"
