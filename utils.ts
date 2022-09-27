@@ -106,7 +106,11 @@ export function handleRuntimeErrors(
     try {
       let response = (await fn(req, res, next)) as any;
       if (response.error) {
-        response.error = removeApiKeysFromString(response.error?.message);
+        response.error = removeApiKeysFromString(
+          typeof response.error === "string"
+            ? response.error
+            : response.error?.message
+        );
       } else if (!response.result) {
         // TODO improve types
         throw new Error(

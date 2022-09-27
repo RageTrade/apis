@@ -38,6 +38,6 @@ async function generateResponse(fn: Function, args: any[]) {
       throw error;
     }
     // cache the error resp (to prevent DoS, hitting with an input which reverts in middle
-    return { error, cacheTimestamp: currentTimestamp() };
+    return { error: error.message, cacheTimestamp: currentTimestamp() };
   }
 }
