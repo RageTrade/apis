@@ -3,6 +3,7 @@ import { currentTimestamp } from "./utils";
 
 interface Options {
   cacheSeconds?: number;
+  tags?: string[];
 }
 
 // const cache = new MemoryStore<any>("cache");
@@ -10,10 +11,11 @@ const cache = new RedisStore<any>();
 export function cacheFunctionResult<F extends (...args: any[]) => any>(
   fn: F,
   args: Parameters<F>,
-  { cacheSeconds }: Options = {}
+  { cacheSeconds, tags }: Options = {}
 ) {
+  tags = tags || [];
   return cache.getOrSet(
-    fn.name + args.map((a) => String(a)).join("-"),
+    fn.name + args.map((a) => String(a)).join("-") + tags,
     generateResponse.bind(null, fn, args),
     cacheSeconds
   );

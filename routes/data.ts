@@ -116,6 +116,7 @@ router.get(
     const poolId = getParamAsNumber(req, "poolId");
     return cacheFunctionResult(v2.getPrices, [networkName, poolId], {
       cacheSeconds: 15 * secs,
+      tags: ["v2"],
     });
   })
 );
@@ -137,6 +138,7 @@ router.get(
     const poolId = getParamAsNumber(req, "poolId");
     return cacheFunctionResult(v2.getPoolInfo, [networkName, poolId], {
       cacheSeconds: 15 * secs,
+      tags: ["v2"],
     });
   })
 );
@@ -147,7 +149,7 @@ router.get(
     const networkName = getNetworkName(req);
     const vaultName = getVaultName(req);
     return cacheFunctionResult(getVaultInfo, [networkName, vaultName], {
-      cacheSeconds: 5 * mins, // 5 mins
+      cacheSeconds: 5 * mins,
     });
   })
 );
@@ -157,7 +159,8 @@ router.get(
     const networkName = getNetworkName(req);
     const vaultName = getVaultName(req);
     return cacheFunctionResult(v2.getVaultInfo, [networkName, vaultName], {
-      cacheSeconds: 5 * mins, // 5 mins
+      cacheSeconds: 5 * mins,
+      tags: ["v2"],
     });
   })
 );
@@ -182,7 +185,7 @@ router.get(
     return cacheFunctionResult(
       v2.getGmxVaultInfoByTokenAddress,
       [networkName, tokenAddress],
-      { cacheSeconds: 1 * mins }
+      { cacheSeconds: 1 * mins, tags: ["v2"] }
     );
   })
 );
@@ -202,6 +205,7 @@ router.get(
     const networkName = getNetworkName(req);
     return cacheFunctionResult(v2.getGmxVaultInfo, [networkName], {
       cacheSeconds: 10 * mins,
+      tags: ["v2"],
     });
   })
 );
