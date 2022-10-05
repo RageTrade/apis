@@ -149,7 +149,7 @@ router.get(
     const networkName = getNetworkName(req);
     const vaultName = getVaultName(req);
     return cacheFunctionResult(getVaultInfo, [networkName, vaultName], {
-      cacheSeconds: 5 * mins,
+      cacheSeconds: 1 * mins,
     });
   })
 );
@@ -159,7 +159,7 @@ router.get(
     const networkName = getNetworkName(req);
     const vaultName = getVaultName(req);
     return cacheFunctionResult(v2.getVaultInfo, [networkName, vaultName], {
-      cacheSeconds: 5 * mins,
+      cacheSeconds: 1 * mins,
       tags: ["v2"],
     });
   })
