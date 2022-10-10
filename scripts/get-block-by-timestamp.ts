@@ -27,11 +27,13 @@ export async function getBlockByTimestamp(
       : "https://api-testnet.arbiscan.io";
 
   while (1) {
-    const resp = await fetchJson(
-      `${baseUrl}/api?module=block&action=getblocknobytime&timestamp=${timestamp}&closest=before&apikey=${process.env.ARBISCAN_KEY}`
-    );
+    const request = `${baseUrl}/api?module=block&action=getblocknobytime&timestamp=${timestamp}&closest=before&apikey=${process.env.ARBISCAN_KEY}`;
+    const resp = await fetchJson(request);
     if (resp.status === "1") {
-      return parseInt(resp.result);
+      const result = parseInt(resp.result);
+      if (!isNaN(result)) {
+        return result;
+      }
     }
     if (JSON.stringify(resp).includes("Max rate limit reached")) {
       await new Promise((res) =>
@@ -40,7 +42,11 @@ export async function getBlockByTimestamp(
       debug("Arbiscan retry");
       continue; // try again
     } else {
-      throw new Error(`Arbiscan Api Failed: ${JSON.stringify(resp)}`);
+      throw new Error(
+        `Arbiscan Api Failed. Request: ${request}. Response: ${JSON.stringify(
+          resp
+        )}`
+      );
     }
   }
 
