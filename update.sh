@@ -1,3 +1,3 @@
 git pull
 yarn install
-yarn restart
+yarn restart2
