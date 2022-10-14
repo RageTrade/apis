@@ -2,7 +2,7 @@ import {
   BaseDataSource,
   EthersProviderDataSource,
   FallbackDataSource,
-  MethodNames,
+  getResultWithMetadata,
   NetworkName,
 } from "@ragetrade/sdk";
 import { getProvider } from "../../providers";
@@ -39,14 +39,16 @@ export class InternalDataSource extends BaseDataSource {
     super();
     this.networkName = networkName;
   }
-  async getNetworkName(): Promise<NetworkName> {
-    return this.networkName;
+  async getNetworkName() {
+    return getResultWithMetadata(this.networkName);
   }
-  async getBlockByTimestamp(timestamp: number): Promise<number> {
-    return await getBlockByTimestamp(this.networkName, timestamp);
+  async getBlockByTimestamp(timestamp: number) {
+    return getResultWithMetadata(
+      await getBlockByTimestamp(this.networkName, timestamp)
+    );
   }
-  async getAccountIdsByAddress(address: string): Promise<number[]> {
+  async getAccountIdsByAddress(address: string) {
     const { result } = await getAccountIdsByAddress(this.networkName, address);
-    return result;
+    return getResultWithMetadata(result);
   }
 }
