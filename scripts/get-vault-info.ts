@@ -2,7 +2,7 @@ import {
   NetworkName,
   formatUsdc,
   priceX128ToPrice,
-  getCoreContracts,
+  core,
   getTricryptoVaultContracts,
   truncate,
   Q128,
@@ -123,7 +123,7 @@ export async function getPoolComposition(
   nativePercentage: string;
   nativeProtocolName: string;
 }> {
-  const { clearingHouse, eth_vToken } = await getCoreContracts(provider);
+  const { clearingHouse, eth_vToken } = await core.getContracts(provider);
 
   const vaultStrategy = BaseVault__factory.connect(
     await getVaultAddressFromVaultName(provider, vaultName),

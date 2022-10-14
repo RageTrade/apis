@@ -6,7 +6,7 @@ import {
   IOracle__factory,
   VPoolWrapper__factory,
   formatFundingRate,
-  getCoreContracts,
+  core,
   sqrtPriceX96ToPriceX128,
   priceX128ToSqrtPriceX96,
   getNetworkNameFromProvider,
@@ -31,7 +31,9 @@ export async function _getPoolInfo(
 ) {
   const networkName = await getNetworkNameFromProvider(provider);
   poolId = BigNumber.from(poolId);
-  const { clearingHouse, clearingHouseLens } = await getCoreContracts(provider);
+  const { clearingHouse, clearingHouseLens } = await core.getContracts(
+    provider
+  );
 
   const [realTwapPriceX128, virtualTwapPriceX128, pool] = await Promise.all([
     clearingHouse.getRealTwapPriceX128(poolId),

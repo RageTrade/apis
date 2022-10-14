@@ -3,7 +3,7 @@ import {
   priceX128ToPrice,
   IUniswapV3Pool__factory,
   IOracle__factory,
-  getCoreContracts,
+  core,
   NetworkName,
   VaultName,
 } from "@ragetrade/sdk";
@@ -24,7 +24,9 @@ export async function _getPrices(
   poolId: BigNumberish
 ) {
   poolId = BigNumber.from(poolId);
-  const { clearingHouse, clearingHouseLens } = await getCoreContracts(provider);
+  const { clearingHouse, clearingHouseLens } = await core.getContracts(
+    provider
+  );
 
   const [realTwapPriceX128, virtualTwapPriceX128, pool] = await Promise.all([
     clearingHouse.getRealTwapPriceX128(poolId),
