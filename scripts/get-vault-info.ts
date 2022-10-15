@@ -1,5 +1,6 @@
 import {
   NetworkName,
+  VaultName,
   formatUsdc,
   priceX128ToPrice,
   core,
@@ -14,7 +15,7 @@ import {
 import { BigNumber, ethers } from "ethers";
 import { formatEther, parseEther, parseUnits } from "ethers/lib/utils";
 import { getProvider } from "../providers";
-import { safeDiv, VaultName } from "../utils";
+import { safeDiv } from "../utils";
 import { getBlockByTimestamp } from "./get-block-by-timestamp";
 
 export async function getVaultInfo(

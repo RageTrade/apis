@@ -5,7 +5,9 @@ import { Request } from "express";
 
 import {
   NetworkName,
+  VaultName,
   getNetworkName as getNetworkNameSdk,
+  getVaultName as getVaultNameSdk,
 } from "@ragetrade/sdk";
 import { BigNumber, ethers } from "ethers";
 
@@ -39,19 +41,9 @@ export function getNetworkName(req: Request): NetworkName {
   return getNetworkNameSdk(str as NetworkName);
 }
 
-// import from sdk
-export type VaultName = "tricrypto" | "gmx" | "unknown";
-
 export function getVaultName(req: Request): VaultName {
   const str = getParamAsString(req, "vaultName");
-  if (!["tricrypto", "gmx"].includes(str)) {
-    throw new ErrorWithStatusCode(
-      'networkName must be "tricrypto" or "gmx"',
-      400
-    );
-  }
-
-  return str as VaultName;
+  return getVaultNameSdk(str as VaultName);
 }
 
 export function getParamAsString(req: Request, paramName: string): string {
