@@ -5,6 +5,7 @@ import logger from "morgan";
 import cors from "cors";
 
 import { router } from "./routes";
+import { Analytics } from "./analytics";
 
 export const app = express();
 
@@ -13,6 +14,16 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(cors());
+
+const analytics = new Analytics();
+setInterval(() => {
+  analytics.storeTemp();
+}, 10 * 1000);
+
+app.use(function (_req, _res, next) {
+  analytics.recordUrlVisit(_req.url);
+  next();
+});
 
 app.use("/", router);
 

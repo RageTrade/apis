@@ -63,10 +63,11 @@ export class BaseStore<Value> {
       const creationTimestamp = await this._get<number>(
         this._timestampPrepend + _key
       );
-      if (creationTimestamp === undefined) {
+      if (creationTimestamp === undefined && !!this._timestampPrepend) {
         // if there is no timestamp, set current timestamp
         await this._set(this._timestampPrepend + _key, currentTimestamp());
       } else if (
+        creationTimestamp !== undefined &&
         creationTimestamp !== -1 &&
         creationTimestamp + secondsOld < currentTimestamp()
       ) {
@@ -88,7 +89,9 @@ export class BaseStore<Value> {
     // set value
     await this._set(_key, _value);
     // set timestamp
-    await this._set(this._timestampPrepend + _key, currentTimestamp());
+    if (this._timestampPrepend) {
+      await this._set(this._timestampPrepend + _key, currentTimestamp());
+    }
   }
 
   /**
