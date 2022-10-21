@@ -7,6 +7,10 @@ const debug = Debugger("apis:redis-store");
 
 export class RedisStore<Value> extends BaseStore<Value> {
   client: Redis;
+  queries: Array<{ key: string; valueFn: () => any; expirySeconds?: number }> =
+    [];
+  updatingCache = false;
+
   constructor() {
     super();
     this.client = redis.createClient();
@@ -17,6 +21,8 @@ export class RedisStore<Value> extends BaseStore<Value> {
     valueFn: () => V | Promise<V>,
     expirySeconds?: number
   ): Promise<V> {
+    this.startCacheUpdater({ key, valueFn, expirySeconds });
+
     const read = await this.get<V>(key);
 
     let valuePromise = this._promises.get(key);
@@ -63,6 +69,35 @@ export class RedisStore<Value> extends BaseStore<Value> {
     } else {
       debug(`RedisStore.set: setting key ${_key} with no expiry`);
       this.client.set(_key, JSON.stringify(_value));
+    }
+  }
+
+  async startCacheUpdater(newQuery: {
+    key: string;
+    valueFn: () => any;
+    expirySeconds?: number;
+  }) {
+    if (!this.updatingCache) {
+      debug("initiate update cache");
+      this.updatingCache = true;
+      this.queries = this.queries.slice(-50); // use only recent 50 entries
+      const _queries = this.queries;
+      if (!this.queries.find((q) => q.key === newQuery.key)) {
+        this.queries.push(newQuery);
+      }
+
+      debug(
+        `RedisStore.updateCache: updating cache with ${this.queries.length} queries`
+      );
+      for (const query of _queries) {
+        try {
+          debug(`RedisStore.updateCache: query ${query.key}`);
+          await this.getOrSet(query.key, query.valueFn, query.expirySeconds);
+        } catch {}
+      }
+      debug("RedisStore.updateCache: cache updated");
+
+      this.updatingCache = false;
     }
   }
 }
