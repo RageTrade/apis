@@ -159,7 +159,7 @@ router.get(
     const networkName = getNetworkName(req);
     const vaultName = getVaultName(req);
     return cacheFunctionResult(v2.getVaultInfo, [networkName, vaultName], {
-      cacheSeconds: 1 * mins,
+      cacheSeconds: 2 * mins,
       tags: ["v2"],
     });
   })
@@ -204,6 +204,17 @@ router.get(
   handleRuntimeErrors(async (req) => {
     const networkName = getNetworkName(req);
     return cacheFunctionResult(v2.getGmxVaultInfo, [networkName], {
+      cacheSeconds: 10 * mins,
+      tags: ["v2"],
+    });
+  })
+);
+
+router.get(
+  "/v2/get-dn-gmx-vault-info",
+  handleRuntimeErrors(async (req) => {
+    const networkName = getNetworkName(req);
+    return cacheFunctionResult(v2.getDnGmxVaultsInfo, [networkName], {
       cacheSeconds: 10 * mins,
       tags: ["v2"],
     });
