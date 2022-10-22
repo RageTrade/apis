@@ -43,8 +43,6 @@ export class JsonStore<Value> extends BaseStore<Value> {
   ): Promise<void> {
     const json = await readJSON(this._path);
     for (const { key, value } of entries) {
-      console.log("set", key);
-
       json[key] = value;
     }
     await writeJSON(this._path, json, { spaces: 2 });

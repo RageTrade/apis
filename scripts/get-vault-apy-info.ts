@@ -57,7 +57,7 @@ export async function getVaultApyInfo(networkName: NetworkName) {
       (Number(candle.volumeUSDC) * 24 * 365 * 0.001) / Number(formatUsdc(vmv));
   }
 
-  console.log(apySum / 24);
+  // console.log(apySum / 24);
 
   return {
     curveYieldStrategyApy: (apySum / 24) * 100,
