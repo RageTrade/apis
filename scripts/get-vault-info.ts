@@ -4,7 +4,7 @@ import {
   formatUsdc,
   priceX128ToPrice,
   core,
-  getTricryptoVaultContracts,
+  tricryptoVault,
   truncate,
   Q128,
   getGmxVaultContracts,
@@ -184,7 +184,9 @@ async function getVaultAddressFromVaultName(
 ): Promise<string> {
   switch (vaultName) {
     case "tricrypto":
-      const { curveYieldStrategy } = await getTricryptoVaultContracts(provider);
+      const { curveYieldStrategy } = await tricryptoVault.getContracts(
+        provider
+      );
       return curveYieldStrategy.address;
     case "gmx":
       const { gmxYieldStrategy } = await getGmxVaultContracts(provider);
