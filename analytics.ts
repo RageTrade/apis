@@ -47,7 +47,7 @@ export class Analytics {
   }
 }
 
-function date() {
+export function date() {
   const d = new Date();
   return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
 }

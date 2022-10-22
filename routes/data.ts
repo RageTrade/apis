@@ -1,4 +1,6 @@
 import express from "express";
+import { readJson } from "fs-extra";
+import { date } from "../analytics";
 
 import { cacheFunctionResult } from "../cache";
 import { getAccountIdsByAddress } from "../scripts/get-account-ids-by-address";
@@ -28,8 +30,26 @@ const hours = 60 * mins;
 const router = express.Router();
 
 /**
+ * General
+ */
+
+router.get(
+  "/analytics",
+  handleRuntimeErrors(async () => {
+    return cacheFunctionResult(
+      async () => {
+        return await readJson(`data/_analytics/${date()}.json`);
+      },
+      [],
+      { cacheSeconds: 1 * secs }
+    );
+  })
+);
+
+/**
  * Network independent
  */
+
 router.get(
   "/get-gmx-data",
   handleRuntimeErrors(async () => {
