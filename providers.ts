@@ -12,9 +12,10 @@ export const arbtest = new ethers.providers.StaticJsonRpcProvider(
   // "https://rinkeby.arbitrum.io/rpc"
   "https://arb-rinkeby.g.alchemy.com/v2/" + process.env.ALCHEMY_KEY
 );
-export const arbgoerli = sdk.getProvider("arbgoerli");
-// "https://rinkeby.arbitrum.io/rpc"
-// "https://arb-goerli.g.alchemy.com/v2/" + process.env.ALCHEMY_KEY
+export const arbgoerli = new ethers.providers.StaticJsonRpcProvider(
+  "https://arb-goerli.g.alchemy.com/v2/" + process.env.ALCHEMY_KEY
+);
+// sdk.getProvider("arbgoerli");
 
 export function getProvider(
   networkName: NetworkName
