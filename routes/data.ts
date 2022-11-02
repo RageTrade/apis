@@ -71,7 +71,7 @@ router.get(
     return cacheFunctionResult(
       getAccountIdsByAddress,
       [networkName, userAddress],
-      { cacheSeconds: 5 * secs }
+      { cacheSeconds: 1 * secs }
     );
   })
 );
