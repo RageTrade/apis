@@ -179,9 +179,25 @@ router.get(
     const networkName = getNetworkName(req);
     const vaultName = getVaultName(req);
     return cacheFunctionResult(v2.getVaultInfo, [networkName, vaultName], {
-      cacheSeconds: 2 * mins,
+      cacheSeconds: 5 * mins,
       tags: ["v2"],
     });
+  })
+);
+
+router.get(
+  "/v2/get-vault-market-value",
+  handleRuntimeErrors(async (req) => {
+    const networkName = getNetworkName(req);
+    const vaultName = getVaultName(req);
+    return cacheFunctionResult(
+      v2.getVaultMarketValue,
+      [networkName, vaultName],
+      {
+        cacheSeconds: 10 * secs,
+        tags: ["v2"],
+      }
+    );
   })
 );
 
