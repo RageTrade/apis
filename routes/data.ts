@@ -179,7 +179,7 @@ router.get(
     const networkName = getNetworkName(req);
     const vaultName = getVaultName(req);
     return cacheFunctionResult(v2.getVaultInfo, [networkName, vaultName], {
-      cacheSeconds: 5 * mins,
+      cacheSeconds: 10 * mins,
       tags: ["v2"],
     });
   })
