@@ -267,4 +267,15 @@ router.get(
   })
 );
 
+router.get(
+  "/v2/get-apy-breakdown",
+  handleRuntimeErrors(async (req) => {
+    const networkName = getNetworkName(req);
+    return cacheFunctionResult(v2.getApyBreakdown, [networkName], {
+      cacheSeconds: 10 * mins,
+      tags: ["v2"],
+    });
+  })
+);
+
 export default router;
