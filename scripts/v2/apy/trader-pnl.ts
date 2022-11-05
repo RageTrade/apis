@@ -99,7 +99,8 @@ const queryGlpData = async (from_ts: string, to_ts: string) => {
 export const getTraderPnl = async () => {
 
   const currentDate = new Date()
-  const threeMonthsOldDate = new Date(currentDate.setMonth(currentDate.getMonth() - 3))
+  const threeMonthsOldDate = new Date()
+  threeMonthsOldDate.setMonth(currentDate.getMonth() - 3)
 
   const to_ts = Math.floor(currentDate.getTime() / 1000).toString()
   const from_ts = Math.floor(threeMonthsOldDate.getTime() / 1000).toString()
@@ -110,19 +111,20 @@ export const getTraderPnl = async () => {
   const glpData = await queryGlpData(from_ts, to_ts)
   const traderData = await queryTraderData(from_ts, to_ts)
 
-  for (const [index, _] of glpData.glpStats.entries() ) {
-
-    const glpItem = glpData.glpStats[index]
-    const traderItem = traderData.tradingStats[index]
-
-    const loss = (traderItem.loss / 1e30)
-    const profit = (traderItem.profit / 1e30)
-    
-    traderPnl += (profit - loss)
-    aum += glpItem.aumInUsdg / 1e18;
+  for (const each of glpData.glpStats) {
+    aum += each.aumInUsdg / 1e18;
   }
 
-  return aum > 0 ? 
-    (traderPnl / aum) * glpData.glpStats.length * 100 * -1
-    : 0
+  for (const each of traderData.tradingStats ) {
+    const loss = (each.loss / 1e30)
+    const profit = (each.profit / 1e30)
+    
+    traderPnl += (profit - loss)
+  }
+
+  return aum > 0 
+      ? (traderPnl / aum) * glpData.glpStats.length * 100 * -1
+      : 0
 }
+
+getTraderPnl()
