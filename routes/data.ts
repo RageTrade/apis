@@ -256,5 +256,15 @@ router.get(
     });
   })
 );
+router.get(
+  "/v2/get-dn-gmx-vault-info-fast",
+  handleRuntimeErrors(async (req) => {
+    const networkName = getNetworkName(req);
+    return cacheFunctionResult(v2.getDnGmxVaultsInfo, [networkName], {
+      cacheSeconds: 20 * secs,
+      tags: ["v2"],
+    });
+  })
+);
 
 export default router;
