@@ -68,7 +68,7 @@ const queryVaultMktValueData = async (
               where: { timestamp_gte: ${from_ts}, timestamp_lte: ${to_ts} }
             ) {
               id
-              valueMarketValue
+              vaultMarketValue
             }
           }
         }
