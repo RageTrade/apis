@@ -126,5 +126,3 @@ export const getTraderPnl = async () => {
       ? (traderPnl / aum) * glpData.glpStats.length * 100 * -1
       : 0
 }
-
-getTraderPnl()
