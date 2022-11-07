@@ -268,10 +268,10 @@ router.get(
 );
 
 router.get(
-  "/v2/get-apy-breakdown",
+  "/v2/get-dn-gmx-apy-breakdown",
   handleRuntimeErrors(async (req) => {
     const networkName = getNetworkName(req);
-    return cacheFunctionResult(v2.getApyBreakdown, [networkName], {
+    return cacheFunctionResult(v2.getDnGmxApyBreakdown, [networkName], {
       cacheSeconds: 10 * mins,
       tags: ["v2"],
     });
