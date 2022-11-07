@@ -126,7 +126,7 @@ export const getEthRewards = async (networkName: NetworkName) => {
   }
 
   for (const each of vaultMktValueData.vault.rebalances) {
-    juniorVaultAvgVmv += Number(each.valueMarketVvaultMarketValuealue);
+    juniorVaultAvgVmv += Number(each.valueMarketValue);
 
     // TODO: once senior vault market value is added in subgraph for junior vault rebalance
     // compute avg vault market value for senior vault
