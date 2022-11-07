@@ -7,6 +7,7 @@ interface UrlInfo {
 export class Analytics {
   tempKeyCount: number = 0;
   temp: { [key: string]: UrlInfo | undefined } = {};
+  storing: boolean = false;
 
   recordUrlVisit(url: string) {
     if (this.temp[url] === undefined) {
@@ -21,6 +22,9 @@ export class Analytics {
   }
 
   async storeTemp() {
+    if (this.storing) return;
+
+    this.storing = true;
     const store = new JsonStore(`data/_analytics/${date()}.json`, true);
 
     const entries = Object.entries(this.temp);
@@ -44,6 +48,7 @@ export class Analytics {
     await store._setMultiple(
       entries.map((entry, i) => ({ key: entry[0], value: resultArray[i] }))
     );
+    this.storing = false;
   }
 }
 

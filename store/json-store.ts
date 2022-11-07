@@ -27,9 +27,16 @@ export class JsonStore<Value> extends BaseStore<Value> {
   }
 
   async _readJson() {
-    await this.waitForWrite();
     this._reading++;
-    const json = await readJSON(this._path);
+    let json;
+    while (true) {
+      try {
+        // if writing is in progress, read might fail
+        json = await readJSON(this._path);
+        break;
+      } catch {}
+      await new Promise((resolve) => setTimeout(resolve, 10)); // wait for 10 ms
+    }
     this._reading--;
     return json;
   }
