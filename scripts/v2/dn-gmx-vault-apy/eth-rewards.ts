@@ -68,7 +68,7 @@ const queryVaultMktValueData = async (
               where: { timestamp_gte: ${from_ts}, timestamp_lte: ${to_ts} }
             ) {
               id
-              valueMarketValue
+              vaultMarketValue
             }
           }
         }
@@ -126,7 +126,7 @@ export const getEthRewards = async (networkName: NetworkName) => {
   }
 
   for (const each of vaultMktValueData.vault.rebalances) {
-    juniorVaultAvgVmv += Number(each.valueMarketValue);
+    juniorVaultAvgVmv += Number(each.valueMarketVvaultMarketValuealue);
 
     // TODO: once senior vault market value is added in subgraph for junior vault rebalance
     // compute avg vault market value for senior vault
