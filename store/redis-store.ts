@@ -77,6 +77,9 @@ export class RedisStore<Value> extends BaseStore<Value> {
     valueFn: () => any;
     expirySeconds?: number;
   }) {
+    if (newQuery.key.startsWith("getAccountIdsByAddress")) {
+      return; // do not include these queries in cache updater
+    }
     if (!this.updatingCache) {
       debug("initiate update cache");
       this.updatingCache = true;
