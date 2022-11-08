@@ -83,7 +83,7 @@ export class RedisStore<Value> extends BaseStore<Value> {
     if (!this.updatingCache) {
       debug("initiate update cache");
       this.updatingCache = true;
-      this.queries = this.queries.slice(-50); // use only recent 50 entries
+      this.queries = this.queries.slice(-100); // use only recent 100 entries
       const _queries = this.queries;
       if (!this.queries.find((q) => q.key === newQuery.key)) {
         this.queries.push(newQuery);
