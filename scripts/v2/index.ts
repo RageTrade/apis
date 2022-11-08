@@ -7,3 +7,4 @@ export * from "./get-vault-info";
 export * from "./get-vault-market-value";
 export * from "./get-dn-gmx-vaults-info";
 export * from "./dn-gmx-vault-apy";
+export * from "./get-dn-gmx-max-deposit-withdraw";

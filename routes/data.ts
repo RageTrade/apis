@@ -278,4 +278,15 @@ router.get(
   })
 );
 
+router.get(
+  "/v2/get-dn-gmx-max-deposit-withdraw",
+  handleRuntimeErrors(async (req) => {
+    const networkName = getNetworkName(req);
+    return cacheFunctionResult(v2.getDnGmxMaxDepositWithdraw, [networkName], {
+      cacheSeconds: 10 * mins,
+      tags: ["v2"],
+    });
+  })
+);
+
 export default router;
