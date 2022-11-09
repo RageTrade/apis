@@ -4,6 +4,7 @@ import { getBorrowApy } from "./borrow-rate";
 import { getEthRewards } from "./eth-rewards";
 
 import { NetworkName } from "@ragetrade/sdk";
+import { getEsgmxRewards } from "./esGmx-rewards";
 
 export const getDnGmxApyBreakdown = async (networkName: NetworkName) => {
   const traderPnl = await getTraderPnl();
@@ -12,6 +13,7 @@ export const getDnGmxApyBreakdown = async (networkName: NetworkName) => {
   const borrowApy = await getBorrowApy(networkName);
 
   const ethRewards = await getEthRewards(networkName);
+  const esGmxRewards = await getEsgmxRewards(networkName);
 
   const seniorVault = {
     aaveSupplyApy: supplyApy,
@@ -23,6 +25,8 @@ export const getDnGmxApyBreakdown = async (networkName: NetworkName) => {
     ethBorrowApy: borrowApy[1],
     glpTraderPnl: traderPnl,
     glpRewardsPct: ethRewards[0],
+    esGmxForGlp: esGmxRewards[0],
+    esGmxForesGmx: esGmxRewards[1],
   };
 
   return { seniorVault, juniorVault };
