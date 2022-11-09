@@ -26,7 +26,7 @@ export const getDnGmxApyBreakdown = async (networkName: NetworkName) => {
     glpTraderPnl: traderPnl,
     glpRewardsPct: ethRewards[0],
     esGmxForGlp: esGmxRewards[0],
-    esGmxForesGmx: esGmxRewards[1],
+    esGmxForEsGmx: esGmxRewards[1],
   };
 
   return { seniorVault, juniorVault };
