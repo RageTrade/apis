@@ -151,7 +151,7 @@ export function removeApiKeysFromString(msg: string): string {
   for (const apiKey of apiKeys) {
     do {
       prevLength = msg.length;
-      msg = msg.replace(apiKey, "<api-key-removed>");
+      msg = msg.replace(apiKey, "<api-key-redacted>");
     } while (msg.length !== prevLength);
   }
   return msg;
