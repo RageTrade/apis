@@ -109,7 +109,14 @@ export function handleRuntimeErrors(
           'There was no error but function did not return a "result" value'
         );
       }
-      res.status(response?.error?.status ?? 200).json(response);
+      let status = 200; // success
+      if (response.error) {
+        status = 500; // internal server error
+      }
+      if (typeof response.status === "number") {
+        status = response.status;
+      }
+      res.status(status).json(response);
     } catch (e: any) {
       next(createError(e.status ?? 500, removeApiKeysFromString(e.message)));
     }
