@@ -119,5 +119,5 @@ export const getTraderPnl = async () => {
     traderPnl += profit - loss;
   }
 
-  return aum > 0 ? (traderPnl / aum) * glpData.glpStats.length * 100 * -1 : 0;
+  return aum > 0 ? (traderPnl / aum) * glpData.glpStats.length * 4 * 100 * -1 : 0;
 };
