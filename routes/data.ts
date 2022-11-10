@@ -260,8 +260,8 @@ router.get(
   "/v2/get-dn-gmx-vault-info-fast",
   handleRuntimeErrors(async (req) => {
     const networkName = getNetworkName(req);
-    return cacheFunctionResult(v2.getDnGmxVaultsInfo, [networkName], {
-      cacheSeconds: 20 * secs,
+    return cacheFunctionResult(v2.getDnGmxVaultsInfoFast, [networkName], {
+      cacheSeconds: 15 * secs,
       tags: ["v2"],
     });
   })
