@@ -119,17 +119,23 @@ export const getEthRewards = async (networkName: NetworkName) => {
   let juniorVaultRewards = 0;
   let seniorVaultRewards = 0;
 
-  for (const each of rewardsData.vault.rewardsHarvestedEntries) {
-    // TODO: handle weth decimals, should be done when there are non-zero values from subgraph
-    juniorVaultRewards += Number(each.juniorVaultWeth) / (1 - adminFeeFraction);
-    seniorVaultRewards += Number(each.seniorVaultWeth) / (1 - adminFeeFraction);
+  if (rewardsData.vault) {
+    for (const each of rewardsData.vault.rewardsHarvestedEntries) {
+      // TODO: handle weth decimals, should be done when there are non-zero values from subgraph
+      juniorVaultRewards +=
+        Number(each.juniorVaultWeth) / (1 - adminFeeFraction);
+      seniorVaultRewards +=
+        Number(each.seniorVaultWeth) / (1 - adminFeeFraction);
+    }
   }
 
-  for (const each of vaultMktValueData.vault.rebalances) {
-    juniorVaultAvgVmv += Number(each.vaultMarketValue);
+  if (vaultMktValueData.vault) {
+    for (const each of vaultMktValueData.vault.rebalances) {
+      juniorVaultAvgVmv += Number(each.vaultMarketValue);
 
-    // TODO: once senior vault market value is added in subgraph for junior vault rebalance
-    // compute avg vault market value for senior vault
+      // TODO: once senior vault market value is added in subgraph for junior vault rebalance
+      // compute avg vault market value for senior vault
+    }
   }
 
   juniorVaultAvgVmv =
