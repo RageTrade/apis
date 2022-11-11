@@ -9,7 +9,7 @@ import {
   typechain,
   uniswap,
 } from "@ragetrade/sdk";
-import { BigNumber, BytesLike } from "ethers";
+import { BigNumber, BytesLike, ethers } from "ethers";
 import {
   hexDataSlice,
   hexZeroPad,
@@ -142,8 +142,8 @@ export async function getDnGmxMaxDepositWithdraw(networkName: NetworkName) {
         usdc: sellResult.amountOut,
       },
       buy: {
-        btc: buyResult.amountIn,
-        usdc: buyResult.amountOut,
+        btc: buyResult.amountOut,
+        usdc: buyResult.amountIn,
       },
     };
 
@@ -201,11 +201,19 @@ export async function getDnGmxMaxDepositWithdraw(networkName: NetworkName) {
         // );
 
         if (targetPriceX128.lt(priceLowerX128)) {
-          throw new Error("targetPriceX128 is less than priceLowerX128");
+          //   throw new Error("targetPriceX128 is less than priceLowerX128");
+          return {
+            amountIn: ethers.constants.Zero,
+            amountOut: ethers.constants.Zero,
+          };
         }
 
         if (targetPriceX128.gt(priceUpperX128)) {
-          throw new Error("targetPriceX128 is greater than priceUpperX128");
+          //   throw new Error("targetPriceX128 is greater than priceUpperX128");
+          return {
+            amountIn: ethers.constants.Zero,
+            amountOut: ethers.constants.Zero,
+          };
         }
       }
 
