@@ -184,6 +184,17 @@ router.get(
     });
   })
 );
+router.get(
+  "/v2/get-vault-info-fast",
+  handleRuntimeErrors(async (req) => {
+    const networkName = getNetworkName(req);
+    const vaultName = getVaultName(req);
+    return cacheFunctionResult(v2.getVaultInfoFast, [networkName, vaultName], {
+      cacheSeconds: 15 * secs,
+      tags: ["v2"],
+    });
+  })
+);
 
 router.get(
   "/v2/get-vault-market-value",
