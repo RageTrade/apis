@@ -8,7 +8,11 @@ export async function getGmxVaultInfoByTokenAddress(
 ) {
   const provider = getProvider(networkName);
   const { usdc, usdt, weth, wbtc } = await tokens.getContracts(provider);
-  if (![usdc, usdt, weth, wbtc].map((c) => c.address).includes(tokenAddress)) {
+  if (
+    ![usdc, usdt, weth, wbtc]
+      .map((c) => c.address.toLowerCase())
+      .includes(tokenAddress.toLowerCase())
+  ) {
     throw new ErrorWithStatusCode(
       `TokenAddress ${tokenAddress} is not allowed`,
       400
