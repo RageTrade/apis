@@ -31,7 +31,11 @@ export async function getPoolInfo(
 
   if (!poolFound) {
     throw new ErrorWithStatusCode(
-      `PoolId ${poolId} is incorrect for this network or sdk is not updated with latest pool.`,
+      `PoolId ${poolId} is invalid, valid pool ids for this network are ${pools[
+        networkName
+      ]
+        .map((p) => Number(p.poolId))
+        .join(", ")}`,
       400
     );
   }
