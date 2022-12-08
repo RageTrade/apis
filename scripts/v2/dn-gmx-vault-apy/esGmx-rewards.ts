@@ -77,7 +77,7 @@ export const getEsgmxRewards = async (networkName: NetworkName) => {
     gmxContracts.glp.totalSupply(),
     dn.dnGmxJuniorVault.getVaultMarketValue(),
     esGmx.balanceOf(dn.dnGmxJuniorVault.address),
-    tk.fsGLP.balanceOf(dn.dnGmxBatchingManager.address),
+    dn.dnGmxBatchingManager.dnGmxJuniorVaultGlpBalance(),
     tk.fsGLP.balanceOf(dn.dnGmxJuniorVault.address),
   ]);
 
