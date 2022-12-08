@@ -8,17 +8,19 @@ const dataUrl =
 
 export const getSupplyApy = async (networkName: NetworkName) => {
   const provider = getProvider(networkName);
+
   const dn = await deltaNeutralGmxVaults.getContracts(provider);
 
-  const response = await (await fetch(dataUrl)).json();
-  const baseApy = response.data[0].apy;
+  const [_seniorTvl, _dnUsdcDeposited, response] = await Promise.all([
+    dn.dnGmxSeniorVault.getVaultMarketValue(),
+    dn.dnGmxJuniorVault.dnUsdcDeposited(),
+    fetch(dataUrl),
+  ]);
 
-  const seniorTvl = (
-    await dn.dnGmxSeniorVault.getVaultMarketValue()
-  ).toNumber();
-  const dnUsdcDeposited = (
-    await dn.dnGmxJuniorVault.dnUsdcDeposited()
-  ).toNumber();
+  const seniorTvl = _seniorTvl.toNumber();
+  const dnUsdcDeposited = _dnUsdcDeposited.toNumber();
+
+  const baseApy = (await response.json()).data[0].apy;
 
   const amplification =
     seniorTvl > 0 ? (seniorTvl + dnUsdcDeposited) / seniorTvl : 0;
