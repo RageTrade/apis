@@ -16,7 +16,7 @@
     "stop": "pm2 delete all 2>&1 || true"
   },
   "dependencies": {
-    "@ragetrade/sdk": "^1.0.1",
+    "@ragetrade/sdk": "^1.0.2",
     "@types/node-fetch": "^2.6.2",
     "@urql/devtools": "^2.0.3",
     "cookie-parser": "~1.4.4",
