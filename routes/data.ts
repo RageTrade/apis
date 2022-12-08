@@ -1,4 +1,5 @@
 import express from "express";
+import { BigNumber } from "ethers";
 import { readJson } from "fs-extra";
 import { date } from "../analytics";
 
@@ -16,6 +17,7 @@ import { getGmxData } from "../scripts/protodev-gmx-staking-info-frontend/script
 import * as v2 from "../scripts/v2";
 import {
   getNetworkName,
+  getParam,
   getParamAsAddress,
   getParamAsInteger,
   getParamAsNumber,
@@ -297,6 +299,32 @@ router.get(
       cacheSeconds: 10 * mins,
       tags: ["v2"],
     });
+  })
+);
+
+router.get(
+  "/v2/get-mint-burn-conversion",
+  handleRuntimeErrors(async (req) => {
+    const networkName = getNetworkName(req);
+
+    const isUsdcToGlp = getParam(
+      req,
+      "isUsdcToGlp",
+      true
+    ) as unknown as Boolean;
+
+    const dollarValueD18 = BigNumber.from(
+      getParam(req, "dollarValueD18", true)
+    );
+
+    return cacheFunctionResult(
+      v2.getGlpMintBurnConversion,
+      [networkName, dollarValueD18, isUsdcToGlp],
+      {
+        cacheSeconds: 10 * mins,
+        tags: ["v2"],
+      }
+    );
   })
 );
 
