@@ -283,7 +283,7 @@ router.get(
   handleRuntimeErrors(async (req) => {
     const networkName = getNetworkName(req);
     return cacheFunctionResult(v2.getDnGmxApyBreakdown, [networkName], {
-      cacheSeconds: 2 * mins,
+      cacheSeconds: 15 * secs,
       tags: ["v2"],
     });
   })
