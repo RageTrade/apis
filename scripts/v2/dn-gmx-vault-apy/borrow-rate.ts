@@ -12,10 +12,38 @@ const idWbtc =
 
 const dataUrl = "https://aave-api-v2.aave.com/data/markets-data";
 
+const getBtcPrice = async (networkName: NetworkName) => {
+  const btcPrice =
+    networkName == "arbmain"
+      ? (
+          await (
+            await fetch(
+              "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd"
+            )
+          ).json()
+        ).bitcoin.usd
+      : 15_000;
+
+  return btcPrice;
+};
+
+const getETHPrice = async (networkName: NetworkName) => {
+  const ethPrice =
+    networkName == "arbmain"
+      ? (
+          await (
+            await fetch(
+              "https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd"
+            )
+          ).json()
+        ).ethereum.usd
+      : 2_000;
+
+  return ethPrice;
+};
+
 export const getBorrowApy = async (networkName: NetworkName) => {
   const provider = getProvider(networkName);
-
-  const dn = await deltaNeutralGmxVaults.getContracts(provider);
 
   const vdWbtc = typechain.core.ERC20__factory.connect(
     networkName == "arbmain"
@@ -30,46 +58,33 @@ export const getBorrowApy = async (networkName: NetworkName) => {
     provider
   );
 
-  const response = (await (await fetch(dataUrl)).json()).reserves;
+  const [dn, btcPrice, ethPrice, aaveResponse] = await Promise.all([
+    deltaNeutralGmxVaults.getContracts(provider),
+    getBtcPrice(networkName),
+    getETHPrice(networkName),
+    fetch(dataUrl),
+  ]);
+
+  const [aaveResponseJson, _btcQuantity, _ethQuantity, _vmv] =
+    await Promise.all([
+      aaveResponse.json(),
+      vdWbtc.balanceOf(dn.dnGmxJuniorVault.address),
+      vdWeth.balanceOf(dn.dnGmxJuniorVault.address),
+      dn.dnGmxJuniorVault.getVaultMarketValue(),
+    ]);
+
+  const aaveReserves = aaveResponseJson.reserves;
 
   const btcBorrowBase = Number(
-    response.find((o: any) => o.id === idWbtc).variableBorrowRate
+    aaveReserves.find((o: any) => o.id === idWbtc).variableBorrowRate
   );
   const ethBorrowBase = Number(
-    response.find((o: any) => o.id === idWeth).variableBorrowRate
+    aaveReserves.find((o: any) => o.id === idWeth).variableBorrowRate
   );
 
-  const btcPrice =
-    networkName == "arbmain"
-      ? (
-          await (
-            await fetch(
-              "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd"
-            )
-          ).json()
-        ).bitcoin.usd
-      : 60_000;
-  const ethPrice =
-    networkName == "arbmain"
-      ? (
-          await (
-            await fetch(
-              "https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd"
-            )
-          ).json()
-        ).ethereum.usd
-      : 4_000;
-
-  const btcQuantity = Number(
-    formatUnits(await vdWbtc.balanceOf(dn.dnGmxJuniorVault.address), 8)
-  );
-  const ethQuantity = Number(
-    formatUnits(await vdWeth.balanceOf(dn.dnGmxJuniorVault.address), 18)
-  );
-
-  const vmv = Number(
-    formatUnits(await dn.dnGmxJuniorVault.getVaultMarketValue(), 6)
-  );
+  const btcQuantity = Number(formatUnits(_btcQuantity, 8));
+  const ethQuantity = Number(formatUnits(_ethQuantity, 18));
+  const vmv = Number(formatUnits(_vmv, 6));
 
   const btcBorrowApy =
     vmv > 0 ? (btcBorrowBase * btcPrice * btcQuantity) / vmv : 0;

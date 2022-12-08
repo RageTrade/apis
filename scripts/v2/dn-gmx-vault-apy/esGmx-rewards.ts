@@ -25,6 +25,15 @@ const SECONDS_PER_YEAR = BigNumber.from(31536000);
 const ONE_ETHER = BigNumber.from(10).pow(18);
 const PRICE_PRECISION = BigNumber.from(10).pow(30);
 
+const getGmxPrice = async () => {
+  const res = await fetch(
+    "https://api.coingecko.com/api/v3/simple/price?ids=gmx&vs_currencies=usd"
+  );
+
+  let gmxPrice = (await res.json()).gmx.usd;
+  return gmxPrice;
+};
+
 export const getEsgmxRewards = async (networkName: NetworkName) => {
   const stakedGlpTracker = new Contract(
     addrStakedGlpTracker,
@@ -36,42 +45,54 @@ export const getEsgmxRewards = async (networkName: NetworkName) => {
     RewardTracker.abi,
     provMain
   );
+  const esGmx = typechain.IERC20Metadata__factory.connect(addrEsGmx, provMain);
 
-  const tk = await tokens.getContracts(provMain);
-  const dn = await deltaNeutralGmxVaults.getContracts(provMain);
-  const gmxContracts = await gmxProtocol.getContracts(provMain);
+  const [
+    tk,
+    dn,
+    gmxContracts,
+    _gmxPrice,
+    _stakedGmxTrackerSupplyUsd,
+    tokensPerIntervalGlp,
+    tokensPerIntervalGmx,
+  ] = await Promise.all([
+    tokens.getContracts(provMain),
+    deltaNeutralGmxVaults.getContracts(provMain),
+    gmxProtocol.getContracts(provMain),
+    getGmxPrice(),
+    stakedGmxTracker.totalSupply(),
+    stakedGlpTracker.tokensPerInterval(),
+    stakedGmxTracker.tokensPerInterval(),
+  ]);
 
-  const glpAum = await gmxContracts.glpManager.getAum(false);
-  const glpSupply = await gmxContracts.glp.totalSupply();
+  const [
+    glpAum,
+    glpSupply,
+    _vmv,
+    _netEsGmxBal,
+    batchingManagerFsGlpBal,
+    juniorVaultFsGlpBal,
+  ] = await Promise.all([
+    gmxContracts.glpManager.getAum(false),
+    gmxContracts.glp.totalSupply(),
+    dn.dnGmxJuniorVault.getVaultMarketValue(),
+    esGmx.balanceOf(dn.dnGmxJuniorVault.address),
+    tk.fsGLP.balanceOf(dn.dnGmxBatchingManager.address),
+    tk.fsGLP.balanceOf(dn.dnGmxJuniorVault.address),
+  ]);
 
+  const vmv = Number(formatUnits(_vmv, 6));
+  const netEsGmxBal = Number(formatEther(_netEsGmxBal));
+
+  const netGlpBal = batchingManagerFsGlpBal.add(juniorVaultFsGlpBal);
+
+  const gmxPrice = BigNumber.from(
+    (_gmxPrice * BASIS_POINTS_DIVISOR.toNumber()).toFixed(0)
+  );
   const glpPrice = glpAum.div(glpSupply);
-  // console.log(glpPrice.toString())
-
   const glpSupplyUsd = glpAum;
-  // console.log('glpSupplyUsd', glpSupplyUsd.toString())
 
-  let gmxPrice = (
-    await (
-      await fetch(
-        "https://api.coingecko.com/api/v3/simple/price?ids=gmx&vs_currencies=usd"
-      )
-    ).json()
-  ).gmx.usd;
-
-  gmxPrice = BigNumber.from(
-    (gmxPrice * BASIS_POINTS_DIVISOR.toNumber()).toFixed(0)
-  );
-  // console.log("gmxPrice", gmxPrice.toString())
-
-  const stakedGmxTrackerSupplyUsd = (await stakedGmxTracker.totalSupply()).mul(
-    gmxPrice
-  );
-  // console.log('stakedGmxTrackerSupplyUsd', stakedGmxTrackerSupplyUsd.toString())
-
-  const tokensPerIntervalGlp = await stakedGlpTracker.tokensPerInterval();
-  const tokensPerIntervalGmx = await stakedGmxTracker.tokensPerInterval();
-  // console.log('tokensPerIntervalGlp', tokensPerIntervalGlp)
-  // console.log('tokensPerIntervalGmx', tokensPerIntervalGmx)
+  const stakedGmxTrackerSupplyUsd = _stakedGmxTrackerSupplyUsd.mul(gmxPrice);
 
   const stakedGlpTrackerAnnualRewardsUsd = tokensPerIntervalGlp
     .mul(SECONDS_PER_YEAR)
@@ -96,21 +117,8 @@ export const getEsgmxRewards = async (networkName: NetworkName) => {
     .mul(ONE_ETHER)
     .mul(BASIS_POINTS_DIVISOR)
     .div(stakedGmxTrackerSupplyUsd);
-  // console.log('stakedGmxTrackerApr', stakedGmxTrackerApr.toString())
 
   // ((esGMX-on-GLP-apr x netGLP x glpPrice) + (esGMX-on-esGMX-apr x esGMX x gmxPrice)) / $risk-on-tvl
-  const vmv = Number(
-    formatUnits(await dn.dnGmxJuniorVault.getVaultMarketValue(), 6)
-  );
-
-  const esGmx = typechain.IERC20Metadata__factory.connect(addrEsGmx, provMain);
-
-  const netEsGmxBal = Number(
-    formatEther(await esGmx.balanceOf(dn.dnGmxJuniorVault.address))
-  );
-  const netGlpBal = (
-    await tk.fsGLP.balanceOf(dn.dnGmxBatchingManager.address)
-  ).add(await tk.fsGLP.balanceOf(dn.dnGmxJuniorVault.address));
 
   let netGlpInUsd = netGlpBal
     .mul(glpPrice)
@@ -125,7 +133,7 @@ export const getEsgmxRewards = async (networkName: NetworkName) => {
   const adjustedEsGmxApy =
     vmv > 0
       ? (esGmxApyforGlp * netGlpInUsd +
-          esGmxApyforGmx * netEsGmxBal * gmxPrice) /
+          esGmxApyforGmx * netEsGmxBal * _gmxPrice) /
         vmv
       : 0;
 

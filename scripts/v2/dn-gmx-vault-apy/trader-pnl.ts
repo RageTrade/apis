@@ -105,8 +105,10 @@ export const getTraderPnl = async () => {
   let aum = 0;
   let traderPnl = 0;
 
-  const glpData = await queryGlpData(from_ts, to_ts);
-  const traderData = await queryTraderData(from_ts, to_ts);
+  const [glpData, traderData] = await Promise.all([
+    queryGlpData(from_ts, to_ts),
+    queryTraderData(from_ts, to_ts),
+  ]);
 
   for (const each of glpData.glpStats) {
     aum += each.aumInUsdg / 1e18;
@@ -119,5 +121,7 @@ export const getTraderPnl = async () => {
     traderPnl += profit - loss;
   }
 
-  return aum > 0 ? (traderPnl / aum) * glpData.glpStats.length * 4 * 100 * -1 : 0;
+  return aum > 0
+    ? (traderPnl / aum) * glpData.glpStats.length * 4 * 100 * -1
+    : 0;
 };

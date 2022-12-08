@@ -80,6 +80,16 @@ const queryVaultMktValueData = async (
   return (await results.json()).data;
 };
 
+const getEthPrice = async () => {
+  const res = await fetch(
+    "https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd"
+  );
+
+  const ethPrice = (await res.json()).ethereum.usd;
+
+  return ethPrice;
+};
+
 export const getEthRewards = async (networkName: NetworkName) => {
   const provider = getProvider(networkName);
   const dn = await deltaNeutralGmxVaults.getContracts(provider);
@@ -96,22 +106,11 @@ export const getEthRewards = async (networkName: NetworkName) => {
   const vault_id = dn.dnGmxJuniorVault.address.toLowerCase();
 
   // TODO: handle case where there are more than 1000 rewardsData entries in a week
-  const rewardsData = await queryRewardsData(vault_id, from_ts, to_ts, 1000, 0);
-  const vaultMktValueData = await queryVaultMktValueData(
-    vault_id,
-    from_ts,
-    to_ts,
-    1000,
-    0
-  );
-
-  const ethPrice = (
-    await (
-      await fetch(
-        "https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd"
-      )
-    ).json()
-  ).ethereum.usd;
+  const [rewardsData, vaultMktValueData, ethPrice] = await Promise.all([
+    queryRewardsData(vault_id, from_ts, to_ts, 1000, 0),
+    queryVaultMktValueData(vault_id, from_ts, to_ts, 1000, 0),
+    getEthPrice(),
+  ]);
 
   let juniorVaultAvgVmv = 0;
   let seniorVaultAvgVmv = 0;
