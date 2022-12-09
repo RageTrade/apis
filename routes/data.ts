@@ -303,23 +303,13 @@ router.get(
 );
 
 router.get(
-  "/v2/get-mint-burn-conversion",
+  "/v2/get-mint-burn-conversion-intermediate",
   handleRuntimeErrors(async (req) => {
     const networkName = getNetworkName(req);
 
-    const isUsdcToGlp = getParam(
-      req,
-      "isUsdcToGlp",
-      true
-    ) as unknown as Boolean;
-
-    const dollarValueD18 = BigNumber.from(
-      getParam(req, "dollarValueD18", true)
-    );
-
     return cacheFunctionResult(
-      v2.getGlpMintBurnConversion,
-      [networkName, dollarValueD18, isUsdcToGlp],
+      v2.getGlpMintBurnConversionIntermediate,
+      [networkName],
       {
         cacheSeconds: 10 * mins,
         tags: ["v2"],
