@@ -3,6 +3,7 @@ import { BigNumber, ethers } from "ethers";
 import {
   Amount,
   bigNumberToAmount,
+  deltaNeutralGmxVaults,
   DnGmxJuniorVault__factory,
   getVault,
   IERC20Metadata__factory,
@@ -11,6 +12,7 @@ import {
   Q128,
   stringifyBigNumber,
   stringToAmount,
+  tokens,
   VaultName,
 } from "@ragetrade/sdk";
 
@@ -31,6 +33,7 @@ export interface VaultInfoFastResult {
   totalShares: Amount;
   totalAssets: Amount;
   vaultMarketValue: Amount;
+  vaultMarketValuePending: Amount;
   assetsPerShare: Amount;
   assetPrice: Amount;
   sharePrice: Amount;
@@ -43,21 +46,29 @@ export async function getVaultInfoFastSDK(
 ): Promise<VaultInfoFastResult> {
   const { vault } = await getVault(provider, vaultName);
 
-  const shareDecimals = await vault.decimals();
+  const [
+    vault_decimals,
+    vault_asset,
+    vault_totalSupply,
+    vault_totalAssets,
+    vault_getVaultMarketValue,
+  ] = await Promise.all([
+    vault.decimals(),
+    vault.asset(),
+    vault.totalSupply(),
+    vault.totalAssets(),
+    vault.getVaultMarketValue(),
+  ]);
+
+  const shareDecimals = await vault_decimals;
   const assetDecimals = await IERC20Metadata__factory.connect(
-    await vault.asset(),
+    vault_asset,
     provider
   ).decimals();
 
   // total supply, total assets
-  const totalSupply = bigNumberToAmount(
-    await vault.totalSupply(),
-    shareDecimals
-  );
-  const totalAssets = bigNumberToAmount(
-    await vault.totalAssets(),
-    assetDecimals
-  );
+  const totalSupply = bigNumberToAmount(vault_totalSupply, shareDecimals);
+  const totalAssets = bigNumberToAmount(vault_totalAssets, assetDecimals);
 
   // asset price
   let assetPrice: Amount;
@@ -98,14 +109,41 @@ export async function getVaultInfoFastSDK(
   );
 
   // vault market value
-  const vaultMarketValueUSD = await vault.getVaultMarketValue();
+  const vaultMarketValueUSD = vault_getVaultMarketValue;
   const vaultMarketValue = bigNumberToAmount(vaultMarketValueUSD, USD_DECIMALS);
+
+  // vault market value pending
+  let vaultMarketValuePending = stringToAmount("0", USD_DECIMALS);
+  if (vaultName === "dn_gmx_junior") {
+    const { usdc, fsGLP } = await tokens.getContracts(provider);
+    const { dnGmxBatchingManager } = await deltaNeutralGmxVaults.getContracts(
+      provider
+    );
+
+    const [usdcBalance, sglpBalance, sglpBalanceOfJuniorVault] =
+      await Promise.all([
+        usdc.balanceOf(dnGmxBatchingManager.address),
+        fsGLP.balanceOf(dnGmxBatchingManager.address),
+        dnGmxBatchingManager.dnGmxJuniorVaultGlpBalance(),
+      ]);
+
+    const sglpInDollars = sglpBalance
+      .sub(sglpBalanceOfJuniorVault)
+      .mul(assetPriceX128)
+      .div(Q128);
+
+    vaultMarketValuePending = bigNumberToAmount(
+      usdcBalance.add(sglpInDollars),
+      6
+    );
+  }
 
   return {
     totalSupply,
     totalShares: totalSupply,
     totalAssets,
     vaultMarketValue,
+    vaultMarketValuePending,
     assetsPerShare,
     assetPrice,
     sharePrice,
