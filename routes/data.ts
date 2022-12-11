@@ -1,9 +1,9 @@
+import { id } from "ethers/lib/utils";
 import express from "express";
-import { BigNumber } from "ethers";
 import { readJson } from "fs-extra";
-import { date } from "../analytics";
 
-import { cacheFunctionResult } from "../cache";
+import { date } from "../analytics";
+import { cacheFunctionResult, flushall } from "../cache";
 import { getAccountIdsByAddress } from "../scripts/get-account-ids-by-address";
 import { getAvgVaultMarketValue } from "../scripts/get-avg-vault-market-value";
 import { getBlockByTimestamp } from "../scripts/get-block-by-timestamp";
@@ -16,11 +16,12 @@ import { getVaultInfo } from "../scripts/get-vault-info";
 import { getGmxData } from "../scripts/protodev-gmx-staking-info-frontend/script";
 import * as v2 from "../scripts/v2";
 import {
+  ErrorWithStatusCode,
   getNetworkName,
-  getParam,
   getParamAsAddress,
   getParamAsInteger,
   getParamAsNumber,
+  getParamAsString,
   getVaultName,
   handleRuntimeErrors,
 } from "../utils";
@@ -45,6 +46,24 @@ router.get(
       [],
       { cacheSeconds: 1 * secs }
     );
+  })
+);
+
+// temporary, remove this later
+router.get(
+  "/flushall",
+  handleRuntimeErrors(async (req, res) => {
+    const password = getParamAsString(req, "password");
+
+    if (
+      id(password) ===
+      "0x5425ff8c8a1a13b6db65f72158f4dd0e1d8aefacc5ab79299ed93c659688200b"
+    ) {
+      await flushall();
+      return { result: "OK" };
+    } else {
+      throw new ErrorWithStatusCode("NOT OK", 400);
+    }
   })
 );
 

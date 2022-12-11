@@ -4,12 +4,17 @@ interface UrlInfo {
   hits: number;
 }
 
+const ignoreRoutes = ["/data/flushall"];
+
 export class Analytics {
   tempKeyCount: number = 0;
   temp: { [key: string]: UrlInfo | undefined } = {};
   storing: boolean = false;
 
   recordUrlVisit(url: string) {
+    if (ignoreRoutes.find((r) => url.startsWith(r))) {
+      return; // ignore this route
+    }
     if (this.temp[url] === undefined) {
       this.tempKeyCount++;
       if (this.tempKeyCount > 1_000) {

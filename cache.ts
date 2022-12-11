@@ -41,3 +41,7 @@ async function generateResponse(fn: Function, args: any[]) {
     return { error: error.message, cacheTimestamp: currentTimestamp() };
   }
 }
+
+export async function flushall() {
+  await cache.client.flushall();
+}
