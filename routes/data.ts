@@ -234,6 +234,17 @@ router.get(
 );
 
 router.get(
+  "/v2/get-tricrypto-vault-apy",
+  handleRuntimeErrors(async (req) => {
+    const networkName = getNetworkName(req);
+    return cacheFunctionResult(v2.getTricryptoVaultApy, [networkName], {
+      cacheSeconds: 1 * mins,
+      tags: ["v2"],
+    });
+  })
+);
+
+router.get(
   "/get-gmx-vault-info-by-token-address",
   handleRuntimeErrors(async (req) => {
     const networkName = getNetworkName(req);

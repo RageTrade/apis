@@ -5,12 +5,12 @@ import { createClient, defaultExchanges, Client } from "urql";
 const exchanges = [devtoolsExchange, ...defaultExchanges];
 
 export const arbitrumClient = createClient({
-  url: "https://api.thegraph.com/subgraphs/name/134dd3v/ragetrade-arbmain",
+  url: "https://api.thegraph.com/subgraphs/name/fr0ntenddev/rage-trade-arbitrum-mainnet",
   exchanges,
 });
 
-export const arbitrumRinkebyClient = createClient({
-  url: "https://api.thegraph.com/subgraphs/name/134dd3v/ragetrade",
+export const arbitrumGoerliClient = createClient({
+  url: "https://api.thegraph.com/subgraphs/name/fr0ntenddev/rage-trade-arbitrum-goerli",
   exchanges,
 });
 
@@ -18,8 +18,8 @@ export function getSubgraph(networkName: NetworkName): Client {
   switch (networkName) {
     case "arbmain":
       return arbitrumClient;
-    case "arbtest":
-      return arbitrumRinkebyClient;
+    case "arbgoerli":
+      return arbitrumGoerliClient;
     default:
       throw new Error(`Subgraph not available for the network: ${networkName}`);
   }

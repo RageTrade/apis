@@ -171,3 +171,7 @@ export function currentTimestamp() {
 export function safeDiv(numerator: BigNumber, denominator: BigNumber) {
   return denominator.eq(0) ? ethers.constants.Zero : numerator.div(denominator);
 }
+
+export function safeDivNumer(numerator: number, denominator: number) {
+  return denominator === 0 ? 0 : numerator / denominator;
+}

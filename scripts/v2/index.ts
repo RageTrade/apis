@@ -11,3 +11,4 @@ export * from "./get-dn-gmx-vaults-info-fast";
 export * from "./dn-gmx-vault-apy";
 export * from "./get-dn-gmx-max-deposit-withdraw";
 export * from "./get-mint-burn-conversion";
+export * from "./get-tricrypto-vault-apy";
