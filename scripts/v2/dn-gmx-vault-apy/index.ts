@@ -18,7 +18,8 @@ export const getDnGmxApyBreakdown = async (networkName: NetworkName) => {
 
   const seniorVault = {
     aaveSupplyApy: supplyApy,
-    glpRewardsPct: 6.29, // ethRewards[1],
+    glpRewardsPct: 6.29,
+    _glpRewardsPct: ethRewards[1],
   };
 
   const juniorVault = {
@@ -26,6 +27,7 @@ export const getDnGmxApyBreakdown = async (networkName: NetworkName) => {
     ethBorrowApy: borrowApy[1],
     glpTraderPnl: traderPnl,
     glpRewardsPct: 14.71, // ethRewards[0],
+    _glpRewardsPct: ethRewards[0],
     esGmxRewards,
   };
 
