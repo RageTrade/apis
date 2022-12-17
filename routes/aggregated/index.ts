@@ -18,6 +18,16 @@ router.get(
 );
 
 router.get(
+  "/get-glp-pnl",
+  handleRuntimeErrors(async (req) => {
+    const networkName = getNetworkName(req);
+    return cacheFunctionResult(aggregated.getGlpPnl, [networkName], {
+      cacheSeconds: 3 * hours,
+    });
+  })
+);
+
+router.get(
   "/get-total-shares",
   handleRuntimeErrors(async (req) => {
     const networkName = getNetworkName(req);

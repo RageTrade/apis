@@ -20,9 +20,20 @@ router.get(
     return cacheFunctionResult(
       aggregated.user.getUserAavePnl,
       [networkName, userAddress],
-      {
-        cacheSeconds: 3 * mins,
-      }
+      { cacheSeconds: 3 * mins }
+    );
+  })
+);
+
+router.get(
+  "/get-glp-pnl",
+  handleRuntimeErrors(async (req) => {
+    const networkName = getNetworkName(req);
+    const userAddress = getParamAsAddress(req, "userAddress");
+    return cacheFunctionResult(
+      aggregated.user.getUserGlpPnl,
+      [networkName, userAddress],
+      { cacheSeconds: 3 * mins }
     );
   })
 );
