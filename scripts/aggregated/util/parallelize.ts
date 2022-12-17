@@ -72,7 +72,7 @@ export async function parallelize<Data, Event extends ethers.Event>(
             // console.log("retrying", e);
             failed += 1;
 
-            if (failed > allEvents.length * 1.5) {
+            if (failed > allEvents.length * 4) {
               throw e;
             }
           }
