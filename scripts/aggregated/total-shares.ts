@@ -3,9 +3,12 @@ import { formatEther } from "ethers/lib/utils";
 import { deltaNeutralGmxVaults, formatUsdc, NetworkName } from "@ragetrade/sdk";
 
 import { getProviderAggregate } from "../../providers";
-import { parallelize } from "./util/parallelize";
+import { EventFn, parallelize } from "./util/parallelize";
 import { Entry } from "./util/types";
 import { depositWithdrawRebalance } from "./util/events/deposit-withdraw-rebalance";
+import { ethers } from "ethers";
+import { glpRewards } from "./util/events/glp-rewards";
+import { glpSwapped } from "./util/events/glp-swapped";
 
 export type GlobalTotalSharesEntry = Entry<{
   totalShares: number;
@@ -29,7 +32,11 @@ export async function getTotalShares(
   const data = await parallelize(
     networkName,
     provider,
-    depositWithdrawRebalance,
+    [
+      depositWithdrawRebalance,
+      glpSwapped,
+      glpRewards,
+    ] as EventFn<ethers.Event>[],
     async (_i, blockNumber, eventName, transactionHash, logIndex) => {
       const totalShares = Number(
         formatEther(

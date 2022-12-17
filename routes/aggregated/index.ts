@@ -38,6 +38,16 @@ router.get(
 );
 
 router.get(
+  "/get-glp-rewards",
+  handleRuntimeErrors(async (req) => {
+    const networkName = getNetworkName(req);
+    return cacheFunctionResult(aggregated.getGlpRewards, [networkName], {
+      cacheSeconds: 3 * hours,
+    });
+  })
+);
+
+router.get(
   "/get-total-shares",
   handleRuntimeErrors(async (req) => {
     const networkName = getNetworkName(req);

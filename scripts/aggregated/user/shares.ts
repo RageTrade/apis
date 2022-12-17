@@ -15,6 +15,7 @@ import { Entry } from "../util/types";
 import { depositWithdrawRebalance } from "../util/events/deposit-withdraw-rebalance";
 import { glpSwapped } from "../util/events/glp-swapped";
 import { ethers } from "ethers";
+import { glpRewards } from "../util/events/glp-rewards";
 
 export type UserSharesEntry = Entry<{
   userShares: number;
@@ -52,7 +53,11 @@ export async function getUserShares(
   const data1 = await parallelize(
     networkName,
     provider,
-    [depositWithdrawRebalance, glpSwapped] as EventFn<ethers.Event>[],
+    [
+      depositWithdrawRebalance,
+      glpSwapped,
+      glpRewards,
+    ] as EventFn<ethers.Event>[],
     async (_i, blockNumber, eventName, transactionHash, logIndex) => {
       const userDeposits = await dnGmxBatchingManager.userDeposits(
         userAddress,
