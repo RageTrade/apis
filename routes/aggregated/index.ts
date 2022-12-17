@@ -28,6 +28,16 @@ router.get(
 );
 
 router.get(
+  "/get-glp-slippage",
+  handleRuntimeErrors(async (req) => {
+    const networkName = getNetworkName(req);
+    return cacheFunctionResult(aggregated.getGlpSlippage, [networkName], {
+      cacheSeconds: 3 * hours,
+    });
+  })
+);
+
+router.get(
   "/get-total-shares",
   handleRuntimeErrors(async (req) => {
     const networkName = getNetworkName(req);

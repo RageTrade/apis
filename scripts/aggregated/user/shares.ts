@@ -9,10 +9,12 @@ import {
 
 import { getProviderAggregate } from "../../../providers";
 import { combine } from "../util/combine";
-import { parallelize } from "../util/parallelize";
+import { EventFn, parallelize } from "../util/parallelize";
 import { GlobalTotalSharesResult } from "../total-shares";
 import { Entry } from "../util/types";
 import { depositWithdrawRebalance } from "../util/events/deposit-withdraw-rebalance";
+import { glpSwapped } from "../util/events/glp-swapped";
+import { ethers } from "ethers";
 
 export type UserSharesEntry = Entry<{
   userShares: number;
@@ -50,7 +52,7 @@ export async function getUserShares(
   const data1 = await parallelize(
     networkName,
     provider,
-    depositWithdrawRebalance,
+    [depositWithdrawRebalance, glpSwapped] as EventFn<ethers.Event>[],
     async (_i, blockNumber, eventName, transactionHash, logIndex) => {
       const userDeposits = await dnGmxBatchingManager.userDeposits(
         userAddress,

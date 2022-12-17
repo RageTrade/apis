@@ -8,23 +8,26 @@ import {
 
 import { getProviderAggregate } from "../../../providers";
 import { combine } from "../util/combine";
-import { GlobalGlpPnlEntry, GlobalGlpPnlResult } from "../glp-pnl";
+import {
+  GlobalGlpSlippageEntry,
+  GlobalGlpSlippageResult,
+} from "../glp-slippage";
 import { Entry } from "../util/types";
 import { UserSharesResult } from "./shares";
 
-export type UserGlpPnlEntry = Entry<{
-  userGlpPnl: number;
+export type UserGlpSlippageEntry = Entry<{
+  userGlpSlippage: number;
 }>;
 
-export interface UserGlpPnlResult {
-  data: UserGlpPnlEntry[];
-  userTotalGlpPnl: number;
+export interface UserGlpSlippageResult {
+  data: UserGlpSlippageEntry[];
+  userTotalGlpSlippage: number;
 }
 
-export async function getUserGlpPnl(
+export async function getUserGlpSlippage(
   networkName: NetworkName,
   userAddress: string
-): Promise<ResultWithMetadata<UserGlpPnlResult>> {
+): Promise<ResultWithMetadata<UserGlpSlippageResult>> {
   const provider = getProviderAggregate(networkName);
 
   const { dnGmxJuniorVault, dnGmxBatchingManager } =
@@ -39,9 +42,9 @@ export async function getUserGlpPnl(
   //     );
   //   }
 
-  const glpPnlResponse: ResultWithMetadata<GlobalGlpPnlResult> =
+  const glpSlippageResponse: ResultWithMetadata<GlobalGlpSlippageResult> =
     await fetchJson({
-      url: `http://localhost:3000/data/aggregated/get-glp-pnl?networkName=${networkName}`,
+      url: `http://localhost:3000/data/aggregated/get-glp-slippage?networkName=${networkName}`,
       timeout: 1_000_000_000, // huge number
     });
 
@@ -52,27 +55,30 @@ export async function getUserGlpPnl(
     });
 
   const data = combine(
-    glpPnlResponse.result.data,
+    glpSlippageResponse.result.data,
     userSharesResponse.result.data,
-    (glpPnlData, userSharesData) => ({
-      ...glpPnlData,
+    (glpSlippageData, userSharesData) => ({
+      ...glpSlippageData,
       ...userSharesData,
-      userGlpPnl:
-        (glpPnlData.glpPnl * userSharesData.userShares) /
+      userGlpSlippage:
+        (glpSlippageData.glpSlippage * userSharesData.userShares) /
         userSharesData.totalShares,
     })
   );
 
   return {
     cacheTimestamp:
-      glpPnlResponse.cacheTimestamp && userSharesResponse.cacheTimestamp
+      glpSlippageResponse.cacheTimestamp && userSharesResponse.cacheTimestamp
         ? Math.min(
-            glpPnlResponse.cacheTimestamp,
+            glpSlippageResponse.cacheTimestamp,
             userSharesResponse.cacheTimestamp
           )
         : undefined,
     result: {
-      userTotalGlpPnl: data.reduce((acc, cur) => acc + cur.userGlpPnl, 0),
+      userTotalGlpSlippage: data.reduce(
+        (acc, cur) => acc + cur.userGlpSlippage,
+        0
+      ),
       data,
     },
   };

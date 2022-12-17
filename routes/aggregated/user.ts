@@ -39,6 +39,19 @@ router.get(
 );
 
 router.get(
+  "/get-glp-slippage",
+  handleRuntimeErrors(async (req) => {
+    const networkName = getNetworkName(req);
+    const userAddress = getParamAsAddress(req, "userAddress");
+    return cacheFunctionResult(
+      aggregated.user.getUserGlpSlippage,
+      [networkName, userAddress],
+      { cacheSeconds: 3 * mins }
+    );
+  })
+);
+
+router.get(
   "/get-shares",
   handleRuntimeErrors(async (req) => {
     const networkName = getNetworkName(req);

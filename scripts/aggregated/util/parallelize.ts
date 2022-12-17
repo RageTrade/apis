@@ -2,13 +2,15 @@ import { ethers } from "ethers";
 
 import { NetworkName } from "@ragetrade/sdk";
 
+export type EventFn<Event> = (
+  networkName: NetworkName,
+  provider: ethers.providers.Provider
+) => Promise<Event[]>;
+
 export async function parallelize<Data, Event extends ethers.Event>(
   networkName: NetworkName,
   provider: ethers.providers.Provider,
-  getEvents: (
-    networkName: NetworkName,
-    provider: ethers.providers.Provider
-  ) => Promise<Event[]>,
+  getEvents: EventFn<Event> | EventFn<Event>[],
   onEachEvent: (
     _i: number,
     blockNumber: number,
@@ -18,9 +20,17 @@ export async function parallelize<Data, Event extends ethers.Event>(
     event: Event
   ) => Promise<Data>
 ) {
-  const allEvents = (await getEvents(networkName, provider)).sort(
-    (a, b) => a.blockNumber - b.blockNumber
-  );
+  let allEvents: Event[] = [];
+
+  if (Array.isArray(getEvents)) {
+    for (const fn of getEvents) {
+      allEvents = allEvents.concat(await fn(networkName, provider));
+    }
+  } else {
+    allEvents = await getEvents(networkName, provider);
+  }
+
+  allEvents = allEvents.sort((a, b) => a.blockNumber - b.blockNumber);
 
   let data: Data[] = [];
   for (let i = 0; i < allEvents.length; i++) {
