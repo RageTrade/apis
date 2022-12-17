@@ -90,7 +90,7 @@ export async function parallelizeOverEveryDWR<Data>(
   }
 
   let intr = setInterval(() => {
-    console.log("done", done, "retries", failed);
+    console.log("done", done, "retries", failed, "total", allEvents.length);
   }, 5000);
 
   await Promise.all(promises);
