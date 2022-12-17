@@ -28,7 +28,14 @@ async function generateResponse(fn: Function, args: any[]) {
   try {
     const result = await fn(...args);
     if (result.result) {
-      return { ...result, cacheTimestamp: currentTimestamp() };
+      // allows to override `cacheTimestamp`
+      return {
+        ...result,
+        cacheTimestamp: Math.min(
+          result.cacheTimestamp ?? Number.MAX_SAFE_INTEGER,
+          currentTimestamp()
+        ),
+      };
     } else {
       return { result, cacheTimestamp: currentTimestamp() };
     }
