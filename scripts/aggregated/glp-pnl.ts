@@ -4,8 +4,9 @@ import { deltaNeutralGmxVaults, NetworkName, tokens } from "@ragetrade/sdk";
 
 import { getProviderAggregate } from "../../providers";
 import { combine } from "./util/combine";
-import { parallelizeOverEveryDWR } from "./util/template";
+import { parallelize } from "./util/parallelize";
 import { Entry } from "./util/types";
+import { depositWithdrawRebalance } from "./util/events/deposit-withdraw-rebalance";
 
 export type GlobalGlpPnlEntry = Entry<{
   fsGlp_balanceOf_juniorVault: number;
@@ -28,9 +29,10 @@ export async function getGlpPnl(
   const { dnGmxJuniorVault, dnGmxBatchingManager } =
     deltaNeutralGmxVaults.getContractsSync(networkName, provider);
 
-  const data = await parallelizeOverEveryDWR(
+  const data = await parallelize(
     networkName,
     provider,
+    depositWithdrawRebalance,
     async (_i, blockNumber, eventName, transactionHash, logIndex) => {
       const fsGlp_balanceOf_juniorVault = Number(
         formatEther(

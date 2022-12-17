@@ -9,12 +9,10 @@ import {
 
 import { getProviderAggregate } from "../../../providers";
 import { combine } from "../util/combine";
-import { parallelizeOverEveryDWR } from "../util/template";
-import {
-  GlobalTotalSharesEntry,
-  GlobalTotalSharesResult,
-} from "../total-shares";
+import { parallelize } from "../util/parallelize";
+import { GlobalTotalSharesResult } from "../total-shares";
 import { Entry } from "../util/types";
+import { depositWithdrawRebalance } from "../util/events/deposit-withdraw-rebalance";
 
 export type UserSharesEntry = Entry<{
   userShares: number;
@@ -49,9 +47,10 @@ export async function getUserShares(
       timeout: 1_000_000_000, // huge number
     });
 
-  const data1 = await parallelizeOverEveryDWR(
+  const data1 = await parallelize(
     networkName,
     provider,
+    depositWithdrawRebalance,
     async (_i, blockNumber, eventName, transactionHash, logIndex) => {
       const userDeposits = await dnGmxBatchingManager.userDeposits(
         userAddress,

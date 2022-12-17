@@ -3,8 +3,9 @@ import { formatEther } from "ethers/lib/utils";
 import { deltaNeutralGmxVaults, formatUsdc, NetworkName } from "@ragetrade/sdk";
 
 import { getProviderAggregate } from "../../providers";
-import { parallelizeOverEveryDWR } from "./util/template";
+import { parallelize } from "./util/parallelize";
 import { Entry } from "./util/types";
+import { depositWithdrawRebalance } from "./util/events/deposit-withdraw-rebalance";
 
 export type GlobalTotalSharesEntry = Entry<{
   totalShares: number;
@@ -25,9 +26,10 @@ export async function getTotalShares(
   const { dnGmxJuniorVault, dnGmxBatchingManager } =
     deltaNeutralGmxVaults.getContractsSync(networkName, provider);
 
-  const data = await parallelizeOverEveryDWR(
+  const data = await parallelize(
     networkName,
     provider,
+    depositWithdrawRebalance,
     async (_i, blockNumber, eventName, transactionHash, logIndex) => {
       const totalShares = Number(
         formatEther(

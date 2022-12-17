@@ -1,37 +1,26 @@
-import { deltaNeutralGmxVaults, NetworkName } from "@ragetrade/sdk";
 import { ethers } from "ethers";
 
-export async function parallelizeOverEveryDWR<Data>(
+import { NetworkName } from "@ragetrade/sdk";
+
+export async function parallelize<Data, Event extends ethers.Event>(
   networkName: NetworkName,
   provider: ethers.providers.Provider,
+  getEvents: (
+    networkName: NetworkName,
+    provider: ethers.providers.Provider
+  ) => Promise<Event[]>,
   onEachEvent: (
     _i: number,
     blockNumber: number,
     eventName: string,
     transactionHash: string,
     logIndex: number,
-    event: ethers.Event
+    event: Event
   ) => Promise<Data>
 ) {
-  const { dnGmxJuniorVault } = deltaNeutralGmxVaults.getContractsSync(
-    networkName,
-    provider
+  const allEvents = (await getEvents(networkName, provider)).sort(
+    (a, b) => a.blockNumber - b.blockNumber
   );
-
-  const allDepositEvents = await dnGmxJuniorVault.queryFilter(
-    dnGmxJuniorVault.filters.Deposit()
-  );
-  const allWithdrawEvents = await dnGmxJuniorVault.queryFilter(
-    dnGmxJuniorVault.filters.Withdraw()
-  );
-  const allRebalancedEvents = await dnGmxJuniorVault.queryFilter(
-    dnGmxJuniorVault.filters.Rebalanced()
-  );
-  const allEvents = [
-    ...allDepositEvents,
-    ...allWithdrawEvents,
-    ...allRebalancedEvents,
-  ].sort((a, b) => a.blockNumber - b.blockNumber);
 
   let data: Data[] = [];
   for (let i = 0; i < allEvents.length; i++) {
@@ -51,7 +40,7 @@ export async function parallelizeOverEveryDWR<Data>(
         eventName: string,
         transactionHash: string,
         logIndex: number,
-        event: ethers.Event
+        event: Event
       ) => {
         while (1) {
           // add random delay to avoid lot of requests being shot at same time

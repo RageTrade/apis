@@ -3,10 +3,11 @@ import { formatUnits } from "ethers/lib/utils";
 import { deltaNeutralGmxVaults, NetworkName } from "@ragetrade/sdk";
 
 import { getProviderAggregate } from "../../providers";
-import { parallelizeOverEveryDWR } from "./util/template";
+import { parallelize } from "./util/parallelize";
 import { Entry } from "./util/types";
 import type { TokenSwappedEvent } from "@ragetrade/sdk/dist/typechain/delta-neutral-gmx-vaults/contracts/libraries/DnGmxJuniorVaultManager";
 import { decimals, price, name } from "./util/helpers";
+import { depositWithdrawRebalance } from "./util/events/deposit-withdraw-rebalance";
 
 export type GlobalUniswapSlippageEntry = Entry<{
   volume: number;
@@ -47,9 +48,10 @@ export async function getUniswapSlippage(
     provider
   );
 
-  const data: GlobalUniswapSlippageEntry[] = await parallelizeOverEveryDWR(
+  const data: GlobalUniswapSlippageEntry[] = await parallelize(
     networkName,
     provider,
+    depositWithdrawRebalance,
     async (_i, blockNumber, eventName, transactionHash, logIndex) => {
       const rc = await provider.getTransactionReceipt(transactionHash);
       const filter = dnGmxJuniorVault.filters.TokenSwapped();

@@ -9,9 +9,10 @@ import {
 
 import { getProviderAggregate } from "../../providers";
 import { combine } from "./util/combine";
-import { parallelizeOverEveryDWR } from "./util/template";
+import { parallelize } from "./util/parallelize";
 import { Entry } from "./util/types";
 import { price } from "./util/helpers";
+import { depositWithdrawRebalance } from "./util/events/deposit-withdraw-rebalance";
 
 export type GlobalAavePnlEntry = Entry<{
   aavePnl: number;
@@ -38,9 +39,10 @@ export async function getAavePnl(
   const vdWbtc = aUsdc.attach(wbtcVariableDebtTokenAddress);
   const vdWeth = aUsdc.attach(wethVariableDebtTokenAddress);
 
-  const data = await parallelizeOverEveryDWR(
+  const data = await parallelize(
     networkName,
     provider,
+    depositWithdrawRebalance,
     async (_i, blockNumber, eventName, transactionHash, logIndex) => {
       const btcAmountBefore = Number(
         formatUnits(
