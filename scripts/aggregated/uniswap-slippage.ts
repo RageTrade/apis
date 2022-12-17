@@ -2,7 +2,6 @@ import { formatUnits } from "ethers/lib/utils";
 
 import {
   aave,
-  chainlink,
   deltaNeutralGmxVaults,
   NetworkName,
   tokens,
@@ -13,6 +12,7 @@ import { combine } from "./util/combine";
 import { parallelizeOverEveryDWR } from "./util/template";
 import { Entry } from "./util/types";
 import type { TokenSwappedEvent } from "@ragetrade/sdk/dist/typechain/delta-neutral-gmx-vaults/contracts/libraries/DnGmxJuniorVaultManager";
+import { decimals, price, name } from "./util/helpers";
 
 export type GlobalUniswapSlippageEntry = Entry<{
   volume: number;
@@ -55,12 +55,6 @@ export async function getUniswapSlippage(
     provider
   );
 
-  const { ethUsdAggregator, btcUsdAggregator } =
-    await chainlink.getContractsSync(networkName, provider);
-  const usdcUsdAggregator = ethUsdAggregator.attach(
-    "0x50834F3163758fcC1Df9973b6e91f0F0F0434aD3"
-  );
-
   const { wbtcVariableDebtTokenAddress, wethVariableDebtTokenAddress } =
     aave.getAddresses(networkName);
   const vdWbtc = aUsdc.attach(wbtcVariableDebtTokenAddress);
@@ -91,14 +85,28 @@ export async function getUniswapSlippage(
       let ethSoldSlippage = 0;
 
       for (const event of parsed) {
-        const fromPrice = await price(event.args.fromToken, blockNumber);
-        const toPrice = await price(event.args.toToken, blockNumber);
+        const fromPrice = await price(
+          event.args.fromToken,
+          blockNumber,
+          networkName
+        );
+        const toPrice = await price(
+          event.args.toToken,
+          blockNumber,
+          networkName
+        );
 
         const fromQuantity = Number(
-          formatUnits(event.args.fromQuantity, decimals(event.args.fromToken))
+          formatUnits(
+            event.args.fromQuantity,
+            decimals(event.args.fromToken, networkName)
+          )
         );
         const toQuantity = Number(
-          formatUnits(event.args.toQuantity, decimals(event.args.toToken))
+          formatUnits(
+            event.args.toQuantity,
+            decimals(event.args.toToken, networkName)
+          )
         );
 
         const fromDollar = fromPrice * fromQuantity;
@@ -106,19 +114,19 @@ export async function getUniswapSlippage(
         const slippageDollar = toDollar - fromDollar;
         //   vaultSumSlippageDollar += slippageDollar;
 
-        if (name(event.args.fromToken) === "wbtc") {
+        if (name(event.args.fromToken, networkName) === "wbtc") {
           btcSold += fromDollar;
           btcSoldSlippage += slippageDollar;
         }
-        if (name(event.args.fromToken) === "weth") {
+        if (name(event.args.fromToken, networkName) === "weth") {
           ethSold += fromDollar;
           ethSoldSlippage += slippageDollar;
         }
-        if (name(event.args.toToken) === "wbtc") {
+        if (name(event.args.toToken, networkName) === "wbtc") {
           btcBought += toDollar;
           btcBoughtSlippage += slippageDollar;
         }
-        if (name(event.args.toToken) === "weth") {
+        if (name(event.args.toToken, networkName) === "weth") {
           ethBought += toDollar;
           ethBoughtSlippage += slippageDollar;
         }
@@ -170,70 +178,4 @@ export async function getUniswapSlippage(
     ),
     data,
   };
-
-  function name(addr: string) {
-    switch (addr.toLowerCase()) {
-      case weth.address.toLowerCase():
-        return "weth";
-      case wbtc.address.toLowerCase():
-        return "wbtc";
-      case usdc.address.toLowerCase():
-        return "usdc";
-      default:
-        return addr;
-    }
-  }
-
-  function decimals(addr: string) {
-    switch (addr.toLowerCase()) {
-      case weth.address.toLowerCase():
-        return 18;
-      case wbtc.address.toLowerCase():
-        return 8;
-      case usdc.address.toLowerCase():
-        return 6;
-      default:
-        return 18;
-    }
-  }
-
-  async function price(addr: string, blockNumber: number) {
-    switch (addr.toLowerCase()) {
-      case weth.address.toLowerCase():
-        return Number(
-          formatUnits(
-            (
-              await ethUsdAggregator.latestRoundData({
-                blockTag: blockNumber,
-              })
-            ).answer,
-            decimals(addr)
-          )
-        );
-      case wbtc.address.toLowerCase():
-        return Number(
-          formatUnits(
-            (
-              await btcUsdAggregator.latestRoundData({
-                blockTag: blockNumber,
-              })
-            ).answer,
-            decimals(addr)
-          )
-        );
-      case usdc.address.toLowerCase():
-        return Number(
-          formatUnits(
-            (
-              await usdcUsdAggregator.latestRoundData({
-                blockTag: blockNumber,
-              })
-            ).answer,
-            decimals(addr)
-          )
-        );
-      default:
-        throw new Error("i dont know");
-    }
-  }
 }

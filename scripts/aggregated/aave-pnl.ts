@@ -12,6 +12,7 @@ import { getProviderAggregate } from "../../providers";
 import { combine } from "./util/combine";
 import { parallelizeOverEveryDWR } from "./util/template";
 import { Entry } from "./util/types";
+import { price } from "./util/helpers";
 
 export type GlobalAavePnlEntry = Entry<{
   aavePnl: number;
@@ -78,12 +79,8 @@ export async function getAavePnl(
           })
         )
       );
-      const btcPrice = Number(
-        formatUnits(await price(wbtc.address, blockNumber), 8)
-      );
-      const ethPrice = Number(
-        formatUnits(await price(weth.address, blockNumber), 8)
-      );
+      const btcPrice = await price(wbtc.address, blockNumber, networkName);
+      const ethPrice = await price(weth.address, blockNumber, networkName);
 
       return {
         blockNumber,
@@ -135,29 +132,4 @@ export async function getAavePnl(
 
   // combines both information
   return { data: combine(data, extraData, (a, b) => ({ ...a, ...b })) };
-
-  async function price(addr: string, blockNumber: number) {
-    switch (addr.toLowerCase()) {
-      case weth.address.toLowerCase():
-        return (
-          await ethUsdAggregator.latestRoundData({
-            blockTag: blockNumber,
-          })
-        ).answer;
-      case wbtc.address.toLowerCase():
-        return (
-          await btcUsdAggregator.latestRoundData({
-            blockTag: blockNumber,
-          })
-        ).answer;
-      case usdc.address.toLowerCase():
-        return (
-          await usdcUsdAggregator.latestRoundData({
-            blockTag: blockNumber,
-          })
-        ).answer;
-      default:
-        throw new Error("i dont know");
-    }
-  }
 }
