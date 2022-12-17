@@ -11,9 +11,19 @@ import {
 import { getProviderAggregate } from "../../providers";
 import { combine } from "./util/combine";
 import { parallelizeOverEveryDWR } from "./util/template";
-import { Data } from "./util/types";
+import { Entry } from "./util/types";
 
-export async function getAavePnl(networkName: NetworkName) {
+export type GlobalAavePnlEntry = Entry<{
+  aavePnl: number;
+}>;
+
+export interface GlobalAavePnlResult {
+  data: GlobalAavePnlEntry[];
+}
+
+export async function getAavePnl(
+  networkName: NetworkName
+): Promise<GlobalAavePnlResult> {
   const provider = getProviderAggregate(networkName);
 
   const { weth, wbtc, usdc } = tokens.getContractsSync(networkName, provider);
@@ -90,7 +100,7 @@ export async function getAavePnl(networkName: NetworkName) {
     }
   );
 
-  const extraData: Data<{ aavePnl: number }>[] = [];
+  const extraData: Entry<{ aavePnl: number }>[] = [];
 
   let last;
   for (const current of data) {
@@ -105,12 +115,17 @@ export async function getAavePnl(networkName: NetworkName) {
 
       extraData.push({
         blockNumber: current.blockNumber,
+        eventName: current.eventName,
+        transactionHash: current.transactionHash,
         logIndex: current.logIndex,
+
         aavePnl,
       });
     } else {
       extraData.push({
         blockNumber: current.blockNumber,
+        eventName: current.eventName,
+        transactionHash: current.transactionHash,
         logIndex: current.logIndex,
         aavePnl: 0,
       });
@@ -119,7 +134,7 @@ export async function getAavePnl(networkName: NetworkName) {
   }
 
   // combines both information
-  return combine(data, extraData, (a, b) => ({ ...a, ...b }));
+  return { data: combine(data, extraData, (a, b) => ({ ...a, ...b })) };
 
   async function price(addr: string, blockNumber: number) {
     switch (addr.toLowerCase()) {

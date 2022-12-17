@@ -1,6 +1,8 @@
-export interface DataBase {
+export interface EntryBase {
   blockNumber: number;
+  eventName: string;
+  transactionHash: string;
   logIndex: number;
 }
 
-export type Data<T extends { [key: string]: any }> = T & DataBase;
+export type Entry<T extends { [key: string]: any }> = T & EntryBase;

@@ -27,6 +27,16 @@ router.get(
   })
 );
 
+router.get(
+  "/get-uniswap-slippage",
+  handleRuntimeErrors(async (req) => {
+    const networkName = getNetworkName(req);
+    return cacheFunctionResult(aggregated.getUniswapSlippage, [networkName], {
+      cacheSeconds: 3 * hours,
+    });
+  })
+);
+
 router.use("/user", UserRouter);
 
 export default router;

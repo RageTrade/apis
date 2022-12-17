@@ -8,23 +8,25 @@ import {
 
 import { getProviderAggregate } from "../../../providers";
 import { combine } from "../util/combine";
-import { GlobalAavePnlEntry, GlobalAavePnlResult } from "../aave-pnl";
+import { UserSharesEntry, UserSharesResult } from "./shares";
+import { GlobalUniswapSlippageResult } from "../uniswap-slippage";
 import { Entry } from "../util/types";
-import { UserSharesResult } from "./shares";
 
-export type UserAavePnlEntry = Entry<{
-  userAavePnl: number;
+export type UserUniswapSlippageEntry = Entry<{
+  userSlippage: number;
+  userVolume: number;
 }>;
 
-export interface UserAaveRnlResult {
-  data: UserAavePnlEntry[];
-  userTotalAavePnl: number;
+export interface UserUniswapSlippageResult {
+  data: UserUniswapSlippageEntry[];
+  userTotalSlippage: number;
+  userTotalVolume: number;
 }
 
-export async function getUserAavePnl(
+export async function getUserUniswapSlippage(
   networkName: NetworkName,
   userAddress: string
-): Promise<ResultWithMetadata<UserAaveRnlResult>> {
+): Promise<ResultWithMetadata<UserUniswapSlippageResult>> {
   const provider = getProviderAggregate(networkName);
 
   const { dnGmxJuniorVault, dnGmxBatchingManager } =
@@ -39,9 +41,9 @@ export async function getUserAavePnl(
   //     );
   //   }
 
-  const aavePnlResponse: ResultWithMetadata<GlobalAavePnlResult> =
+  const globalUniswapSlippageResponse: ResultWithMetadata<GlobalUniswapSlippageResult> =
     await fetchJson({
-      url: `http://localhost:3000/data/aggregated/get-aave-pnl?networkName=${networkName}`,
+      url: `http://localhost:3000/data/aggregated/get-uniswap-slippage?networkName=${networkName}`,
       timeout: 1_000_000_000, // huge number
     });
 
@@ -52,27 +54,32 @@ export async function getUserAavePnl(
     });
 
   const data = combine(
-    aavePnlResponse.result.data,
+    globalUniswapSlippageResponse.result.data,
     userSharesResponse.result.data,
-    (aavePnlData, userSharesData) => ({
-      ...aavePnlData,
-      ...userSharesData,
-      userAavePnl:
-        (aavePnlData.aavePnl * userSharesData.userShares) /
-        userSharesData.totalShares,
+    (globalUniswapSlippageEntry, userSharesEntry) => ({
+      ...globalUniswapSlippageEntry,
+      ...userSharesEntry,
+      userSlippage:
+        (globalUniswapSlippageEntry.slippage * userSharesEntry.userShares) /
+        userSharesEntry.totalShares,
+      userVolume:
+        (globalUniswapSlippageEntry.volume * userSharesEntry.userShares) /
+        userSharesEntry.totalShares,
     })
   );
 
   return {
     cacheTimestamp:
-      aavePnlResponse.cacheTimestamp && userSharesResponse.cacheTimestamp
+      globalUniswapSlippageResponse.cacheTimestamp &&
+      userSharesResponse.cacheTimestamp
         ? Math.min(
-            aavePnlResponse.cacheTimestamp,
+            globalUniswapSlippageResponse.cacheTimestamp,
             userSharesResponse.cacheTimestamp
           )
         : undefined,
     result: {
-      userTotalAavePnl: data.reduce((acc, cur) => acc + cur.userAavePnl, 0),
+      userTotalSlippage: data.reduce((acc, cur) => acc + cur.userSlippage, 0),
+      userTotalVolume: data.reduce((acc, cur) => acc + cur.userVolume, 0),
       data,
     },
   };

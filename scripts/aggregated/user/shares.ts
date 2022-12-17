@@ -10,11 +10,25 @@ import {
 import { getProviderAggregate } from "../../../providers";
 import { combine } from "../util/combine";
 import { parallelizeOverEveryDWR } from "../util/template";
+import {
+  GlobalTotalSharesEntry,
+  GlobalTotalSharesResult,
+} from "../total-shares";
+import { Entry } from "../util/types";
+
+export type UserSharesEntry = Entry<{
+  userShares: number;
+  totalShares: number;
+}>;
+
+export interface UserSharesResult {
+  data: UserSharesEntry[];
+}
 
 export async function getUserShares(
   networkName: NetworkName,
   userAddress: string
-): Promise<ResultWithMetadata<any>> {
+): Promise<ResultWithMetadata<UserSharesResult>> {
   const provider = getProviderAggregate(networkName);
 
   const { dnGmxJuniorVault, dnGmxBatchingManager } =
@@ -29,21 +43,11 @@ export async function getUserShares(
   //     );
   //   }
 
-  const totalSharesData: ResultWithMetadata<
-    {
-      blockNumber: number;
-      eventName: string;
-      transactionHash: string;
-      logIndex: number;
-      totalShares: number;
-      currentRound: number;
-      roundSharesMinted: number;
-      roundUsdcBalance: number;
-    }[]
-  > = await fetchJson({
-    url: `http://localhost:3000/data/aggregated/get-total-shares?networkName=${networkName}`,
-    timeout: 1_000_000_000, // huge number
-  });
+  const totalSharesData: ResultWithMetadata<GlobalTotalSharesResult> =
+    await fetchJson({
+      url: `http://localhost:3000/data/aggregated/get-total-shares?networkName=${networkName}`,
+      timeout: 1_000_000_000, // huge number
+    });
 
   const data1 = await parallelizeOverEveryDWR(
     networkName,
@@ -89,9 +93,10 @@ export async function getUserShares(
     }
   );
 
-  return {
-    cacheTimestamp: totalSharesData.cacheTimestamp,
-    result: combine(totalSharesData.result, data1, (global, user) => {
+  const data: UserSharesEntry[] = combine(
+    totalSharesData.result.data,
+    data1,
+    (global, user) => {
       return {
         ...global,
         ...user,
@@ -103,6 +108,11 @@ export async function getUserShares(
               global.roundUsdcBalance
             : 0),
       };
-    }),
+    }
+  );
+
+  return {
+    cacheTimestamp: totalSharesData.cacheTimestamp,
+    result: { data },
   };
 }

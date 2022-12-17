@@ -4,14 +4,28 @@ import { deltaNeutralGmxVaults, formatUsdc, NetworkName } from "@ragetrade/sdk";
 
 import { getProviderAggregate } from "../../providers";
 import { parallelizeOverEveryDWR } from "./util/template";
+import { Entry } from "./util/types";
 
-export async function getTotalShares(networkName: NetworkName) {
+export type GlobalTotalSharesEntry = Entry<{
+  totalShares: number;
+  currentRound: number;
+  roundSharesMinted: number;
+  roundUsdcBalance: number;
+}>;
+
+export interface GlobalTotalSharesResult {
+  data: GlobalTotalSharesEntry[];
+}
+
+export async function getTotalShares(
+  networkName: NetworkName
+): Promise<GlobalTotalSharesResult> {
   const provider = getProviderAggregate(networkName);
 
   const { dnGmxJuniorVault, dnGmxBatchingManager } =
     deltaNeutralGmxVaults.getContractsSync(networkName, provider);
 
-  return await parallelizeOverEveryDWR(
+  const data = await parallelizeOverEveryDWR(
     networkName,
     provider,
     async (_i, blockNumber, eventName, transactionHash, logIndex) => {
@@ -56,4 +70,6 @@ export async function getTotalShares(networkName: NetworkName) {
       };
     }
   );
+
+  return { data };
 }

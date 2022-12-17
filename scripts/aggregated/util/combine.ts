@@ -1,4 +1,4 @@
-import { DataBase } from "./types";
+import { EntryBase } from "./types";
 
 /**
  * Gives intersection of two data arrays through blockNumber & logIndex, mixes
@@ -7,8 +7,8 @@ import { DataBase } from "./types";
  * @returns
  */
 export function combine<
-  A extends DataBase,
-  B extends DataBase,
+  A extends EntryBase,
+  B extends EntryBase,
   Combiner extends (a: A, b: B) => any
 >(a: A[], b: B[], combiner: Combiner): ReturnType<Combiner>[] {
   const combined: ReturnType<Combiner>[] = [];

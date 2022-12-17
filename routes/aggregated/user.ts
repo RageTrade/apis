@@ -18,7 +18,7 @@ router.get(
     const networkName = getNetworkName(req);
     const userAddress = getParamAsAddress(req, "userAddress");
     return cacheFunctionResult(
-      aggregated.user.getAavePnl,
+      aggregated.user.getUserAavePnl,
       [networkName, userAddress],
       {
         cacheSeconds: 3 * mins,
@@ -34,6 +34,19 @@ router.get(
     const userAddress = getParamAsAddress(req, "userAddress");
     return cacheFunctionResult(
       aggregated.user.getUserShares,
+      [networkName, userAddress],
+      { cacheSeconds: 3 * mins }
+    );
+  })
+);
+
+router.get(
+  "/get-uniswap-slippage",
+  handleRuntimeErrors(async (req) => {
+    const networkName = getNetworkName(req);
+    const userAddress = getParamAsAddress(req, "userAddress");
+    return cacheFunctionResult(
+      aggregated.user.getUserUniswapSlippage,
       [networkName, userAddress],
       { cacheSeconds: 3 * mins }
     );
