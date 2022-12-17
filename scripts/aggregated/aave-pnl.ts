@@ -2,7 +2,6 @@ import { formatEther, formatUnits } from "ethers/lib/utils";
 
 import {
   aave,
-  chainlink,
   deltaNeutralGmxVaults,
   NetworkName,
   tokens,
@@ -27,17 +26,11 @@ export async function getAavePnl(
 ): Promise<GlobalAavePnlResult> {
   const provider = getProviderAggregate(networkName);
 
-  const { weth, wbtc, usdc } = tokens.getContractsSync(networkName, provider);
+  const { weth, wbtc } = tokens.getContractsSync(networkName, provider);
   const { aUsdc } = aave.getContractsSync(networkName, provider);
   const { dnGmxJuniorVault } = deltaNeutralGmxVaults.getContractsSync(
     networkName,
     provider
-  );
-
-  const { ethUsdAggregator, btcUsdAggregator } =
-    await chainlink.getContractsSync(networkName, provider);
-  const usdcUsdAggregator = ethUsdAggregator.attach(
-    "0x50834F3163758fcC1Df9973b6e91f0F0F0434aD3"
   );
 
   const { wbtcVariableDebtTokenAddress, wethVariableDebtTokenAddress } =

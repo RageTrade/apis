@@ -1,14 +1,8 @@
 import { formatUnits } from "ethers/lib/utils";
 
-import {
-  aave,
-  deltaNeutralGmxVaults,
-  NetworkName,
-  tokens,
-} from "@ragetrade/sdk";
+import { deltaNeutralGmxVaults, NetworkName } from "@ragetrade/sdk";
 
 import { getProviderAggregate } from "../../providers";
-import { combine } from "./util/combine";
 import { parallelizeOverEveryDWR } from "./util/template";
 import { Entry } from "./util/types";
 import type { TokenSwappedEvent } from "@ragetrade/sdk/dist/typechain/delta-neutral-gmx-vaults/contracts/libraries/DnGmxJuniorVaultManager";
@@ -48,17 +42,10 @@ export async function getUniswapSlippage(
 ): Promise<GlobalUniswapSlippageResult> {
   const provider = getProviderAggregate(networkName);
 
-  const { weth, wbtc, usdc } = tokens.getContractsSync(networkName, provider);
-  const { aUsdc } = aave.getContractsSync(networkName, provider);
   const { dnGmxJuniorVault } = deltaNeutralGmxVaults.getContractsSync(
     networkName,
     provider
   );
-
-  const { wbtcVariableDebtTokenAddress, wethVariableDebtTokenAddress } =
-    aave.getAddresses(networkName);
-  const vdWbtc = aUsdc.attach(wbtcVariableDebtTokenAddress);
-  const vdWeth = aUsdc.attach(wethVariableDebtTokenAddress);
 
   const data: GlobalUniswapSlippageEntry[] = await parallelizeOverEveryDWR(
     networkName,
