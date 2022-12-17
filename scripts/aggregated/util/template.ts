@@ -43,7 +43,7 @@ export async function parallelizeOverEveryDWR<Data>(
   let done = 0;
   let failed = 0;
   for (const event of allEvents) {
-    if (i > 200) break;
+    // if (i > 200) break;
     promises.push(
       (async (
         _i: number,
