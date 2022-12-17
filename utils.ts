@@ -11,6 +11,10 @@ import {
 } from "@ragetrade/sdk";
 import { BigNumber, ethers } from "ethers";
 
+export const secs = 1;
+export const mins = 60;
+export const hours = 60 * mins;
+
 export function getParamAsAddress(req: Request, paramName: string): string {
   const input = getParamAsString(req, paramName);
   if (!isAddress(input)) {

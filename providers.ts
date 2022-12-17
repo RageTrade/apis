@@ -32,3 +32,25 @@ export function getProvider(
       throw new Error(`Provider not available for the network: ${networkName}`);
   }
 }
+
+// This is separate from the above function because the aggregate apis make a lot of requests
+export function getProviderAggregate(
+  networkName: NetworkName
+): ethers.providers.Provider {
+  switch (networkName) {
+    case "arbmain":
+      return new ethers.providers.StaticJsonRpcProvider(
+        "https://arb-mainnet.g.alchemy.com/v2/" +
+          process.env.ALCHEMY_KEY_AGGREGATE
+      );
+    case "arbgoerli":
+      return new ethers.providers.StaticJsonRpcProvider(
+        "https://arb-goerli.g.alchemy.com/v2/" +
+          process.env.ALCHEMY_KEY_AGGREGATE
+      );
+    default:
+      throw new Error(
+        `Aggregate provider not available for the network: ${networkName}`
+      );
+  }
+}

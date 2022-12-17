@@ -24,11 +24,12 @@ import {
   getParamAsString,
   getVaultName,
   handleRuntimeErrors,
+  hours,
+  mins,
+  secs,
 } from "../utils";
 
-const secs = 1;
-const mins = 60;
-const hours = 60 * mins;
+import AggregatedRouter from "./aggregated";
 
 const router = express.Router();
 
@@ -66,6 +67,12 @@ router.get(
     }
   })
 );
+
+/**
+ * Aggregated
+ */
+
+router.use("/aggregated", AggregatedRouter);
 
 /**
  * Network independent
