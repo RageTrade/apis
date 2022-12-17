@@ -70,8 +70,12 @@ export async function parallelizeOverEveryDWR<Data>(
             done++;
             break;
           } catch (e: any) {
-            // console.log("retrying");
+            // console.log("retrying", e);
             failed += 1;
+
+            if (failed > allEvents.length * 1.5) {
+              throw e;
+            }
           }
         }
       })(

@@ -1,5 +1,8 @@
-import { chainlink, NetworkName, tokens } from "@ragetrade/sdk";
 import { formatUnits } from "ethers/lib/utils";
+
+import { chainlink, NetworkName, tokens } from "@ragetrade/sdk";
+
+import { getProviderAggregate } from "../../../providers";
 
 export function name(addr: string, networkName: NetworkName) {
   const { weth, wbtc, usdc } = tokens.getContractsSync(networkName);
@@ -34,10 +37,16 @@ export async function price(
   blockNumber: number,
   networkName: NetworkName
 ) {
-  const { weth, wbtc, usdc } = tokens.getContractsSync(networkName);
+  const { weth, wbtc, usdc } = tokens.getContractsSync(
+    networkName,
+    getProviderAggregate(networkName)
+  );
 
   const { ethUsdAggregator, btcUsdAggregator } =
-    await chainlink.getContractsSync(networkName);
+    await chainlink.getContractsSync(
+      networkName,
+      getProviderAggregate(networkName)
+    );
   const usdcUsdAggregator = ethUsdAggregator.attach(
     "0x50834F3163758fcC1Df9973b6e91f0F0F0434aD3"
   );
