@@ -445,6 +445,8 @@ export async function getVaultMetrics() {
     lastRowDeltaSpread = row;
   }
 
+  clearInterval(intr);
+
   return {
     glpNetPnl,
     aaveNetPnl,
