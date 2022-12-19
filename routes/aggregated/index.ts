@@ -67,6 +67,16 @@ router.get(
   })
 );
 
+router.get(
+  "/get-vault-metrics",
+  handleRuntimeErrors(async (req) => {
+    const networkName = getNetworkName(req);
+    return cacheFunctionResult(aggregated.getVaultMetrics, [], {
+      cacheSeconds: 24 * hours,
+    });
+  })
+);
+
 router.use("/user", UserRouter);
 
 export default router;
