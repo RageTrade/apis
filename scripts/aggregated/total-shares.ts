@@ -11,6 +11,7 @@ import { glpRewards } from "./util/events/glp-rewards";
 import { glpSwapped } from "./util/events/glp-swapped";
 
 export type GlobalTotalSharesEntry = Entry<{
+  timestamp: number;
   totalShares: number;
   currentRound: number;
   roundSharesMinted: number;
@@ -38,6 +39,8 @@ export async function getTotalShares(
       glpRewards,
     ] as EventFn<ethers.Event>[],
     async (_i, blockNumber, eventName, transactionHash, logIndex) => {
+      const { timestamp } = await provider.getBlock(blockNumber);
+
       const totalShares = Number(
         formatEther(
           await dnGmxJuniorVault.totalSupply({
@@ -72,6 +75,7 @@ export async function getTotalShares(
         eventName,
         transactionHash,
         logIndex,
+        timestamp,
         totalShares,
         currentRound,
         roundSharesMinted,

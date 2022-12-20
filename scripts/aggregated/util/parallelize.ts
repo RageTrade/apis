@@ -5,7 +5,7 @@ import { NetworkName } from "@ragetrade/sdk";
 export type EventFn<Event> = (
   networkName: NetworkName,
   provider: ethers.providers.Provider
-) => Promise<Event[]>;
+) => Event[] | Promise<Event[]>;
 
 export async function parallelize<Data, Event extends ethers.Event>(
   networkName: NetworkName,
