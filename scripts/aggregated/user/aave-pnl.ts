@@ -8,23 +8,32 @@ import {
 
 import { getProviderAggregate } from "../../../providers";
 import { combine } from "../util/combine";
-import { GlobalAavePnlEntry, GlobalAavePnlResult } from "../aave-pnl";
+import { GlobalAavePnlResult } from "../aave-pnl";
 import { Entry } from "../util/types";
 import { UserSharesResult } from "./shares";
+import { days, timestampRoundDown } from "../../../utils";
 
 export type UserAavePnlEntry = Entry<{
+  timestamp: number;
   userAavePnl: number;
 }>;
 
-export interface UserAaveRnlResult {
-  data: UserAavePnlEntry[];
+export interface UserAavePnlDailyEntry {
+  startTimestamp: number;
+  endTimestamp: number;
+  userAavePnlNet: number;
+}
+
+export interface UserAavePnlResult {
   userTotalAavePnl: number;
+  data: UserAavePnlEntry[];
+  dailyData: UserAavePnlDailyEntry[];
 }
 
 export async function getUserAavePnl(
   networkName: NetworkName,
   userAddress: string
-): Promise<ResultWithMetadata<UserAaveRnlResult>> {
+): Promise<ResultWithMetadata<UserAavePnlResult>> {
   const provider = getProviderAggregate(networkName);
 
   const { dnGmxJuniorVault, dnGmxBatchingManager } =
@@ -74,6 +83,22 @@ export async function getUserAavePnl(
     result: {
       userTotalAavePnl: data.reduce((acc, cur) => acc + cur.userAavePnl, 0),
       data,
+      dailyData: data.reduce(
+        (acc: UserAavePnlDailyEntry[], cur: UserAavePnlEntry) => {
+          const lastEntry = acc[acc.length - 1];
+          if (lastEntry && cur.timestamp <= lastEntry.endTimestamp) {
+            lastEntry.userAavePnlNet += cur.userAavePnl;
+          } else {
+            acc.push({
+              startTimestamp: timestampRoundDown(cur.timestamp),
+              endTimestamp: timestampRoundDown(cur.timestamp) + 1 * days - 1,
+              userAavePnlNet: cur.userAavePnl,
+            });
+          }
+          return acc;
+        },
+        []
+      ),
     },
   };
 }

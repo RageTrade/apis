@@ -11,14 +11,23 @@ import { combine } from "../util/combine";
 import { GlobalGlpRewardsResult } from "../glp-rewards";
 import { Entry } from "../util/types";
 import { UserSharesResult } from "./shares";
+import { timestampRoundDown, days } from "../../../utils";
 
 export type UserGlpRewardsEntry = Entry<{
+  timestamp: number;
   userGlpRewards: number;
 }>;
 
+export interface UserGlpRewardsDailyEntry {
+  startTimestamp: number;
+  endTimestamp: number;
+  userGlpRewardsNet: number;
+}
+
 export interface UserGlpRewardsResult {
-  data: UserGlpRewardsEntry[];
   userTotalGlpRewards: number;
+  data: UserGlpRewardsEntry[];
+  dailyData: UserGlpRewardsDailyEntry[];
 }
 
 export async function getUserGlpRewards(
@@ -77,6 +86,22 @@ export async function getUserGlpRewards(
         0
       ),
       data,
+      dailyData: data.reduce(
+        (acc: UserGlpRewardsDailyEntry[], cur: UserGlpRewardsEntry) => {
+          const lastEntry = acc[acc.length - 1];
+          if (lastEntry && cur.timestamp <= lastEntry.endTimestamp) {
+            lastEntry.userGlpRewardsNet += cur.userGlpRewards;
+          } else {
+            acc.push({
+              startTimestamp: timestampRoundDown(cur.timestamp),
+              endTimestamp: timestampRoundDown(cur.timestamp) + 1 * days - 1,
+              userGlpRewardsNet: cur.userGlpRewards,
+            });
+          }
+          return acc;
+        },
+        []
+      ),
     },
   };
 }

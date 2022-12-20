@@ -8,17 +8,26 @@ import {
 
 import { getProviderAggregate } from "../../../providers";
 import { combine } from "../util/combine";
-import { GlobalGlpPnlEntry, GlobalGlpPnlResult } from "../glp-pnl";
+import { GlobalGlpPnlResult } from "../glp-pnl";
 import { Entry } from "../util/types";
 import { UserSharesResult } from "./shares";
+import { timestampRoundDown, days } from "../../../utils";
 
 export type UserGlpPnlEntry = Entry<{
+  timestamp: number;
   userGlpPnl: number;
 }>;
 
+export interface UserGlpPnlDailyEntry {
+  startTimestamp: number;
+  endTimestamp: number;
+  userGlpPnlNet: number;
+}
+
 export interface UserGlpPnlResult {
-  data: UserGlpPnlEntry[];
   userTotalGlpPnl: number;
+  data: UserGlpPnlEntry[];
+  dailyData: UserGlpPnlDailyEntry[];
 }
 
 export async function getUserGlpPnl(
@@ -74,6 +83,22 @@ export async function getUserGlpPnl(
     result: {
       userTotalGlpPnl: data.reduce((acc, cur) => acc + cur.userGlpPnl, 0),
       data,
+      dailyData: data.reduce(
+        (acc: UserGlpPnlDailyEntry[], cur: UserGlpPnlEntry) => {
+          const lastEntry = acc[acc.length - 1];
+          if (lastEntry && cur.timestamp <= lastEntry.endTimestamp) {
+            lastEntry.userGlpPnlNet += cur.userGlpPnl;
+          } else {
+            acc.push({
+              startTimestamp: timestampRoundDown(cur.timestamp),
+              endTimestamp: timestampRoundDown(cur.timestamp) + 1 * days - 1,
+              userGlpPnlNet: cur.userGlpPnl,
+            });
+          }
+          return acc;
+        },
+        []
+      ),
     },
   };
 }

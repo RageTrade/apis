@@ -14,6 +14,7 @@ import { BigNumber, ethers } from "ethers";
 export const secs = 1;
 export const mins = 60;
 export const hours = 60 * mins;
+export const days = 24 * hours;
 
 export function getParamAsAddress(req: Request, paramName: string): string {
   const input = getParamAsString(req, paramName);
@@ -178,4 +179,8 @@ export function safeDiv(numerator: BigNumber, denominator: BigNumber) {
 
 export function safeDivNumer(numerator: number, denominator: number) {
   return denominator === 0 ? 0 : numerator / denominator;
+}
+
+export function timestampRoundDown(timestampSec: number) {
+  return timestampSec - (timestampSec % days);
 }

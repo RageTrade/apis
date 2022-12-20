@@ -18,6 +18,7 @@ import { ethers } from "ethers";
 import { glpRewards } from "../util/events/glp-rewards";
 
 export type UserSharesEntry = Entry<{
+  timestamp: number;
   userShares: number;
   totalShares: number;
 }>;

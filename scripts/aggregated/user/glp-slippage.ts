@@ -8,20 +8,26 @@ import {
 
 import { getProviderAggregate } from "../../../providers";
 import { combine } from "../util/combine";
-import {
-  GlobalGlpSlippageEntry,
-  GlobalGlpSlippageResult,
-} from "../glp-slippage";
+import { GlobalGlpSlippageResult } from "../glp-slippage";
 import { Entry } from "../util/types";
 import { UserSharesResult } from "./shares";
+import { timestampRoundDown, days } from "../../../utils";
 
 export type UserGlpSlippageEntry = Entry<{
+  timestamp: number;
   userGlpSlippage: number;
 }>;
 
+export interface UserGlpSlippageDailyEntry {
+  startTimestamp: number;
+  endTimestamp: number;
+  userGlpSlippageNet: number;
+}
+
 export interface UserGlpSlippageResult {
-  data: UserGlpSlippageEntry[];
   userTotalGlpSlippage: number;
+  data: UserGlpSlippageEntry[];
+  dailyData: UserGlpSlippageDailyEntry[];
 }
 
 export async function getUserGlpSlippage(
@@ -80,6 +86,22 @@ export async function getUserGlpSlippage(
         0
       ),
       data,
+      dailyData: data.reduce(
+        (acc: UserGlpSlippageDailyEntry[], cur: UserGlpSlippageEntry) => {
+          const lastEntry = acc[acc.length - 1];
+          if (lastEntry && cur.timestamp <= lastEntry.endTimestamp) {
+            lastEntry.userGlpSlippageNet += cur.userGlpSlippage;
+          } else {
+            acc.push({
+              startTimestamp: timestampRoundDown(cur.timestamp),
+              endTimestamp: timestampRoundDown(cur.timestamp) + 1 * days - 1,
+              userGlpSlippageNet: cur.userGlpSlippage,
+            });
+          }
+          return acc;
+        },
+        []
+      ),
     },
   };
 }

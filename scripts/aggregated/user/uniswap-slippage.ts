@@ -8,19 +8,29 @@ import {
 
 import { getProviderAggregate } from "../../../providers";
 import { combine } from "../util/combine";
-import { UserSharesEntry, UserSharesResult } from "./shares";
+import { UserSharesResult } from "./shares";
 import { GlobalUniswapSlippageResult } from "../uniswap-slippage";
 import { Entry } from "../util/types";
+import { timestampRoundDown, days } from "../../../utils";
 
 export type UserUniswapSlippageEntry = Entry<{
+  timestamp: number;
   userSlippage: number;
   userVolume: number;
 }>;
 
+export interface UserUniswapSlippageDailyEntry {
+  startTimestamp: number;
+  endTimestamp: number;
+  userSlippageNet: number;
+  userVolumeNet: number;
+}
+
 export interface UserUniswapSlippageResult {
-  data: UserUniswapSlippageEntry[];
   userTotalSlippage: number;
   userTotalVolume: number;
+  data: UserUniswapSlippageEntry[];
+  dailyData: UserUniswapSlippageDailyEntry[];
 }
 
 export async function getUserUniswapSlippage(
@@ -81,6 +91,27 @@ export async function getUserUniswapSlippage(
       userTotalSlippage: data.reduce((acc, cur) => acc + cur.userSlippage, 0),
       userTotalVolume: data.reduce((acc, cur) => acc + cur.userVolume, 0),
       data,
+      dailyData: data.reduce(
+        (
+          acc: UserUniswapSlippageDailyEntry[],
+          cur: UserUniswapSlippageEntry
+        ) => {
+          const lastEntry = acc[acc.length - 1];
+          if (lastEntry && cur.timestamp <= lastEntry.endTimestamp) {
+            lastEntry.userSlippageNet += cur.userSlippage;
+            lastEntry.userVolumeNet += cur.userVolume;
+          } else {
+            acc.push({
+              startTimestamp: timestampRoundDown(cur.timestamp),
+              endTimestamp: timestampRoundDown(cur.timestamp) + 1 * days - 1,
+              userSlippageNet: cur.userSlippage,
+              userVolumeNet: cur.userVolume,
+            });
+          }
+          return acc;
+        },
+        []
+      ),
     },
   };
 }
