@@ -1,10 +1,4 @@
-import {
-  readJSON,
-  writeJSON,
-  existsSync,
-  ensureFileSync,
-  ensureFile,
-} from "fs-extra";
+import { readJSON, writeJSON, existsSync, ensureFile, remove } from "fs-extra";
 import path from "path";
 import { BaseStore } from "./base-store";
 
@@ -17,13 +11,17 @@ export class FileStore<Value> extends BaseStore<Value> {
   }
 
   async _get<V = string>(_key: string): Promise<V | undefined> {
-    const exists = existsSync(this.getPath(_key));
+    const filePath = this.getPath(_key);
+    const exists = existsSync(filePath);
     if (exists) {
-      const json = await readJSON(this.getPath(_key));
-      return json as unknown as V;
-    } else {
-      return undefined;
+      try {
+        const json = await readJSON(filePath);
+        return json as unknown as V;
+      } catch {
+        await remove(filePath);
+      }
     }
+    return undefined;
   }
 
   async _set<V = Value>(_key: string, _value: V): Promise<void> {
