@@ -1,22 +1,37 @@
-import { formatEther } from "ethers/lib/utils";
+import { fetchJson, formatEther } from "ethers/lib/utils";
 
-import { deltaNeutralGmxVaults, NetworkName, tokens } from "@ragetrade/sdk";
+import {
+  deltaNeutralGmxVaults,
+  NetworkName,
+  ResultWithMetadata,
+  tokens,
+} from "@ragetrade/sdk";
 
 import { getProviderAggregate } from "../../providers";
 import { combine } from "./util/combine";
 import { parallelize } from "./util/parallelize";
 import { Entry } from "./util/types";
 import { depositWithdrawRebalance } from "./util/events/deposit-withdraw-rebalance";
+import { GlobalTotalSharesResult } from "./total-shares";
+import { timestampRoundDown, days } from "../../utils";
 
 export type GlobalGlpPnlEntry = Entry<{
+  timestamp: number;
   fsGlp_balanceOf_juniorVault: number;
   fsGlp_balanceOf_batchingManager: number;
   glpPrice: number;
   glpPnl: number;
 }>;
 
+export interface GlobalGlpPnlDailyEntry {
+  startTimestamp: number;
+  endTimestamp: number;
+  glpPnlNet: number;
+}
+
 export interface GlobalGlpPnlResult {
   data: GlobalGlpPnlEntry[];
+  dailyData: GlobalGlpPnlDailyEntry[];
 }
 
 export async function getGlpPnl(
@@ -28,6 +43,12 @@ export async function getGlpPnl(
 
   const { dnGmxJuniorVault, dnGmxBatchingManager } =
     deltaNeutralGmxVaults.getContractsSync(networkName, provider);
+
+  const totalSharesData: ResultWithMetadata<GlobalTotalSharesResult> =
+    await fetchJson({
+      url: `http://localhost:3000/data/aggregated/get-total-shares?networkName=${networkName}`,
+      timeout: 1_000_000_000, // huge number
+    });
 
   const data = await parallelize(
     networkName,
@@ -70,10 +91,15 @@ export async function getGlpPnl(
     }
   );
 
-  const extraData: GlobalGlpPnlEntry[] = [];
+  const data2 = combine(data, totalSharesData.result.data, (a, b) => ({
+    ...a,
+    timestamp: b.timestamp,
+  }));
+
+  const extraData = [];
 
   let last;
-  for (const current of data) {
+  for (const current of data2) {
     if (last) {
       const glpPnl =
         (last.fsGlp_balanceOf_juniorVault +
@@ -107,6 +133,25 @@ export async function getGlpPnl(
     last = current;
   }
 
-  // combines both information
-  return { data: combine(data, extraData, (a, b) => ({ ...a, ...b })) };
+  // combines all information
+  const combinedData = combine(data2, extraData, (a, b) => ({ ...a, ...b }));
+  return {
+    data: combinedData,
+    dailyData: combinedData.reduce(
+      (acc: GlobalGlpPnlDailyEntry[], cur: GlobalGlpPnlEntry) => {
+        const lastEntry = acc[acc.length - 1];
+        if (lastEntry && cur.timestamp <= lastEntry.endTimestamp) {
+          lastEntry.glpPnlNet += cur.glpPnl;
+        } else {
+          acc.push({
+            startTimestamp: timestampRoundDown(cur.timestamp),
+            endTimestamp: timestampRoundDown(cur.timestamp) + 1 * days - 1,
+            glpPnlNet: cur.glpPnl,
+          });
+        }
+        return acc;
+      },
+      []
+    ),
+  };
 }

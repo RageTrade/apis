@@ -1,18 +1,34 @@
-import { formatEther, formatUnits } from "ethers/lib/utils";
+import { fetchJson, formatEther, formatUnits } from "ethers/lib/utils";
 
-import { gmxProtocol, NetworkName, tokens } from "@ragetrade/sdk";
+import {
+  gmxProtocol,
+  NetworkName,
+  ResultWithMetadata,
+  tokens,
+} from "@ragetrade/sdk";
 
 import { getProviderAggregate } from "../../providers";
 import { glpRewards } from "./util/events/glp-rewards";
 import { parallelize } from "./util/parallelize";
 import { Entry } from "./util/types";
+import { GlobalTotalSharesResult } from "./total-shares";
+import { combine } from "./util/combine";
+import { timestampRoundDown, days } from "../../utils";
 
 export type GlobalGlpRewardsEntry = Entry<{
+  timestamp: number;
   glpRewards: number;
 }>;
 
+export interface GlobalGlpRewardsDailyEntry {
+  startTimestamp: number;
+  endTimestamp: number;
+  glpRewardsNet: number;
+}
+
 export interface GlobalGlpRewardsResult {
   data: GlobalGlpRewardsEntry[];
+  dailyData: GlobalGlpRewardsDailyEntry[];
 }
 
 export async function getGlpRewards(
@@ -22,6 +38,12 @@ export async function getGlpRewards(
 
   const { glpManager } = gmxProtocol.getContractsSync(networkName, provider);
   const { fsGLP } = tokens.getContractsSync(networkName, provider);
+
+  const totalSharesData: ResultWithMetadata<GlobalTotalSharesResult> =
+    await fetchJson({
+      url: `http://localhost:3000/data/aggregated/get-total-shares?networkName=${networkName}`,
+      timeout: 1_000_000_000, // huge number
+    });
 
   const data = await parallelize(
     networkName,
@@ -55,5 +77,28 @@ export async function getGlpRewards(
     }
   );
 
-  return { data };
+  const combinedData = combine(data, totalSharesData.result.data, (a, b) => ({
+    ...a,
+    timestamp: b.timestamp,
+  }));
+
+  return {
+    data: combinedData,
+    dailyData: combinedData.reduce(
+      (acc: GlobalGlpRewardsDailyEntry[], cur: GlobalGlpRewardsEntry) => {
+        const lastEntry = acc[acc.length - 1];
+        if (lastEntry && cur.timestamp <= lastEntry.endTimestamp) {
+          lastEntry.glpRewardsNet += cur.glpRewards;
+        } else {
+          acc.push({
+            startTimestamp: timestampRoundDown(cur.timestamp),
+            endTimestamp: timestampRoundDown(cur.timestamp) + 1 * days - 1,
+            glpRewardsNet: cur.glpRewards,
+          });
+        }
+        return acc;
+      },
+      []
+    ),
+  };
 }

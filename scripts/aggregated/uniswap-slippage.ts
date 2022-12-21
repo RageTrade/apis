@@ -1,6 +1,10 @@
-import { formatUnits } from "ethers/lib/utils";
+import { fetchJson, formatUnits } from "ethers/lib/utils";
 
-import { deltaNeutralGmxVaults, NetworkName } from "@ragetrade/sdk";
+import {
+  deltaNeutralGmxVaults,
+  NetworkName,
+  ResultWithMetadata,
+} from "@ragetrade/sdk";
 
 import { getProviderAggregate } from "../../providers";
 import { parallelize } from "./util/parallelize";
@@ -8,8 +12,12 @@ import { Entry } from "./util/types";
 import type { TokenSwappedEvent } from "@ragetrade/sdk/dist/typechain/delta-neutral-gmx-vaults/contracts/libraries/DnGmxJuniorVaultManager";
 import { decimals, price, name } from "./util/helpers";
 import { depositWithdrawRebalance } from "./util/events/deposit-withdraw-rebalance";
+import { GlobalTotalSharesResult } from "./total-shares";
+import { combine } from "./util/combine";
+import { days, timestampRoundDown } from "../../utils";
 
 export type GlobalUniswapSlippageEntry = Entry<{
+  timestamp: number;
   volume: number;
   slippage: number;
   btcBought: number;
@@ -21,6 +29,13 @@ export type GlobalUniswapSlippageEntry = Entry<{
   btcSoldSlippage: number;
   ethSoldSlippage: number;
 }>;
+
+export interface GlobalUniswapSlippageDailyEntry {
+  startTimestamp: number;
+  endTimestamp: number;
+  slippageNet: number;
+  volumeNet: number;
+}
 
 export interface GlobalUniswapSlippageResult {
   totalVolume: number;
@@ -36,6 +51,7 @@ export interface GlobalUniswapSlippageResult {
   totalEthSoldSlippage: number;
 
   data: GlobalUniswapSlippageEntry[];
+  dailyData: GlobalUniswapSlippageDailyEntry[];
 }
 
 export async function getUniswapSlippage(
@@ -48,7 +64,13 @@ export async function getUniswapSlippage(
     provider
   );
 
-  const data: GlobalUniswapSlippageEntry[] = await parallelize(
+  const totalSharesData: ResultWithMetadata<GlobalTotalSharesResult> =
+    await fetchJson({
+      url: `http://localhost:3000/data/aggregated/get-total-shares?networkName=${networkName}`,
+      timeout: 1_000_000_000, // huge number
+    });
+
+  const data = await parallelize(
     networkName,
     provider,
     depositWithdrawRebalance,
@@ -142,6 +164,11 @@ export async function getUniswapSlippage(
     }
   );
 
+  const combinedData = combine(data, totalSharesData.result.data, (a, b) => ({
+    ...a,
+    timestamp: b.timestamp,
+  }));
+
   return {
     totalVolume: data.reduce((acc, cur) => acc + cur.volume, 0),
     totalSlippage: data.reduce((acc, cur) => acc + cur.slippage, 0),
@@ -165,6 +192,27 @@ export async function getUniswapSlippage(
       (acc, cur) => acc + cur.ethSoldSlippage,
       0
     ),
-    data,
+    data: combinedData,
+    dailyData: combinedData.reduce(
+      (
+        acc: GlobalUniswapSlippageDailyEntry[],
+        cur: GlobalUniswapSlippageEntry
+      ) => {
+        const lastEntry = acc[acc.length - 1];
+        if (lastEntry && cur.timestamp <= lastEntry.endTimestamp) {
+          lastEntry.slippageNet += cur.slippage;
+          lastEntry.volumeNet += cur.volume;
+        } else {
+          acc.push({
+            startTimestamp: timestampRoundDown(cur.timestamp),
+            endTimestamp: timestampRoundDown(cur.timestamp) + 1 * days - 1,
+            slippageNet: cur.slippage,
+            volumeNet: cur.volume,
+          });
+        }
+        return acc;
+      },
+      []
+    ),
   };
 }

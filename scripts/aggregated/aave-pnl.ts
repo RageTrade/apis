@@ -1,9 +1,10 @@
-import { formatEther, formatUnits } from "ethers/lib/utils";
+import { fetchJson, formatEther, formatUnits } from "ethers/lib/utils";
 
 import {
   aave,
   deltaNeutralGmxVaults,
   NetworkName,
+  ResultWithMetadata,
   tokens,
 } from "@ragetrade/sdk";
 
@@ -13,13 +14,23 @@ import { parallelize } from "./util/parallelize";
 import { Entry } from "./util/types";
 import { price } from "./util/helpers";
 import { depositWithdrawRebalance } from "./util/events/deposit-withdraw-rebalance";
+import { GlobalTotalSharesResult } from "./total-shares";
+import { timestampRoundDown, days } from "../../utils";
 
 export type GlobalAavePnlEntry = Entry<{
+  timestamp: number;
   aavePnl: number;
 }>;
 
+export interface GlobalAavePnlDailyEntry {
+  startTimestamp: number;
+  endTimestamp: number;
+  aavePnlNet: number;
+}
+
 export interface GlobalAavePnlResult {
   data: GlobalAavePnlEntry[];
+  dailyData: GlobalAavePnlDailyEntry[];
 }
 
 export async function getAavePnl(
@@ -38,6 +49,12 @@ export async function getAavePnl(
     aave.getAddresses(networkName);
   const vdWbtc = aUsdc.attach(wbtcVariableDebtTokenAddress);
   const vdWeth = aUsdc.attach(wethVariableDebtTokenAddress);
+
+  const totalSharesData: ResultWithMetadata<GlobalTotalSharesResult> =
+    await fetchJson({
+      url: `http://localhost:3000/data/aggregated/get-total-shares?networkName=${networkName}`,
+      timeout: 1_000_000_000, // huge number
+    });
 
   const data = await parallelize(
     networkName,
@@ -92,10 +109,15 @@ export async function getAavePnl(
     }
   );
 
+  const data2 = combine(data, totalSharesData.result.data, (a, b) => ({
+    ...a,
+    timestamp: b.timestamp,
+  }));
+
   const extraData: Entry<{ aavePnl: number }>[] = [];
 
   let last;
-  for (const current of data) {
+  for (const current of data2) {
     if (last) {
       let aavePnl = 0;
       aavePnl -=
@@ -126,5 +148,24 @@ export async function getAavePnl(
   }
 
   // combines both information
-  return { data: combine(data, extraData, (a, b) => ({ ...a, ...b })) };
+  const combinedData = combine(data2, extraData, (a, b) => ({ ...a, ...b }));
+  return {
+    data: combinedData,
+    dailyData: combinedData.reduce(
+      (acc: GlobalAavePnlDailyEntry[], cur: GlobalAavePnlEntry) => {
+        const lastEntry = acc[acc.length - 1];
+        if (lastEntry && cur.timestamp <= lastEntry.endTimestamp) {
+          lastEntry.aavePnlNet += cur.aavePnl;
+        } else {
+          acc.push({
+            startTimestamp: timestampRoundDown(cur.timestamp),
+            endTimestamp: timestampRoundDown(cur.timestamp) + 1 * days - 1,
+            aavePnlNet: cur.aavePnl,
+          });
+        }
+        return acc;
+      },
+      []
+    ),
+  };
 }

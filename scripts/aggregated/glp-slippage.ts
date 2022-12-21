@@ -1,10 +1,10 @@
-import { formatEther, formatUnits } from "ethers/lib/utils";
+import { fetchJson, formatEther, formatUnits } from "ethers/lib/utils";
 
 import {
-  deltaNeutralGmxVaults,
   formatUsdc,
   gmxProtocol,
   NetworkName,
+  ResultWithMetadata,
   tokens,
 } from "@ragetrade/sdk";
 
@@ -12,10 +12,12 @@ import { getProviderAggregate } from "../../providers";
 import { combine } from "./util/combine";
 import { parallelize } from "./util/parallelize";
 import { Entry } from "./util/types";
-import { depositWithdrawRebalance } from "./util/events/deposit-withdraw-rebalance";
 import { glpSwapped } from "./util/events/glp-swapped";
+import { timestampRoundDown, days } from "../../utils";
+import { GlobalTotalSharesResult } from "./total-shares";
 
 export type GlobalGlpSlippageEntry = Entry<{
+  timestamp: number;
   glpAmt: number;
   usdcAmt: number;
   fromGlpToUsdc: boolean;
@@ -24,8 +26,14 @@ export type GlobalGlpSlippageEntry = Entry<{
   glpSlippage: number;
 }>;
 
+export interface GlobalGlpSlippageDailyEntry {
+  startTimestamp: number;
+  endTimestamp: number;
+  glpSlippageNet: number;
+}
 export interface GlobalGlpSlippageResult {
   data: GlobalGlpSlippageEntry[];
+  dailyData: GlobalGlpSlippageDailyEntry[];
 }
 
 export async function getGlpSlippage(
@@ -35,10 +43,13 @@ export async function getGlpSlippage(
 
   const { fsGLP } = tokens.getContractsSync(networkName, provider);
 
-  const { dnGmxJuniorVault, dnGmxBatchingManager } =
-    deltaNeutralGmxVaults.getContractsSync(networkName, provider);
-
   const { glpManager } = gmxProtocol.getContractsSync(networkName, provider);
+
+  const totalSharesData: ResultWithMetadata<GlobalTotalSharesResult> =
+    await fetchJson({
+      url: `http://localhost:3000/data/aggregated/get-total-shares?networkName=${networkName}`,
+      timeout: 1_000_000_000, // huge number
+    });
 
   const data = await parallelize(
     networkName,
@@ -94,5 +105,28 @@ export async function getGlpSlippage(
     }
   );
 
-  return { data };
+  const combinedData = combine(data, totalSharesData.result.data, (a, b) => ({
+    ...a,
+    timestamp: b.timestamp,
+  }));
+
+  return {
+    data: combinedData,
+    dailyData: combinedData.reduce(
+      (acc: GlobalGlpSlippageDailyEntry[], cur: GlobalGlpSlippageEntry) => {
+        const lastEntry = acc[acc.length - 1];
+        if (lastEntry && cur.timestamp <= lastEntry.endTimestamp) {
+          lastEntry.glpSlippageNet += cur.glpSlippage;
+        } else {
+          acc.push({
+            startTimestamp: timestampRoundDown(cur.timestamp),
+            endTimestamp: timestampRoundDown(cur.timestamp) + 1 * days - 1,
+            glpSlippageNet: cur.glpSlippage,
+          });
+        }
+        return acc;
+      },
+      []
+    ),
+  };
 }
