@@ -54,16 +54,14 @@ export class ArchiveCacheProvider extends ethers.providers
     }
   }
 
-  async getTransactionReceipt(
-    transactionHash: string
-  ): Promise<TransactionReceipt> {
-    const requestId = id(["getTransactionReceipt", transactionHash].join("-"));
-
-    // @ts-ignore
-    return await this.store.getOrSet(requestId, async () => {
-      return stringifyBigNumber(
-        await super.getTransactionReceipt(transactionHash)
-      );
-    });
+  async send(method: string, params: any): Promise<any> {
+    if (method === "eth_getTransactionReceipt") {
+      const requestId = id(["send", method, ...params].join("-"));
+      return await this.store.getOrSet(requestId, async () => {
+        return await super.send(method, params);
+      });
+    } else {
+      return await super.send(method, params);
+    }
   }
 }
