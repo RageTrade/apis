@@ -1,6 +1,7 @@
-import { NetworkName, sdk } from "@ragetrade/sdk";
+import { chainIds, NetworkName, sdk } from "@ragetrade/sdk";
 import { config } from "dotenv";
 import { ethers } from "ethers";
+import { ArchiveCacheProvider } from "./archive-cache-provider";
 
 config();
 
@@ -39,14 +40,16 @@ export function getProviderAggregate(
 ): ethers.providers.Provider {
   switch (networkName) {
     case "arbmain":
-      return new ethers.providers.StaticJsonRpcProvider(
+      return new ArchiveCacheProvider(
         "https://arb-mainnet.g.alchemy.com/v2/" +
-          process.env.ALCHEMY_KEY_AGGREGATE
+          process.env.ALCHEMY_KEY_AGGREGATE,
+        chainIds.arbmain
       );
     case "arbgoerli":
-      return new ethers.providers.StaticJsonRpcProvider(
+      return new ArchiveCacheProvider(
         "https://arb-goerli.g.alchemy.com/v2/" +
-          process.env.ALCHEMY_KEY_AGGREGATE
+          process.env.ALCHEMY_KEY_AGGREGATE,
+        chainIds.arbgoerli
       );
     default:
       throw new Error(

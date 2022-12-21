@@ -45,7 +45,7 @@ export class JsonStore<Value> extends BaseStore<Value> {
     await this.waitForWrite();
     this._writing = true;
     await this.waitForReads();
-    const json = await readJSON(this._path);
+    const json = await this._readJson();
     for (const { key, value } of entries) {
       json[key] = value;
     }

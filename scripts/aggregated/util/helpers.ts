@@ -42,11 +42,10 @@ export async function price(
     getProviderAggregate(networkName)
   );
 
-  const { ethUsdAggregator, btcUsdAggregator } =
-    await chainlink.getContractsSync(
-      networkName,
-      getProviderAggregate(networkName)
-    );
+  const { ethUsdAggregator, btcUsdAggregator } = chainlink.getContractsSync(
+    networkName,
+    getProviderAggregate(networkName)
+  );
   const usdcUsdAggregator = ethUsdAggregator.attach(
     "0x50834F3163758fcC1Df9973b6e91f0F0F0434aD3"
   );
