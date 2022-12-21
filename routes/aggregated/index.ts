@@ -68,6 +68,16 @@ router.get(
 );
 
 router.get(
+  "/get-delta-spread",
+  handleRuntimeErrors(async (req) => {
+    const networkName = getNetworkName(req);
+    return cacheFunctionResult(aggregated.getDeltaSpread, [networkName], {
+      cacheSeconds: 20 * mins,
+    });
+  })
+);
+
+router.get(
   "/get-aave-lends",
   handleRuntimeErrors(async (req) => {
     const networkName = getNetworkName(req);

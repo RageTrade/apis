@@ -11,12 +11,12 @@ import { parallelize } from "./util/parallelize";
 import { Entry } from "./util/types";
 import type { TokenSwappedEvent } from "@ragetrade/sdk/dist/typechain/delta-neutral-gmx-vaults/contracts/libraries/DnGmxJuniorVaultManager";
 import { decimals, price, name } from "./util/helpers";
+import { depositWithdrawRebalance } from "./util/events/deposit-withdraw-rebalance";
 import { GlobalTotalSharesResult } from "./total-shares";
 import { combine } from "./util/combine";
 import { days, timestampRoundDown } from "../../utils";
-import { rebalanced } from "./util/events/rebalanced";
 
-export type GlobalUniswapSlippageEntry = Entry<{
+export type GlobalDeltaSpreadEntry = Entry<{
   timestamp: number;
   volume: number;
   slippage: number;
@@ -30,14 +30,14 @@ export type GlobalUniswapSlippageEntry = Entry<{
   ethSoldSlippage: number;
 }>;
 
-export interface GlobalUniswapSlippageDailyEntry {
+export interface GlobalDeltaSpreadDailyEntry {
   startTimestamp: number;
   endTimestamp: number;
   slippageNet: number;
   volumeNet: number;
 }
 
-export interface GlobalUniswapSlippageResult {
+export interface GlobalDeltaSpreadResult {
   totalVolume: number;
   totalSlippage: number;
 
@@ -50,13 +50,13 @@ export interface GlobalUniswapSlippageResult {
   totalBtcSoldSlippage: number;
   totalEthSoldSlippage: number;
 
-  data: GlobalUniswapSlippageEntry[];
-  dailyData: GlobalUniswapSlippageDailyEntry[];
+  data: GlobalDeltaSpreadEntry[];
+  dailyData: GlobalDeltaSpreadDailyEntry[];
 }
 
-export async function getUniswapSlippage(
+export async function getDeltaSpread(
   networkName: NetworkName
-): Promise<GlobalUniswapSlippageResult> {
+): Promise<GlobalDeltaSpreadResult> {
   const provider = getProviderAggregate(networkName);
 
   const { dnGmxJuniorVault } = deltaNeutralGmxVaults.getContractsSync(
@@ -73,7 +73,7 @@ export async function getUniswapSlippage(
   const data = await parallelize(
     networkName,
     provider,
-    rebalanced,
+    depositWithdrawRebalance,
     async (_i, blockNumber, eventName, transactionHash, logIndex) => {
       const rc = await provider.getTransactionReceipt(transactionHash);
       const filter = dnGmxJuniorVault.filters.TokenSwapped();
@@ -194,10 +194,7 @@ export async function getUniswapSlippage(
     ),
     data: combinedData,
     dailyData: combinedData.reduce(
-      (
-        acc: GlobalUniswapSlippageDailyEntry[],
-        cur: GlobalUniswapSlippageEntry
-      ) => {
+      (acc: GlobalDeltaSpreadDailyEntry[], cur: GlobalDeltaSpreadEntry) => {
         const lastEntry = acc[acc.length - 1];
         if (lastEntry && cur.timestamp <= lastEntry.endTimestamp) {
           lastEntry.slippageNet += cur.slippage;
