@@ -37,8 +37,10 @@ export async function parallelize<Data, Event extends ethers.Event>(
     data.push();
   }
 
+  const start = Date.now();
   let i = 0;
   let promises = [];
+  let inflight = 0;
   let done = 0;
   let failed = 0;
   for (const event of allEvents) {
@@ -55,9 +57,11 @@ export async function parallelize<Data, Event extends ethers.Event>(
         while (1) {
           // add random delay to avoid lot of requests being shot at same time
           await new Promise((r) =>
-            setTimeout(r, Math.floor(Math.random() * 20_000))
+            setTimeout(r, Math.floor(Math.random() * 10_000))
           );
+          if (inflight >= 350) continue;
           try {
+            inflight++;
             data[_i] = await onEachEvent(
               _i,
               blockNumber,
@@ -67,10 +71,12 @@ export async function parallelize<Data, Event extends ethers.Event>(
               event
             );
             done++;
+            inflight--;
             break;
           } catch (e: any) {
             // console.log("retrying", e);
-            failed += 1;
+            failed++;
+            inflight--;
 
             if (failed > allEvents.length * 4) {
               throw e;
@@ -84,12 +90,24 @@ export async function parallelize<Data, Event extends ethers.Event>(
         event.transactionHash,
         event.logIndex,
         event
-      )
+      ).catch((e) => {
+        throw e;
+      })
     );
   }
 
   let intr = setInterval(() => {
-    console.log("done", done, "retries", failed, "total", allEvents.length);
+    console.log(
+      "inflight",
+      inflight,
+      "done",
+      done,
+      (done * 1000) / (Date.now() - start),
+      "retries",
+      failed,
+      "total",
+      allEvents.length
+    );
   }, 5000);
 
   await Promise.all(promises);
