@@ -12,7 +12,7 @@ router.get(
   handleRuntimeErrors(async (req) => {
     const networkName = getNetworkName(req);
     return cacheFunctionResult(aggregated.getAavePnl, [networkName], {
-      cacheSeconds: 3 * hours,
+      cacheSeconds: 20 * mins,
     });
   })
 );
@@ -22,7 +22,7 @@ router.get(
   handleRuntimeErrors(async (req) => {
     const networkName = getNetworkName(req);
     return cacheFunctionResult(aggregated.getGlpPnl, [networkName], {
-      cacheSeconds: 3 * hours,
+      cacheSeconds: 20 * mins,
     });
   })
 );
@@ -32,7 +32,7 @@ router.get(
   handleRuntimeErrors(async (req) => {
     const networkName = getNetworkName(req);
     return cacheFunctionResult(aggregated.getGlpSlippage, [networkName], {
-      cacheSeconds: 3 * hours,
+      cacheSeconds: 20 * mins,
     });
   })
 );
@@ -42,7 +42,7 @@ router.get(
   handleRuntimeErrors(async (req) => {
     const networkName = getNetworkName(req);
     return cacheFunctionResult(aggregated.getGlpRewards, [networkName], {
-      cacheSeconds: 3 * hours,
+      cacheSeconds: 20 * mins,
     });
   })
 );
@@ -52,7 +52,7 @@ router.get(
   handleRuntimeErrors(async (req) => {
     const networkName = getNetworkName(req);
     return cacheFunctionResult(aggregated.getTotalShares, [networkName], {
-      cacheSeconds: 3 * hours,
+      cacheSeconds: 20 * mins,
     });
   })
 );
@@ -62,7 +62,7 @@ router.get(
   handleRuntimeErrors(async (req) => {
     const networkName = getNetworkName(req);
     return cacheFunctionResult(aggregated.getUniswapSlippage, [networkName], {
-      cacheSeconds: 3 * hours,
+      cacheSeconds: 20 * mins,
     });
   })
 );
@@ -74,7 +74,7 @@ router.get(
     return cacheFunctionResult(
       aggregated.vaultMetrics.getAaveLends,
       [networkName],
-      { cacheSeconds: 1 * mins }
+      { cacheSeconds: 20 * mins }
     );
   })
 );
@@ -86,7 +86,7 @@ router.get(
     return cacheFunctionResult(
       aggregated.vaultMetrics.getAaveBorrows,
       [networkName],
-      { cacheSeconds: 1 * mins }
+      { cacheSeconds: 20 * mins }
     );
   })
 );
@@ -95,7 +95,7 @@ router.get(
   "/get-trader-pnl",
   handleRuntimeErrors(async () => {
     return cacheFunctionResult(aggregated.vaultMetrics.getTraderPnl, [], {
-      cacheSeconds: 1 * mins,
+      cacheSeconds: 20 * mins,
     });
   })
 );
