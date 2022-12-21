@@ -19,6 +19,9 @@ import { arbmain } from "../../providers";
 export async function getVaultMetrics() {
   const START_BLOCK = 45607856;
   const END_BLOCK = undefined;
+  const DELAY = 20_000;
+  const QUERIES = 500;
+  const start = Date.now();
 
   const { aUsdc } = await aave.getContracts(arbmain);
   const { glpManager, gmxUnderlyingVault } = await gmxProtocol.getContracts(
@@ -134,6 +137,7 @@ export async function getVaultMetrics() {
   let j = 0;
   let k = 0;
 
+  let inflight = 0;
   let done = 0;
   let failed = 0;
 
@@ -239,18 +243,28 @@ export async function getVaultMetrics() {
   }
 
   let intr = setInterval(() => {
-    console.log("done", done, "retries", failed, "total", allEvents.length);
+    console.log(
+      "inflight",
+      inflight,
+      "done",
+      done,
+      (done * 1000) / (Date.now() - start),
+      "retries",
+      failed,
+      "total",
+      allEvents.length
+    );
   }, 5000);
 
-  await logTraderPnl();
-  await Promise.all(promisesLend);
-  await Promise.all(promisesBorrow);
-  await Promise.all(promisesRewards);
-  await Promise.all(promisesGlpSlippage);
-  await Promise.all(promisesDeltaSpread);
-  await Promise.all(promisesUniswapSlippage);
-
-  clearInterval(intr);
+  await Promise.all([
+    logTraderPnl(),
+    ...promisesLend,
+    ...promisesBorrow,
+    ...promisesRewards,
+    ...promisesGlpSlippage,
+    ...promisesDeltaSpread,
+    ...promisesUniswapSlippage,
+  ]);
 
   const _dataLends = dataLends.filter((e) => e);
   const _dataBorrows = dataBorrows.filter((e) => e);
@@ -464,14 +478,18 @@ export async function getVaultMetrics() {
     vdWbtcInterestDollarsAccumulator,
     vdWethInterestDollarsAccumulator,
     data,
+    dataLends,
+    dataBorrows,
+    dataDeltaSpreads,
   };
 
   async function logRewards(event: RewardsHarvestedEvent) {
     while (1) {
       await new Promise((r) =>
-        setTimeout(r, Math.floor(Math.random() * 20_000))
+        setTimeout(r, Math.floor(Math.random() * DELAY))
       );
-
+      if (inflight >= QUERIES) continue;
+      inflight++;
       try {
         const { juniorVaultGlp, seniorVaultAUsdc } = event.args;
 
@@ -496,6 +514,7 @@ export async function getVaultMetrics() {
         // console.log("retrying");
         failed++;
       }
+      inflight--;
     }
   }
 
@@ -504,54 +523,65 @@ export async function getVaultMetrics() {
     isBlockUsedForDeltaSpread.set(blockNumber, true);
     while (1) {
       await new Promise((r) =>
-        setTimeout(r, Math.floor(Math.random() * 20_000))
+        setTimeout(r, Math.floor(Math.random() * DELAY))
       );
+      if (inflight >= QUERIES) continue;
+      inflight++;
       try {
-        const [
-          _btcAmountBefore,
-          _btcAmountAfter,
-          _ethAmountBefore,
-          _ethAmountAfter,
-          pb,
-          pe,
-          _fsGlp_balanceOf_juniorVault,
-          _fsGlp_balanceOf_batchingManager,
-          _glp_totalSupply,
-          _glpPrice,
-          _currentEthUsdgAmount,
-          _currentBtcUsdgAmount,
-        ] = await Promise.all([
-          vdWbtc.balanceOf(dnGmxJuniorVault.address, {
+        const _btcAmountBefore = await vdWbtc.balanceOf(
+          dnGmxJuniorVault.address,
+          {
             blockTag: blockNumber - 1,
-          }),
-          vdWbtc.balanceOf(dnGmxJuniorVault.address, {
+          }
+        );
+        const _btcAmountAfter = await vdWbtc.balanceOf(
+          dnGmxJuniorVault.address,
+          {
             blockTag: blockNumber,
-          }),
-          vdWeth.balanceOf(dnGmxJuniorVault.address, {
+          }
+        );
+        const _ethAmountBefore = await vdWeth.balanceOf(
+          dnGmxJuniorVault.address,
+          {
             blockTag: blockNumber - 1,
-          }),
-          vdWeth.balanceOf(dnGmxJuniorVault.address, {
+          }
+        );
+        const _ethAmountAfter = await vdWeth.balanceOf(
+          dnGmxJuniorVault.address,
+          {
             blockTag: blockNumber,
-          }),
-          price(wbtc.address, blockNumber),
-          price(weth.address, blockNumber),
-          fsGLP.balanceOf(dnGmxJuniorVault.address, {
+          }
+        );
+        const pb = await price(wbtc.address, blockNumber);
+        const pe = await price(weth.address, blockNumber);
+        const _fsGlp_balanceOf_juniorVault = await fsGLP.balanceOf(
+          dnGmxJuniorVault.address,
+          {
             blockTag: blockNumber,
-          }),
-          dnGmxBatchingManager.dnGmxJuniorVaultGlpBalance({
+          }
+        );
+        const _fsGlp_balanceOf_batchingManager =
+          await dnGmxBatchingManager.dnGmxJuniorVaultGlpBalance({
             blockTag: blockNumber,
-          }),
-          glp.totalSupply({ blockTag: blockNumber }),
-          dnGmxJuniorVault.getPrice(false, {
+          });
+        const _glp_totalSupply = await glp.totalSupply({
+          blockTag: blockNumber,
+        });
+        const _glpPrice = await dnGmxJuniorVault.getPrice(false, {
+          blockTag: blockNumber,
+        });
+        const _currentEthUsdgAmount = await gmxUnderlyingVault.usdgAmounts(
+          weth.address,
+          {
             blockTag: blockNumber,
-          }),
-          gmxUnderlyingVault.usdgAmounts(weth.address, {
+          }
+        );
+        const _currentBtcUsdgAmount = await gmxUnderlyingVault.usdgAmounts(
+          wbtc.address,
+          {
             blockTag: blockNumber,
-          }),
-          gmxUnderlyingVault.usdgAmounts(wbtc.address, {
-            blockTag: blockNumber,
-          }),
-        ]);
+          }
+        );
 
         const btcAmountBefore = formatUnits(_btcAmountBefore, 8);
         const btcAmountAfter = formatUnits(_btcAmountAfter, 8);
@@ -598,14 +628,17 @@ export async function getVaultMetrics() {
         // console.log("retrying");
         failed++;
       }
+      inflight--;
     }
   }
 
   async function logUniswapSlippage(blockNumber: number, txHash: string) {
     while (1) {
       await new Promise((r) =>
-        setTimeout(r, Math.floor(Math.random() * 20_000))
+        setTimeout(r, Math.floor(Math.random() * DELAY))
       );
+      if (inflight >= QUERIES) continue;
+      inflight++;
       try {
         const rc = await arbmain.getTransactionReceipt(txHash);
         const filter = dnGmxJuniorVault.filters.TokenSwapped();
@@ -658,6 +691,7 @@ export async function getVaultMetrics() {
         // console.log("retrying");
         failed++;
       }
+      inflight--;
     }
   }
 
@@ -665,9 +699,10 @@ export async function getVaultMetrics() {
     const scaling = 1;
     while (1) {
       await new Promise((r) =>
-        setTimeout(r, Math.floor(Math.random() * 20_000))
+        setTimeout(r, Math.floor(Math.random() * DELAY))
       );
-
+      if (inflight >= QUERIES) continue;
+      inflight++;
       try {
         const rc = await arbmain.getTransactionReceipt(txHash);
         const filter = dnGmxJuniorVault.filters.GlpSwapped();
@@ -705,6 +740,7 @@ export async function getVaultMetrics() {
         // console.log("retrying");
         failed++;
       }
+      inflight--;
     }
   }
 
@@ -714,8 +750,10 @@ export async function getVaultMetrics() {
 
     while (1) {
       await new Promise((r) =>
-        setTimeout(r, Math.floor(Math.random() * 20_000))
+        setTimeout(r, Math.floor(Math.random() * DELAY))
       );
+      if (inflight >= QUERIES) continue;
+      inflight++;
       try {
         const [
           _btcAmountBefore,
@@ -768,6 +806,7 @@ export async function getVaultMetrics() {
         // console.log("retrying");
         failed++;
       }
+      inflight--;
     }
   }
 
@@ -777,8 +816,10 @@ export async function getVaultMetrics() {
 
     while (1) {
       await new Promise((r) =>
-        setTimeout(r, Math.floor(Math.random() * 20_000))
+        setTimeout(r, Math.floor(Math.random() * DELAY))
       );
+      if (inflight >= QUERIES) continue;
+      inflight++;
       try {
         const [
           _aUsdcjuniorBefore,
@@ -816,6 +857,7 @@ export async function getVaultMetrics() {
         // console.log("retrying");
         failed++;
       }
+      inflight--;
     }
   }
 
@@ -873,22 +915,34 @@ export async function getVaultMetrics() {
         ).json()
       ).height;
 
-      const vaultGlp = Number(
-        formatEther(
-          (
-            await dnGmxBatchingManager.dnGmxJuniorVaultGlpBalance({
-              blockTag: block,
-            })
-          ).add(
-            await fsGLP.balanceOf(dnGmxJuniorVault.address, { blockTag: block })
-          )
-        )
-      );
+      let vaultGlp;
+      let totalGlp;
+      while (1) {
+        try {
+          vaultGlp = Number(
+            formatEther(
+              (
+                await dnGmxBatchingManager.dnGmxJuniorVaultGlpBalance({
+                  blockTag: block,
+                })
+              ).add(
+                await fsGLP.balanceOf(dnGmxJuniorVault.address, {
+                  blockTag: block,
+                })
+              )
+            )
+          );
 
-      const totalGlp = Number(
-        formatEther(await glp.totalSupply({ blockTag: block }))
-      );
+          totalGlp = Number(
+            formatEther(await glp.totalSupply({ blockTag: block }))
+          );
+          break;
+        } catch {}
+      }
 
+      if (vaultGlp === undefined || totalGlp === undefined) {
+        throw new Error("vaultGlp or totalGlp is undefined");
+      }
       traderPnl.push(profit - loss);
       vaultShare.push(vaultGlp / totalGlp);
     }
