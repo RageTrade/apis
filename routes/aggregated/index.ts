@@ -2,7 +2,7 @@ import express from "express";
 
 import { cacheFunctionResult } from "../../cache";
 import * as aggregated from "../../scripts/aggregated";
-import { getNetworkName, handleRuntimeErrors, hours } from "../../utils";
+import { getNetworkName, handleRuntimeErrors, hours, mins } from "../../utils";
 import UserRouter from "./user";
 
 const router = express.Router();
@@ -68,10 +68,34 @@ router.get(
 );
 
 router.get(
-  "/get-vault-metrics",
+  "/get-aave-lends",
   handleRuntimeErrors(async (req) => {
-    return cacheFunctionResult(aggregated.getVaultMetrics, [], {
-      cacheSeconds: 24 * hours,
+    const networkName = getNetworkName(req);
+    return cacheFunctionResult(
+      aggregated.vaultMetrics.getAaveLends,
+      [networkName],
+      { cacheSeconds: 1 * mins }
+    );
+  })
+);
+
+router.get(
+  "/get-aave-borrows",
+  handleRuntimeErrors(async (req) => {
+    const networkName = getNetworkName(req);
+    return cacheFunctionResult(
+      aggregated.vaultMetrics.getAaveBorrows,
+      [networkName],
+      { cacheSeconds: 1 * mins }
+    );
+  })
+);
+
+router.get(
+  "/get-trader-pnl",
+  handleRuntimeErrors(async () => {
+    return cacheFunctionResult(aggregated.vaultMetrics.getTraderPnl, [], {
+      cacheSeconds: 1 * mins,
     });
   })
 );

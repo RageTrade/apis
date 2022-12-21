@@ -74,7 +74,7 @@ export async function parallelize<Data, Event extends ethers.Event>(
             inflight--;
             break;
           } catch (e: any) {
-            console.log("retrying", e);
+            // console.log("retrying", e);
             failed++;
             inflight--;
 
