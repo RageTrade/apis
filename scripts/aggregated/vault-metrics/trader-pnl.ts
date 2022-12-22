@@ -5,11 +5,35 @@ import {
   gmxProtocol,
   aave,
 } from "@ragetrade/sdk";
-import { formatEther } from "ethers/lib/utils";
+import { formatEther, formatUnits } from "ethers/lib/utils";
 import { getProviderAggregate } from "../../../providers";
 import "../../../fetch-polyfill";
+import { days, timestampRoundDown } from "../../../utils";
 
-export async function getTraderPnl() {
+export interface GlobalTraderPnlEntry {
+  timestamp: number;
+  profit: number;
+  loss: number;
+  traderPnl: number;
+  vaultShare: number;
+  traderPnlVault: number;
+}
+
+export interface GlobalTraderPnlDailyEntry {
+  startTimestamp: number;
+  endTimestamp: number;
+  traderPnlNet: number;
+  traderPnlVaultNet: number;
+}
+
+export interface GlobalTraderPnlResult {
+  traderPnlNet: number;
+  traderPnlVaultNet: number;
+  data: GlobalTraderPnlEntry[];
+  dailyData: GlobalTraderPnlDailyEntry[];
+}
+
+export async function getTraderPnl(): Promise<GlobalTraderPnlResult> {
   const START_BLOCK = 45607856;
 
   const provider = getProviderAggregate("arbmain");
@@ -56,15 +80,34 @@ export async function getTraderPnl() {
   const to_ts = Math.floor(currentDate.getTime() / 1000).toString();
   const from_ts = (await provider.getBlock(START_BLOCK)).timestamp.toString();
 
-  let traderPnl = [];
-  let vaultShare = [];
-  let traderPnlVault = 0;
+  // let traderPnl = [];
+  // let vaultShare = [];
+  // let traderPnlVault = 0;
 
   const traderData = await queryTraderData(from_ts, to_ts);
 
-  for (const each of traderData.tradingStats) {
-    const loss = each.loss / 1e30;
-    const profit = each.profit / 1e30;
+  const tradingStats = (
+    traderData.tradingStats as {
+      timestamp: number;
+      profit: string;
+      loss: string;
+      profitCumulative: string;
+      lossCumulative: string;
+      longOpenInterest: string;
+      shortOpenInterest: string;
+    }[]
+  ).sort((a, b) => a.timestamp - b.timestamp);
+
+  const data = [];
+  // {
+  //   traderPnl: number;
+  //   vaultShare: number;
+  //   traderPnlVault: number;
+  // }[] = [];
+
+  for (const each of tradingStats) {
+    const loss = Number(formatUnits(each.loss, 30));
+    const profit = Number(formatUnits(each.profit, 30));
 
     const block = (
       await (
@@ -100,13 +143,46 @@ export async function getTraderPnl() {
     if (vaultGlp === undefined || totalGlp === undefined) {
       throw new Error("vaultGlp or totalGlp is undefined");
     }
-    traderPnl.push(profit - loss);
-    vaultShare.push(vaultGlp / totalGlp);
+    // traderPnl.push(profit - loss);
+    // vaultShare.push(vaultGlp / totalGlp);
+    const traderPnl = profit - loss;
+    const vaultShare = vaultGlp / totalGlp;
+    const traderPnlVault = traderPnl * vaultShare;
+    data.push({
+      timestamp: each.timestamp,
+      profit,
+      loss,
+      traderPnl,
+      vaultShare,
+      traderPnlVault,
+    });
   }
 
-  for (const [index, pnl] of traderPnl.entries()) {
-    traderPnlVault += pnl * vaultShare[index];
-  }
+  // for (const [index, pnl] of traderPnl.entries()) {
+  //   traderPnlVault += pnl * vaultShare[index];
+  // }
 
-  return traderPnlVault;
+  return {
+    traderPnlNet: data.reduce((acc, cur) => acc + cur.traderPnlVault, 0),
+    traderPnlVaultNet: data.reduce((acc, cur) => acc + cur.traderPnlVault, 0),
+    data,
+    dailyData: data.reduce(
+      (acc: GlobalTraderPnlDailyEntry[], cur: GlobalTraderPnlEntry) => {
+        const lastEntry = acc[acc.length - 1];
+        if (lastEntry && cur.timestamp <= lastEntry.endTimestamp) {
+          lastEntry.traderPnlNet += cur.traderPnl;
+          lastEntry.traderPnlVaultNet += cur.traderPnlVault;
+        } else {
+          acc.push({
+            startTimestamp: timestampRoundDown(cur.timestamp),
+            endTimestamp: timestampRoundDown(cur.timestamp) + 1 * days - 1,
+            traderPnlNet: cur.traderPnl,
+            traderPnlVaultNet: cur.traderPnlVault,
+          });
+        }
+        return acc;
+      },
+      []
+    ),
+  };
 }
