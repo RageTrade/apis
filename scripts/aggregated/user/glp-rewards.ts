@@ -15,19 +15,22 @@ import { timestampRoundDown, days } from "../../../utils";
 
 export type UserGlpRewardsEntry = Entry<{
   timestamp: number;
-  userGlpRewards: number;
+  userJuniorVaultWethReward: number;
+  userSeniorVaultWethReward: number;
 }>;
 
 export interface UserGlpRewardsDailyEntry {
   startTimestamp: number;
   endTimestamp: number;
-  userGlpRewardsNet: number;
+  userJuniorVaultWethRewardNet: number;
+  userSeniorVaultWethRewardNet: number;
 }
 
 export interface UserGlpRewardsResult {
-  userTotalGlpRewards: number;
   data: UserGlpRewardsEntry[];
   dailyData: UserGlpRewardsDailyEntry[];
+  userTotalJuniorVaultWethReward: number;
+  userTotalSeniorVaultWethReward: number;
 }
 
 export async function getUserGlpRewards(
@@ -66,8 +69,11 @@ export async function getUserGlpRewards(
     (glpRewardsData, userSharesData) => ({
       ...glpRewardsData,
       ...userSharesData,
-      userGlpRewards:
-        (glpRewardsData.glpRewards * userSharesData.userShares) /
+      userJuniorVaultWethReward:
+        (glpRewardsData.juniorVaultWethReward * userSharesData.userShares) /
+        userSharesData.totalShares,
+      userSeniorVaultWethReward:
+        (glpRewardsData.seniorVaultWethReward * userSharesData.userShares) /
         userSharesData.totalShares,
     })
   );
@@ -81,26 +87,34 @@ export async function getUserGlpRewards(
           )
         : undefined,
     result: {
-      userTotalGlpRewards: data.reduce(
-        (acc, cur) => acc + cur.userGlpRewards,
-        0
-      ),
       data,
       dailyData: data.reduce(
         (acc: UserGlpRewardsDailyEntry[], cur: UserGlpRewardsEntry) => {
           const lastEntry = acc[acc.length - 1];
           if (lastEntry && cur.timestamp <= lastEntry.endTimestamp) {
-            lastEntry.userGlpRewardsNet += cur.userGlpRewards;
+            lastEntry.userJuniorVaultWethRewardNet +=
+              cur.userJuniorVaultWethReward;
+            lastEntry.userSeniorVaultWethRewardNet +=
+              cur.userSeniorVaultWethReward;
           } else {
             acc.push({
               startTimestamp: timestampRoundDown(cur.timestamp),
               endTimestamp: timestampRoundDown(cur.timestamp) + 1 * days - 1,
-              userGlpRewardsNet: cur.userGlpRewards,
+              userJuniorVaultWethRewardNet: cur.userJuniorVaultWethReward,
+              userSeniorVaultWethRewardNet: cur.userSeniorVaultWethReward,
             });
           }
           return acc;
         },
         []
+      ),
+      userTotalJuniorVaultWethReward: data.reduce(
+        (acc, cur) => acc + cur.userJuniorVaultWethReward,
+        0
+      ),
+      userTotalSeniorVaultWethReward: data.reduce(
+        (acc, cur) => acc + cur.userSeniorVaultWethReward,
+        0
       ),
     },
   };
