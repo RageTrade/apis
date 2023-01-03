@@ -27,10 +27,10 @@ export interface UserUniswapSlippageDailyEntry {
 }
 
 export interface UserUniswapSlippageResult {
-  userTotalSlippage: number;
-  userTotalVolume: number;
   data: UserUniswapSlippageEntry[];
   dailyData: UserUniswapSlippageDailyEntry[];
+  userTotalSlippage: number;
+  userTotalVolume: number;
 }
 
 export async function getUserUniswapSlippage(
@@ -88,8 +88,6 @@ export async function getUserUniswapSlippage(
           )
         : undefined,
     result: {
-      userTotalSlippage: data.reduce((acc, cur) => acc + cur.userSlippage, 0),
-      userTotalVolume: data.reduce((acc, cur) => acc + cur.userVolume, 0),
       data,
       dailyData: data.reduce(
         (
@@ -112,6 +110,8 @@ export async function getUserUniswapSlippage(
         },
         []
       ),
+      userTotalSlippage: data.reduce((acc, cur) => acc + cur.userSlippage, 0),
+      userTotalVolume: data.reduce((acc, cur) => acc + cur.userVolume, 0),
     },
   };
 }

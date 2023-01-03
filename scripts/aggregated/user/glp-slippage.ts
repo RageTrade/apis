@@ -25,9 +25,9 @@ export interface UserGlpSlippageDailyEntry {
 }
 
 export interface UserGlpSlippageResult {
-  userTotalGlpSlippage: number;
   data: UserGlpSlippageEntry[];
   dailyData: UserGlpSlippageDailyEntry[];
+  userTotalGlpSlippage: number;
 }
 
 export async function getUserGlpSlippage(
@@ -81,10 +81,6 @@ export async function getUserGlpSlippage(
           )
         : undefined,
     result: {
-      userTotalGlpSlippage: data.reduce(
-        (acc, cur) => acc + cur.userGlpSlippage,
-        0
-      ),
       data,
       dailyData: data.reduce(
         (acc: UserGlpSlippageDailyEntry[], cur: UserGlpSlippageEntry) => {
@@ -101,6 +97,10 @@ export async function getUserGlpSlippage(
           return acc;
         },
         []
+      ),
+      userTotalGlpSlippage: data.reduce(
+        (acc, cur) => acc + cur.userGlpSlippage,
+        0
       ),
     },
   };

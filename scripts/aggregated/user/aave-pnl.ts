@@ -25,9 +25,9 @@ export interface UserAavePnlDailyEntry {
 }
 
 export interface UserAavePnlResult {
-  userTotalAavePnl: number;
   data: UserAavePnlEntry[];
   dailyData: UserAavePnlDailyEntry[];
+  userTotalAavePnl: number;
 }
 
 export async function getUserAavePnl(
@@ -81,7 +81,6 @@ export async function getUserAavePnl(
           )
         : undefined,
     result: {
-      userTotalAavePnl: data.reduce((acc, cur) => acc + cur.userAavePnl, 0),
       data,
       dailyData: data.reduce(
         (acc: UserAavePnlDailyEntry[], cur: UserAavePnlEntry) => {
@@ -99,6 +98,7 @@ export async function getUserAavePnl(
         },
         []
       ),
+      userTotalAavePnl: data.reduce((acc, cur) => acc + cur.userAavePnl, 0),
     },
   };
 }
