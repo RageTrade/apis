@@ -61,7 +61,8 @@ export async function getAaveLends(
     networkName,
     provider,
     depositWithdrawRebalance,
-    async (_i, blockNumber, eventName, transactionHash, logIndex) => {
+    { uniqueBlocks: true },
+    async (_i, blockNumber, event) => {
       const aUsdcJuniorBefore = Number(
         formatUsdc(
           await aUsdc.balanceOf(dnGmxJuniorVault.address, {
@@ -94,9 +95,7 @@ export async function getAaveLends(
 
       return {
         blockNumber,
-        eventName,
-        transactionHash,
-        logIndex,
+        transactionHash: event.transactionHash,
         aUsdcJuniorBefore,
         aUsdcJuniorAfter,
         aUsdcSeniorBefore,
@@ -124,18 +123,14 @@ export async function getAaveLends(
     if (last) {
       extraData.push({
         blockNumber: current.blockNumber,
-        eventName: current.eventName,
         transactionHash: current.transactionHash,
-        logIndex: current.logIndex,
         aUsdcInterestJunior: current.aUsdcJuniorBefore - last.aUsdcJuniorAfter,
         aUsdcInterestSenior: current.aUsdcSeniorBefore - last.aUsdcSeniorAfter,
       });
     } else {
       extraData.push({
         blockNumber: current.blockNumber,
-        eventName: current.eventName,
         transactionHash: current.transactionHash,
-        logIndex: current.logIndex,
         aUsdcInterestJunior: 0,
         aUsdcInterestSenior: 0,
       });

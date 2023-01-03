@@ -65,7 +65,8 @@ export async function getAaveBorrows(
     networkName,
     provider,
     depositWithdrawRebalance,
-    async (_i, blockNumber, eventName, transactionHash, logIndex) => {
+    { uniqueBlocks: true },
+    async (_i, blockNumber, event) => {
       const _btcAmountBefore = await vdWbtc.balanceOf(
         dnGmxJuniorVault.address,
         { blockTag: blockNumber - 1 }
@@ -93,9 +94,7 @@ export async function getAaveBorrows(
 
       return {
         blockNumber,
-        eventName,
-        transactionHash,
-        logIndex,
+        transactionHash: event.transactionHash,
         btcAmountBefore,
         btcAmountAfter,
         ethAmountBefore,
@@ -133,9 +132,7 @@ export async function getAaveBorrows(
 
       extraData.push({
         blockNumber: current.blockNumber,
-        eventName: current.eventName,
         transactionHash: current.transactionHash,
-        logIndex: current.logIndex,
         vdWbtcInterest,
         vdWbtcInterestDollars,
         vdWethInterest,
@@ -144,9 +141,7 @@ export async function getAaveBorrows(
     } else {
       extraData.push({
         blockNumber: current.blockNumber,
-        eventName: current.eventName,
         transactionHash: current.transactionHash,
-        logIndex: current.logIndex,
         vdWbtcInterest: 0,
         vdWbtcInterestDollars: 0,
         vdWethInterest: 0,

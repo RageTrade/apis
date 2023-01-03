@@ -16,8 +16,12 @@ export function combine<
   for (const aItem of a) {
     for (const bItem of b) {
       if (
+        // check block number
         aItem.blockNumber === bItem.blockNumber &&
-        aItem.logIndex === bItem.logIndex
+        // if log index exists then check that as well
+        (!!aItem.logIndex && !!bItem.logIndex
+          ? aItem.logIndex === bItem.logIndex
+          : true)
       ) {
         combined.push(combiner(aItem, bItem));
         break;

@@ -60,7 +60,8 @@ export async function getAavePnl(
     networkName,
     provider,
     depositWithdrawRebalance,
-    async (_i, blockNumber, eventName, transactionHash, logIndex) => {
+    { uniqueBlocks: true },
+    async (_i, blockNumber, event) => {
       const btcAmountBefore = Number(
         formatUnits(
           await vdWbtc.balanceOf(dnGmxJuniorVault.address, {
@@ -96,9 +97,7 @@ export async function getAavePnl(
 
       return {
         blockNumber,
-        eventName,
-        transactionHash,
-        logIndex,
+        transactionHash: event.transactionHash,
         btcAmountBefore,
         btcAmountAfter,
         ethAmountBefore,
@@ -133,18 +132,13 @@ export async function getAavePnl(
 
       extraData.push({
         blockNumber: current.blockNumber,
-        eventName: current.eventName,
         transactionHash: current.transactionHash,
-        logIndex: current.logIndex,
-
         aavePnl,
       });
     } else {
       extraData.push({
         blockNumber: current.blockNumber,
-        eventName: current.eventName,
         transactionHash: current.transactionHash,
-        logIndex: current.logIndex,
         aavePnl: 0,
       });
     }

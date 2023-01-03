@@ -54,15 +54,16 @@ export async function getGlpRewards(
     networkName,
     provider,
     rewardsHarvested,
-    async (_i, blockNumber, eventName, transactionHash, logIndex, event) => {
+    { uniqueBlocks: false }, // consider each block because we are using event.args
+    async (_i, blockNumber, event) => {
       const { juniorVaultGlp, seniorVaultAUsdc } = event.args;
 
       const [aumMax, _] = await glpManager.getAums({
-        blockTag: event.blockNumber,
+        blockTag: blockNumber,
       });
 
       const glpTotalSuply = await fsGLP.totalSupply({
-        blockTag: event.blockNumber,
+        blockTag: blockNumber,
       });
 
       const glpPrice = Number(formatUnits(aumMax.div(glpTotalSuply), 12));
@@ -72,9 +73,7 @@ export async function getGlpRewards(
 
       return {
         blockNumber,
-        eventName,
-        transactionHash,
-        logIndex,
+        transactionHash: event.transactionHash,
         glpPrice,
         juniorVaultWethReward,
         seniorVaultWethReward,

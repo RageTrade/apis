@@ -54,7 +54,8 @@ export async function getGlpPnl(
     networkName,
     provider,
     depositWithdrawRebalance,
-    async (_i, blockNumber, eventName, transactionHash, logIndex) => {
+    { uniqueBlocks: true },
+    async (_i, blockNumber, event) => {
       const fsGlp_balanceOf_juniorVault = Number(
         formatEther(
           await fsGLP.balanceOf(dnGmxJuniorVault.address, {
@@ -81,9 +82,7 @@ export async function getGlpPnl(
 
       return {
         blockNumber,
-        eventName,
-        transactionHash,
-        logIndex,
+        transactionHash: event.transactionHash,
         fsGlp_balanceOf_juniorVault,
         fsGlp_balanceOf_batchingManager,
         glpPrice,
@@ -108,9 +107,7 @@ export async function getGlpPnl(
 
       extraData.push({
         blockNumber: current.blockNumber,
-        eventName: current.eventName,
         transactionHash: current.transactionHash,
-        logIndex: current.logIndex,
         fsGlp_balanceOf_juniorVault: current.fsGlp_balanceOf_juniorVault,
         fsGlp_balanceOf_batchingManager:
           current.fsGlp_balanceOf_batchingManager,
@@ -120,9 +117,7 @@ export async function getGlpPnl(
     } else {
       extraData.push({
         blockNumber: current.blockNumber,
-        eventName: current.eventName,
         transactionHash: current.transactionHash,
-        logIndex: current.logIndex,
         fsGlp_balanceOf_juniorVault: current.fsGlp_balanceOf_juniorVault,
         fsGlp_balanceOf_batchingManager:
           current.fsGlp_balanceOf_batchingManager,

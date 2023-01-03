@@ -59,7 +59,8 @@ export async function getUserShares(
       glpSwapped,
       glpRewards,
     ] as EventFn<ethers.Event>[],
-    async (_i, blockNumber, eventName, transactionHash, logIndex) => {
+    { uniqueBlocks: true },
+    async (_i, blockNumber, event) => {
       const userDeposits = await dnGmxBatchingManager.userDeposits(
         userAddress,
         { blockTag: blockNumber }
@@ -89,9 +90,7 @@ export async function getUserShares(
 
       return {
         blockNumber,
-        eventName,
-        transactionHash,
-        logIndex,
+        transactionHash: event.transactionHash,
         userRound,
         userUnclaimedShares,
         userClaimedShares,

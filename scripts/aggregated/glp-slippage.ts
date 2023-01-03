@@ -56,7 +56,8 @@ export async function getGlpSlippage(
     networkName,
     provider,
     glpSwapped,
-    async (_i, blockNumber, eventName, transactionHash, logIndex, event) => {
+    { uniqueBlocks: false }, // consider each block because we are using event.args
+    async (_i, blockNumber, event) => {
       const scaling = 1;
       let pnlMin = 0;
 
@@ -66,11 +67,11 @@ export async function getGlpSlippage(
       const usdcAmt = Number(formatUsdc(usdcQuantity));
 
       const [_, aumMin] = await glpManager.getAums({
-        blockTag: event.blockNumber,
+        blockTag: blockNumber,
       });
 
       const totalSuply = await fsGLP.totalSupply({
-        blockTag: event.blockNumber,
+        blockTag: blockNumber,
       });
 
       const glpPriceMin = Number(formatUnits(aumMin.div(totalSuply), 12));
@@ -93,9 +94,8 @@ export async function getGlpSlippage(
 
       return {
         blockNumber,
-        eventName,
-        transactionHash,
-        logIndex,
+        transactionHash: event.transactionHash,
+        logIndex: event.logIndex,
         glpAmt,
         usdcAmt,
         fromGlpToUsdc,

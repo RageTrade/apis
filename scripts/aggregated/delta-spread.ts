@@ -74,8 +74,9 @@ export async function getDeltaSpread(
     networkName,
     provider,
     depositWithdrawRebalance,
-    async (_i, blockNumber, eventName, transactionHash, logIndex) => {
-      const rc = await provider.getTransactionReceipt(transactionHash);
+    { uniqueBlocks: false }, // consider each block because we are using event.args
+    async (_i, blockNumber, event) => {
+      const rc = await provider.getTransactionReceipt(event.transactionHash);
       const filter = dnGmxJuniorVault.filters.TokenSwapped();
       const parsed = rc.logs
         .filter((log) => log.topics[0] === filter.topics?.[0])
@@ -147,9 +148,7 @@ export async function getDeltaSpread(
 
       return {
         blockNumber,
-        eventName,
-        transactionHash,
-        logIndex,
+        transactionHash: event.transactionHash,
         volume,
         slippage,
         btcBought,

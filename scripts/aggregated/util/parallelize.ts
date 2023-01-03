@@ -11,14 +11,10 @@ export async function parallelize<Data, Event extends ethers.Event>(
   networkName: NetworkName,
   provider: ethers.providers.Provider,
   getEvents: EventFn<Event> | EventFn<Event>[],
-  onEachEvent: (
-    _i: number,
-    blockNumber: number,
-    eventName: string,
-    transactionHash: string,
-    logIndex: number,
-    event: Event
-  ) => Promise<Data>
+  options: {
+    uniqueBlocks?: boolean;
+  },
+  onEachEvent: (_i: number, blockNumber: number, event: Event) => Promise<Data>
 ) {
   let allEvents: Event[] = [];
 
@@ -31,6 +27,15 @@ export async function parallelize<Data, Event extends ethers.Event>(
   }
 
   allEvents = allEvents.sort((a, b) => a.blockNumber - b.blockNumber);
+
+  if (options.uniqueBlocks) {
+    const blockMap = new Map<number, boolean>();
+    allEvents = allEvents.filter(
+      (event) =>
+        !blockMap.has(event.blockNumber) &&
+        blockMap.set(event.blockNumber, true)
+    );
+  }
 
   let data: Data[] = [];
   for (let i = 0; i < allEvents.length; i++) {
@@ -62,14 +67,7 @@ export async function parallelize<Data, Event extends ethers.Event>(
           if (inflight >= 700) continue;
           try {
             inflight++;
-            data[_i] = await onEachEvent(
-              _i,
-              blockNumber,
-              eventName,
-              transactionHash,
-              logIndex,
-              event
-            );
+            data[_i] = await onEachEvent(_i, blockNumber, event);
             done++;
             inflight--;
             break;

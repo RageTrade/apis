@@ -38,7 +38,8 @@ export async function getTotalShares(
       glpSwapped,
       glpRewards,
     ] as EventFn<ethers.Event>[],
-    async (_i, blockNumber, eventName, transactionHash, logIndex) => {
+    { uniqueBlocks: true },
+    async (_i, blockNumber, event) => {
       const { timestamp } = await provider.getBlock(blockNumber);
 
       const totalShares = Number(
@@ -72,9 +73,7 @@ export async function getTotalShares(
 
       return {
         blockNumber,
-        eventName,
-        transactionHash,
-        logIndex,
+        transactionHash: event.transactionHash,
         timestamp,
         totalShares,
         currentRound,
