@@ -6,9 +6,9 @@ import {
   aave,
 } from "@ragetrade/sdk";
 import { formatEther, formatUnits } from "ethers/lib/utils";
-import { getProviderAggregate } from "../../../providers";
-import "../../../fetch-polyfill";
-import { days, timestampRoundDown } from "../../../utils";
+import { getProviderAggregate } from "../../providers";
+import "../../fetch-polyfill";
+import { days, timestampRoundDown } from "../../utils";
 
 export interface GlobalTraderPnlEntry {
   timestamp: number;

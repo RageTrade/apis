@@ -81,11 +81,9 @@ router.get(
   "/get-aave-lends",
   handleRuntimeErrors(async (req) => {
     const networkName = getNetworkName(req);
-    return cacheFunctionResult(
-      aggregated.vaultMetrics.getAaveLends,
-      [networkName],
-      { cacheSeconds: 20 * mins }
-    );
+    return cacheFunctionResult(aggregated.getAaveLends, [networkName], {
+      cacheSeconds: 20 * mins,
+    });
   })
 );
 
@@ -93,18 +91,16 @@ router.get(
   "/get-aave-borrows",
   handleRuntimeErrors(async (req) => {
     const networkName = getNetworkName(req);
-    return cacheFunctionResult(
-      aggregated.vaultMetrics.getAaveBorrows,
-      [networkName],
-      { cacheSeconds: 20 * mins }
-    );
+    return cacheFunctionResult(aggregated.getAaveBorrows, [networkName], {
+      cacheSeconds: 20 * mins,
+    });
   })
 );
 
 router.get(
   "/get-trader-pnl",
   handleRuntimeErrors(async () => {
-    return cacheFunctionResult(aggregated.vaultMetrics.getTraderPnl, [], {
+    return cacheFunctionResult(aggregated.getTraderPnl, [], {
       cacheSeconds: 20 * mins,
     });
   })

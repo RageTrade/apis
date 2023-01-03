@@ -5,6 +5,8 @@ export * from "./glp-rewards";
 export * from "./total-shares";
 export * from "./uniswap-slippage";
 export * from "./delta-spread";
+export * from "./aave-lends";
+export * from "./aave-borrows";
+export * from "./trader-pnl";
 
 export * as user from "./user";
-export * as vaultMetrics from "./vault-metrics/";

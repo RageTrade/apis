@@ -9,14 +9,14 @@ import {
   tokens,
 } from "@ragetrade/sdk";
 
-import { getProviderAggregate } from "../../../providers";
-import { combine } from "../util/combine";
-import { parallelize } from "../util/parallelize";
-import { Entry } from "../util/types";
-import { price } from "../util/helpers";
-import { depositWithdrawRebalance } from "../util/events/deposit-withdraw-rebalance";
-import { GlobalTotalSharesResult } from "../total-shares";
-import { timestampRoundDown, days } from "../../../utils";
+import { getProviderAggregate } from "../../providers";
+import { combine } from "./util/combine";
+import { parallelize } from "./util/parallelize";
+import { Entry } from "./util/types";
+import { price } from "./util/helpers";
+import { depositWithdrawRebalance } from "./util/events/deposit-withdraw-rebalance";
+import { GlobalTotalSharesResult } from "./total-shares";
+import { timestampRoundDown, days } from "../../utils";
 
 export type GlobalAaveBorrowsEntry = Entry<{
   timestamp: number;
