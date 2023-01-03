@@ -78,6 +78,19 @@ router.get(
 );
 
 router.get(
+  "/get-trader-pnl",
+  handleRuntimeErrors(async (req) => {
+    const networkName = getNetworkName(req);
+    const userAddress = getParamAsAddress(req, "userAddress");
+    return cacheFunctionResult(
+      aggregated.user.getUserTraderPnl,
+      [networkName, userAddress],
+      { cacheSeconds: 20 * mins }
+    );
+  })
+);
+
+router.get(
   "/get-uniswap-slippage",
   handleRuntimeErrors(async (req) => {
     const networkName = getNetworkName(req);
