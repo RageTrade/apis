@@ -54,11 +54,16 @@ export async function getUserShares(
   const data1 = await parallelize(
     networkName,
     provider,
-    [
-      depositWithdrawRebalance,
-      glpSwapped,
-      glpRewards,
-    ] as EventFn<ethers.Event>[],
+    // use all events from total shares
+    () =>
+      totalSharesData.result.data.map(
+        (entry) =>
+          ({
+            blockNumber: entry.blockNumber,
+            transactionHash: entry.transactionHash,
+            logIndex: entry.logIndex,
+          } as ethers.Event)
+      ),
     { uniqueBlocks: true },
     async (_i, blockNumber, event) => {
       const userDeposits = await dnGmxBatchingManager.userDeposits(

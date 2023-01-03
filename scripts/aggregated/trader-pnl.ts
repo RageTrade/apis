@@ -11,6 +11,7 @@ import "../../fetch-polyfill";
 import { days, timestampRoundDown } from "../../utils";
 
 export interface GlobalTraderPnlEntry {
+  blockNumber: number;
   timestamp: number;
   profit: number;
   loss: number;
@@ -27,10 +28,10 @@ export interface GlobalTraderPnlDailyEntry {
 }
 
 export interface GlobalTraderPnlResult {
-  traderPnlNet: number;
-  traderPnlVaultNet: number;
   data: GlobalTraderPnlEntry[];
   dailyData: GlobalTraderPnlDailyEntry[];
+  traderPnlNet: number;
+  traderPnlVaultNet: number;
 }
 
 export async function getTraderPnl(): Promise<GlobalTraderPnlResult> {
@@ -88,6 +89,7 @@ export async function getTraderPnl(): Promise<GlobalTraderPnlResult> {
 
   const tradingStats = (
     traderData.tradingStats as {
+      blockNumber: number;
       timestamp: number;
       profit: string;
       loss: string;
@@ -109,7 +111,7 @@ export async function getTraderPnl(): Promise<GlobalTraderPnlResult> {
     const loss = Number(formatUnits(each.loss, 30));
     const profit = Number(formatUnits(each.profit, 30));
 
-    const block = (
+    const blockNumber = (
       await (
         await fetch(`https://coins.llama.fi/block/arbitrum/${each.timestamp}`)
       ).json()
@@ -123,18 +125,18 @@ export async function getTraderPnl(): Promise<GlobalTraderPnlResult> {
           formatEther(
             (
               await dnGmxBatchingManager.dnGmxJuniorVaultGlpBalance({
-                blockTag: block,
+                blockTag: blockNumber,
               })
             ).add(
               await fsGLP.balanceOf(dnGmxJuniorVault.address, {
-                blockTag: block,
+                blockTag: blockNumber,
               })
             )
           )
         );
 
         totalGlp = Number(
-          formatEther(await glp.totalSupply({ blockTag: block }))
+          formatEther(await glp.totalSupply({ blockTag: blockNumber }))
         );
         break;
       } catch {}
@@ -149,6 +151,7 @@ export async function getTraderPnl(): Promise<GlobalTraderPnlResult> {
     const vaultShare = vaultGlp / totalGlp;
     const traderPnlVault = traderPnl * vaultShare;
     data.push({
+      blockNumber,
       timestamp: each.timestamp,
       profit,
       loss,
@@ -163,8 +166,6 @@ export async function getTraderPnl(): Promise<GlobalTraderPnlResult> {
   // }
 
   return {
-    traderPnlNet: data.reduce((acc, cur) => acc + cur.traderPnlVault, 0),
-    traderPnlVaultNet: data.reduce((acc, cur) => acc + cur.traderPnlVault, 0),
     data,
     dailyData: data.reduce(
       (acc: GlobalTraderPnlDailyEntry[], cur: GlobalTraderPnlEntry) => {
@@ -184,5 +185,7 @@ export async function getTraderPnl(): Promise<GlobalTraderPnlResult> {
       },
       []
     ),
+    traderPnlNet: data.reduce((acc, cur) => acc + cur.traderPnlVault, 0),
+    traderPnlVaultNet: data.reduce((acc, cur) => acc + cur.traderPnlVault, 0),
   };
 }

@@ -1,6 +1,11 @@
-import { formatEther } from "ethers/lib/utils";
+import { fetchJson, formatEther } from "ethers/lib/utils";
 
-import { deltaNeutralGmxVaults, formatUsdc, NetworkName } from "@ragetrade/sdk";
+import {
+  deltaNeutralGmxVaults,
+  formatUsdc,
+  NetworkName,
+  ResultWithMetadata,
+} from "@ragetrade/sdk";
 
 import { getProviderAggregate } from "../../providers";
 import { EventFn, parallelize } from "./util/parallelize";
@@ -9,6 +14,7 @@ import { depositWithdrawRebalance } from "./util/events/deposit-withdraw-rebalan
 import { ethers } from "ethers";
 import { glpRewards } from "./util/events/glp-rewards";
 import { glpSwapped } from "./util/events/glp-swapped";
+import { GlobalTraderPnlResult } from "./trader-pnl";
 
 export type GlobalTotalSharesEntry = Entry<{
   timestamp: number;
@@ -30,6 +36,13 @@ export async function getTotalShares(
   const { dnGmxJuniorVault, dnGmxBatchingManager } =
     deltaNeutralGmxVaults.getContractsSync(networkName, provider);
 
+  // this api contains extra block numbers
+  const traderPnlData: ResultWithMetadata<GlobalTraderPnlResult> =
+    await fetchJson({
+      url: `http://localhost:3000/data/aggregated/get-trader-pnl?networkName=${networkName}`,
+      timeout: 1_000_000_000, // huge number
+    });
+
   const data = await parallelize(
     networkName,
     provider,
@@ -37,6 +50,21 @@ export async function getTotalShares(
       depositWithdrawRebalance,
       glpSwapped,
       glpRewards,
+      // additional block numbers from trader pnl
+      () => {
+        const uniqueBlockNumbers = Array.from(
+          new Set(traderPnlData.result.data.map((entry) => entry.blockNumber))
+        );
+        return uniqueBlockNumbers.map(
+          (blockNumber) =>
+            ({
+              blockNumber,
+              event: "unknown",
+              transactionHash: "unknown",
+              logIndex: -1,
+            } as ethers.Event)
+        );
+      },
     ] as EventFn<ethers.Event>[],
     { uniqueBlocks: true },
     async (_i, blockNumber, event) => {
