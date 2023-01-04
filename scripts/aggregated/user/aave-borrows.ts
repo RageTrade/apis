@@ -76,17 +76,21 @@ export async function getUserAaveBorrows(
       ...aaveBorrowsData,
       ...userSharesData,
       userVdWbtcInterest:
-        (aaveBorrowsData.vdWbtcInterest * userSharesData.userShares) /
-        userSharesData.totalShares,
+        (aaveBorrowsData.vdWbtcInterest *
+          userSharesData.userJuniorVaultShares) /
+        userSharesData.totalJuniorVaultShares,
       userVdWbtcInterestDollars:
-        (aaveBorrowsData.vdWbtcInterestDollars * userSharesData.userShares) /
-        userSharesData.totalShares,
+        (aaveBorrowsData.vdWbtcInterestDollars *
+          userSharesData.userJuniorVaultShares) /
+        userSharesData.totalJuniorVaultShares,
       userVdWethInterest:
-        (aaveBorrowsData.vdWethInterest * userSharesData.userShares) /
-        userSharesData.totalShares,
+        (aaveBorrowsData.vdWethInterest *
+          userSharesData.userJuniorVaultShares) /
+        userSharesData.totalJuniorVaultShares,
       userVdWethInterestDollars:
-        (aaveBorrowsData.vdWethInterestDollars * userSharesData.userShares) /
-        userSharesData.totalShares,
+        (aaveBorrowsData.vdWethInterestDollars *
+          userSharesData.userJuniorVaultShares) /
+        userSharesData.totalJuniorVaultShares,
     })
   );
 

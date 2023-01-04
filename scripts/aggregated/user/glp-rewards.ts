@@ -70,11 +70,13 @@ export async function getUserGlpRewards(
       ...glpRewardsData,
       ...userSharesData,
       userJuniorVaultWethReward:
-        (glpRewardsData.juniorVaultWethReward * userSharesData.userShares) /
-        userSharesData.totalShares,
+        (glpRewardsData.juniorVaultWethReward *
+          userSharesData.userJuniorVaultShares) /
+        userSharesData.totalJuniorVaultShares,
       userSeniorVaultWethReward:
-        (glpRewardsData.seniorVaultWethReward * userSharesData.userShares) /
-        userSharesData.totalShares,
+        (glpRewardsData.seniorVaultWethReward *
+          userSharesData.userJuniorVaultShares) /
+        userSharesData.totalJuniorVaultShares,
     })
   );
 

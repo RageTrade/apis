@@ -97,41 +97,47 @@ export async function getUserDeltaSpread(
       ...deltaSpreadData,
       ...userSharesData,
       userVolume:
-        (deltaSpreadData.volume * userSharesData.userShares) /
-        userSharesData.totalShares,
+        (deltaSpreadData.volume * userSharesData.userJuniorVaultShares) /
+        userSharesData.totalJuniorVaultShares,
       userSlippage:
-        (deltaSpreadData.slippage * userSharesData.userShares) /
-        userSharesData.totalShares,
+        (deltaSpreadData.slippage * userSharesData.userJuniorVaultShares) /
+        userSharesData.totalJuniorVaultShares,
       userBtcBought:
-        (deltaSpreadData.btcBought * userSharesData.userShares) /
-        userSharesData.totalShares,
+        (deltaSpreadData.btcBought * userSharesData.userJuniorVaultShares) /
+        userSharesData.totalJuniorVaultShares,
       userEthBought:
-        (deltaSpreadData.ethBought * userSharesData.userShares) /
-        userSharesData.totalShares,
+        (deltaSpreadData.ethBought * userSharesData.userJuniorVaultShares) /
+        userSharesData.totalJuniorVaultShares,
       userBtcSold:
-        (deltaSpreadData.btcSold * userSharesData.userShares) /
-        userSharesData.totalShares,
+        (deltaSpreadData.btcSold * userSharesData.userJuniorVaultShares) /
+        userSharesData.totalJuniorVaultShares,
       userEthSold:
-        (deltaSpreadData.ethSold * userSharesData.userShares) /
-        userSharesData.totalShares,
+        (deltaSpreadData.ethSold * userSharesData.userJuniorVaultShares) /
+        userSharesData.totalJuniorVaultShares,
       userBtcBoughtSlippage:
-        (deltaSpreadData.btcBoughtSlippage * userSharesData.userShares) /
-        userSharesData.totalShares,
+        (deltaSpreadData.btcBoughtSlippage *
+          userSharesData.userJuniorVaultShares) /
+        userSharesData.totalJuniorVaultShares,
       userEthBoughtSlippage:
-        (deltaSpreadData.ethBoughtSlippage * userSharesData.userShares) /
-        userSharesData.totalShares,
+        (deltaSpreadData.ethBoughtSlippage *
+          userSharesData.userJuniorVaultShares) /
+        userSharesData.totalJuniorVaultShares,
       userBtcSoldSlippage:
-        (deltaSpreadData.btcSoldSlippage * userSharesData.userShares) /
-        userSharesData.totalShares,
+        (deltaSpreadData.btcSoldSlippage *
+          userSharesData.userJuniorVaultShares) /
+        userSharesData.totalJuniorVaultShares,
       userEthSoldSlippage:
-        (deltaSpreadData.ethSoldSlippage * userSharesData.userShares) /
-        userSharesData.totalShares,
+        (deltaSpreadData.ethSoldSlippage *
+          userSharesData.userJuniorVaultShares) /
+        userSharesData.totalJuniorVaultShares,
       userBtcHedgeDeltaPnl:
-        (deltaSpreadData.btcHedgeDeltaPnl * userSharesData.userShares) /
-        userSharesData.totalShares,
+        (deltaSpreadData.btcHedgeDeltaPnl *
+          userSharesData.userJuniorVaultShares) /
+        userSharesData.totalJuniorVaultShares,
       userEthHedgeDeltaPnl:
-        (deltaSpreadData.ethHedgeDeltaPnl * userSharesData.userShares) /
-        userSharesData.totalShares,
+        (deltaSpreadData.ethHedgeDeltaPnl *
+          userSharesData.userJuniorVaultShares) /
+        userSharesData.totalJuniorVaultShares,
     })
   );
 

@@ -70,11 +70,13 @@ export async function getUserAaveLends(
       ...aaveLendsData,
       ...userSharesData,
       userAUsdcInterestJunior:
-        (aaveLendsData.aUsdcInterestJunior * userSharesData.userShares) /
-        userSharesData.totalShares,
+        (aaveLendsData.aUsdcInterestJunior *
+          userSharesData.userJuniorVaultShares) /
+        userSharesData.totalJuniorVaultShares,
       userAUsdcInterestSenior:
-        (aaveLendsData.aUsdcInterestSenior * userSharesData.userShares) /
-        userSharesData.totalShares,
+        (aaveLendsData.aUsdcInterestSenior *
+          userSharesData.userJuniorVaultShares) /
+        userSharesData.totalJuniorVaultShares,
     })
   );
 

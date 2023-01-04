@@ -67,8 +67,8 @@ export async function getUserGlpPnl(
       ...glpPnlData,
       ...userSharesData,
       userGlpPnl:
-        (glpPnlData.glpPnl * userSharesData.userShares) /
-        userSharesData.totalShares,
+        (glpPnlData.glpPnl * userSharesData.userJuniorVaultShares) /
+        userSharesData.totalJuniorVaultShares,
     })
   );
 

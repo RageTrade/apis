@@ -18,7 +18,8 @@ import { GlobalTraderPnlResult } from "./trader-pnl";
 
 export type GlobalTotalSharesEntry = Entry<{
   timestamp: number;
-  totalShares: number;
+  totalJuniorVaultShares: number;
+  totalSeniorVaultShares: number;
   currentRound: number;
   roundSharesMinted: number;
   roundUsdcBalance: number;
@@ -33,7 +34,7 @@ export async function getTotalShares(
 ): Promise<GlobalTotalSharesResult> {
   const provider = getProviderAggregate(networkName);
 
-  const { dnGmxJuniorVault, dnGmxBatchingManager } =
+  const { dnGmxJuniorVault, dnGmxSeniorVault, dnGmxBatchingManager } =
     deltaNeutralGmxVaults.getContractsSync(networkName, provider);
 
   // this api contains extra block numbers
@@ -70,9 +71,16 @@ export async function getTotalShares(
     async (_i, blockNumber, event) => {
       const { timestamp } = await provider.getBlock(blockNumber);
 
-      const totalShares = Number(
+      const totalJuniorVaultShares = Number(
         formatEther(
           await dnGmxJuniorVault.totalSupply({
+            blockTag: blockNumber,
+          })
+        )
+      );
+      const totalSeniorVaultShares = Number(
+        formatEther(
+          await dnGmxSeniorVault.totalSupply({
             blockTag: blockNumber,
           })
         )
@@ -103,7 +111,8 @@ export async function getTotalShares(
         blockNumber,
         transactionHash: event.transactionHash,
         timestamp,
-        totalShares,
+        totalJuniorVaultShares,
+        totalSeniorVaultShares,
         currentRound,
         roundSharesMinted,
         roundUsdcBalance,

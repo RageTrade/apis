@@ -67,8 +67,9 @@ export async function getUserTraderPnl(
       ...globalTraderPnlEntry,
       ...userSharesEntry,
       userTraderPnl:
-        (globalTraderPnlEntry.traderPnlVault * userSharesEntry.userShares) /
-        userSharesEntry.totalShares,
+        (globalTraderPnlEntry.traderPnlVault *
+          userSharesEntry.userJuniorVaultShares) /
+        userSharesEntry.totalJuniorVaultShares,
     })
   );
 

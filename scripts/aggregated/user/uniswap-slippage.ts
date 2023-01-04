@@ -70,11 +70,13 @@ export async function getUserUniswapSlippage(
       ...globalUniswapSlippageEntry,
       ...userSharesEntry,
       userSlippage:
-        (globalUniswapSlippageEntry.slippage * userSharesEntry.userShares) /
-        userSharesEntry.totalShares,
+        (globalUniswapSlippageEntry.slippage *
+          userSharesEntry.userJuniorVaultShares) /
+        userSharesEntry.totalJuniorVaultShares,
       userVolume:
-        (globalUniswapSlippageEntry.volume * userSharesEntry.userShares) /
-        userSharesEntry.totalShares,
+        (globalUniswapSlippageEntry.volume *
+          userSharesEntry.userJuniorVaultShares) /
+        userSharesEntry.totalJuniorVaultShares,
     })
   );
 

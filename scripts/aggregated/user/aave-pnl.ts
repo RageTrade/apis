@@ -67,8 +67,8 @@ export async function getUserAavePnl(
       ...aavePnlData,
       ...userSharesData,
       userAavePnl:
-        (aavePnlData.aavePnl * userSharesData.userShares) /
-        userSharesData.totalShares,
+        (aavePnlData.aavePnl * userSharesData.userJuniorVaultShares) /
+        userSharesData.totalJuniorVaultShares,
     })
   );
 

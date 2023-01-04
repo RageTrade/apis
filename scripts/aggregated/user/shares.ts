@@ -19,8 +19,10 @@ import { glpRewards } from "../util/events/glp-rewards";
 
 export type UserSharesEntry = Entry<{
   timestamp: number;
-  userShares: number;
-  totalShares: number;
+  userJuniorVaultShares: number;
+  userSeniorVaultShares: number;
+  totalJuniorVaultShares: number;
+  totalSeniorVaultShares: number;
 }>;
 
 export interface UserSharesResult {
@@ -33,7 +35,7 @@ export async function getUserShares(
 ): Promise<ResultWithMetadata<UserSharesResult>> {
   const provider = getProviderAggregate(networkName);
 
-  const { dnGmxJuniorVault, dnGmxBatchingManager } =
+  const { dnGmxJuniorVault, dnGmxSeniorVault, dnGmxBatchingManager } =
     deltaNeutralGmxVaults.getContractsSync(networkName, provider);
 
   const currentShares = await dnGmxJuniorVault.balanceOf(userAddress);
@@ -66,6 +68,14 @@ export async function getUserShares(
       ),
     { uniqueBlocks: true },
     async (_i, blockNumber, event) => {
+      const userSeniorVaultShares = Number(
+        formatEther(
+          await dnGmxSeniorVault.balanceOf(userAddress, {
+            blockTag: blockNumber,
+          })
+        )
+      );
+
       const userDeposits = await dnGmxBatchingManager.userDeposits(
         userAddress,
         { blockTag: blockNumber }
@@ -96,6 +106,7 @@ export async function getUserShares(
       return {
         blockNumber,
         transactionHash: event.transactionHash,
+        userSeniorVaultShares,
         userRound,
         userUnclaimedShares,
         userClaimedShares,
@@ -111,7 +122,7 @@ export async function getUserShares(
       return {
         ...global,
         ...user,
-        userShares:
+        userJuniorVaultShares:
           user.userUnclaimedShares +
           user.userClaimedShares +
           (global.roundUsdcBalance > 0 && user.userRound === global.currentRound

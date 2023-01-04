@@ -67,8 +67,8 @@ export async function getUserGlpSlippage(
       ...glpSlippageData,
       ...userSharesData,
       userGlpSlippage:
-        (glpSlippageData.glpSlippage * userSharesData.userShares) /
-        userSharesData.totalShares,
+        (glpSlippageData.glpSlippage * userSharesData.userJuniorVaultShares) /
+        userSharesData.totalJuniorVaultShares,
     })
   );
 
