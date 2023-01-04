@@ -39,7 +39,7 @@ router.get(
 );
 
 router.get(
-  "/get-delta-soread",
+  "/get-delta-spread",
   handleRuntimeErrors(async (req) => {
     const networkName = getNetworkName(req);
     const userAddress = getParamAsAddress(req, "userAddress");
