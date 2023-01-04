@@ -34,20 +34,6 @@ export async function getUserTraderPnl(
   networkName: NetworkName,
   userAddress: string
 ): Promise<ResultWithMetadata<UserTraderPnlResult>> {
-  const provider = getProviderAggregate(networkName);
-
-  const { dnGmxJuniorVault, dnGmxBatchingManager } =
-    deltaNeutralGmxVaults.getContractsSync(networkName, provider);
-
-  const currentShares = await dnGmxJuniorVault.balanceOf(userAddress);
-  // TODO add this check
-  //   if (currentShares.isZero()) {
-  //     throw new ErrorWithStatusCode(
-  //       "Junior vault shares for this address is zero, hence not allowed to perform aggregate query",
-  //       400
-  //     );
-  //   }
-
   const globalTraderPnlResponse: ResultWithMetadata<GlobalTraderPnlResult> =
     await fetchJson({
       url: `http://localhost:3000/data/aggregated/get-trader-pnl?networkName=${networkName}`,

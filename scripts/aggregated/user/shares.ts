@@ -39,26 +39,33 @@ export async function getUserShares(
   const { dnGmxJuniorVault, dnGmxSeniorVault, dnGmxBatchingManager } =
     deltaNeutralGmxVaults.getContractsSync(networkName, provider);
 
-  // for preventing abuse
-  // const currentJuniorVaultShares = await dnGmxJuniorVault.balanceOf(
-  //   userAddress
-  // );
-  // const currentSeniorVaultShares = await dnGmxJuniorVault.balanceOf(
-  //   userAddress
-  // );
-  // if (
-  //   currentJuniorVaultShares.lt(parseEther("100")) &&
-  //   currentSeniorVaultShares.lt(parseEther("100"))
-  // ) {
-  //   throw new ErrorWithStatusCode(
-  //     `Balance of junior or senior vault shares found to be ${formatEther(
-  //       currentJuniorVaultShares
-  //     )} and ${formatEther(
-  //       currentSeniorVaultShares
-  //     )}, hence not allowed to perform user specific aggregate query for this address.`,
-  //     400
-  //   );
-  // }
+  // for preventing abuse of user specific APIs
+  const whitelist: string[] = require("./whitelist.json");
+  // check if user is in whitelist
+  if (
+    !whitelist.map((a) => a.toLowerCase()).includes(userAddress.toLowerCase())
+  ) {
+    // otherwise, check if user has any shares in either vault
+    const currentJuniorVaultShares = await dnGmxJuniorVault.balanceOf(
+      userAddress
+    );
+    const currentSeniorVaultShares = await dnGmxJuniorVault.balanceOf(
+      userAddress
+    );
+    if (
+      currentJuniorVaultShares.lt(parseEther("100")) &&
+      currentSeniorVaultShares.lt(parseEther("100"))
+    ) {
+      throw new ErrorWithStatusCode(
+        `Balance of junior or senior vault shares found to be ${formatEther(
+          currentJuniorVaultShares
+        )} and ${formatEther(
+          currentSeniorVaultShares
+        )}, hence not allowed to perform user specific aggregate query for this address.`,
+        400
+      );
+    }
+  }
 
   const totalSharesData: ResultWithMetadata<GlobalTotalSharesResult> =
     await fetchJson({
