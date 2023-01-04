@@ -21,6 +21,7 @@ import { days, timestampRoundDown } from "../../utils";
 
 export type GlobalDeltaSpreadEntry = Entry<{
   timestamp: number;
+
   volume: number;
   slippage: number;
 
@@ -33,6 +34,9 @@ export type GlobalDeltaSpreadEntry = Entry<{
   btcSoldSlippage: number;
   ethSoldSlippage: number;
 
+  btcHedgeDeltaPnl: number;
+  ethHedgeDeltaPnl: number;
+
   btcPrice: number;
   ethPrice: number;
   btcAmountAfter: number;
@@ -42,9 +46,6 @@ export type GlobalDeltaSpreadEntry = Entry<{
   fsGlp_balanceOf_juniorVault: number;
   fsGlp_balanceOf_batchingManager: number;
   glp_totalSupply: number;
-
-  btcHedgeDeltaPnl: number;
-  ethHedgeDeltaPnl: number;
 }>;
 
 export interface GlobalDeltaSpreadDailyEntry {

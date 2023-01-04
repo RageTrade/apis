@@ -39,6 +39,19 @@ router.get(
 );
 
 router.get(
+  "/get-delta-soread",
+  handleRuntimeErrors(async (req) => {
+    const networkName = getNetworkName(req);
+    const userAddress = getParamAsAddress(req, "userAddress");
+    return cacheFunctionResult(
+      aggregated.user.getUserDeltaSpread,
+      [networkName, userAddress],
+      { cacheSeconds: 20 * mins }
+    );
+  })
+);
+
+router.get(
   "/get-glp-pnl",
   handleRuntimeErrors(async (req) => {
     const networkName = getNetworkName(req);
