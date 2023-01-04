@@ -101,7 +101,7 @@ export const getTraderPnl = async () => {
   // threeMonthsOldDate.setMonth(currentDate.getMonth() - 3);
 
   const twoWeeksOldDate = new Date();
-  twoWeeksOldDate.setDate(twoWeeksOldDate.getDate() - 14);
+  twoWeeksOldDate.setDate(twoWeeksOldDate.getDate() - 28);
 
   const to_ts = Math.floor(currentDate.getTime() / 1000).toString();
   const from_ts = Math.floor(twoWeeksOldDate.getTime() / 1000).toString();
@@ -126,6 +126,6 @@ export const getTraderPnl = async () => {
   }
 
   return aum > 0
-    ? (traderPnl / aum) * glpData.glpStats.length * 26 * 100 * -1
+    ? (traderPnl / aum) * glpData.glpStats.length * 13 * 100 * -1
     : 0;
 };
