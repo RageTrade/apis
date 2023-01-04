@@ -16,7 +16,7 @@ export function cacheFunctionResult<F extends (...args: any[]) => any>(
   tags = tags || [];
   return cache.getOrSet(
     fn.name + args.map((a) => String(a)).join("-") + tags,
-    generateResponse.bind(null, fn, args),
+    generateResponse.bind(null, fn, args, cacheSeconds ?? 0),
     cacheSeconds
   );
 }
@@ -24,7 +24,11 @@ export function cacheFunctionResult<F extends (...args: any[]) => any>(
 // includes error in the cache function output,
 // this is needed for preventing someone to abuse
 // an endpoint which does not cache due to revert
-async function generateResponse(fn: Function, args: any[]) {
+async function generateResponse(
+  fn: Function,
+  args: any[],
+  cacheSeconds: number
+) {
   try {
     const result = await fn(...args);
     if (result.result) {
@@ -35,6 +39,7 @@ async function generateResponse(fn: Function, args: any[]) {
           result.cacheTimestamp ?? Number.MAX_SAFE_INTEGER,
           currentTimestamp()
         ),
+        cacheSeconds,
       };
     } else {
       return { result, cacheTimestamp: currentTimestamp() };
@@ -45,7 +50,11 @@ async function generateResponse(fn: Function, args: any[]) {
       throw error;
     }
     // cache the error resp (to prevent DoS, hitting with an input which reverts in middle
-    return { error: error.message, cacheTimestamp: currentTimestamp() };
+    return {
+      error: error.message,
+      cacheTimestamp: currentTimestamp(),
+      cacheSeconds: Math.min(cacheSeconds, 15),
+    };
   }
 }
 
