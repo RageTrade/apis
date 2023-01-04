@@ -13,6 +13,19 @@ import { cacheFunctionResult } from "../../cache";
 const router = express.Router();
 
 router.get(
+  "/get-aave-borrows",
+  handleRuntimeErrors(async (req) => {
+    const networkName = getNetworkName(req);
+    const userAddress = getParamAsAddress(req, "userAddress");
+    return cacheFunctionResult(
+      aggregated.user.getUserAaveBorrows,
+      [networkName, userAddress],
+      { cacheSeconds: 20 * mins }
+    );
+  })
+);
+
+router.get(
   "/get-aave-pnl",
   handleRuntimeErrors(async (req) => {
     const networkName = getNetworkName(req);
