@@ -13,23 +13,24 @@ export class BaseIndexer<DataStoreType> {
   _networkName: NetworkName;
   _provider: ethers.providers.Provider;
   _syncedBlock: number;
-  _blockInterval: number;
-  _store: BaseStore<DataStoreType>;
+  _store: BaseStore<DataStoreType> | undefined;
 
-  constructor(
-    networkName: NetworkName,
-    startBlock: number,
-    blockInterval: number
-  ) {
-    this._syncedBlock = startBlock - 1;
-    this._blockInterval = blockInterval;
+  constructor(networkName: NetworkName) {
+    this._syncedBlock = -1;
     this._networkName = networkName;
-    this._store = (this.constructor as any).getStore(this._networkName);
     this._provider = getProvider(networkName);
   }
 
-  static getStore(networkName: NetworkName): BaseStore<any> {
+  getStore(): BaseStore<DataStoreType> {
     throw new Error("static BaseIndexer.getStore: method not implemented.");
+  }
+
+  getCachedStoreObject(): BaseStore<DataStoreType> {
+    if (this._store) {
+      return this._store;
+    }
+    this._store = this.getStore();
+    return this._store;
   }
 
   async getFilter(
@@ -42,18 +43,24 @@ export class BaseIndexer<DataStoreType> {
     throw new Error("BaseIndexer.forEachLog: method not implemented.");
   }
 
-  async ready() {
+  private async ready() {
     this._syncedBlock = Number(
-      await this._store.getOrSet<string>("synced-block", () =>
+      await this.getCachedStoreObject().getOrSet<string>("synced-block", () =>
         String(this._syncedBlock - 1)
       )
     );
   }
 
-  async start(iterWait?: number, err?: (err: any) => void) {
+  async start(
+    startBlock: number,
+    blockInterval: number,
+    iterWait?: number,
+    err?: (err: any) => void
+  ) {
+    this._syncedBlock = startBlock - 1;
     while (1) {
       try {
-        await this.run();
+        await this.run(blockInterval);
       } catch (e) {
         if (err) {
           err(e);
@@ -65,17 +72,19 @@ export class BaseIndexer<DataStoreType> {
     }
   }
 
-  async run() {
+  private async run(blockInterval: number) {
     await this.ready();
     console.log(this._networkName, "indexer ready");
 
     const filter = await this.getFilter(this._provider);
 
     const latestBlock = await this._provider.getBlockNumber();
+    const store = this.getCachedStoreObject();
     while (this._syncedBlock < latestBlock) {
       const { logs, fromBlock, toBlock } = await this.getLogs(
         filter,
-        latestBlock
+        latestBlock,
+        blockInterval
       );
 
       let latestBlockWithLogs = fromBlock;
@@ -84,7 +93,7 @@ export class BaseIndexer<DataStoreType> {
         await this.forEachLog(log);
       }
       this._syncedBlock = toBlock;
-      await this._store.set<string>(
+      await store.set<string>(
         "synced-block",
         // store the block in which we got logs
         String(Math.max(this._syncedBlock, latestBlockWithLogs))
@@ -92,15 +101,15 @@ export class BaseIndexer<DataStoreType> {
     }
   }
 
-  async getLogs(
+  private async getLogs(
     filter: EventFilter,
-    latestBlock: number
+    latestBlock: number,
+    blockInterval: number
   ): Promise<{
     logs: ethers.providers.Log[];
     fromBlock: number;
     toBlock: number;
   }> {
-    let blockInterval = this._blockInterval;
     let fromBlock = this._syncedBlock + 1;
     let toBlock: number = Math.min(
       this._syncedBlock + blockInterval,

@@ -6,7 +6,7 @@ export async function getAccountIdsByAddress(
   networkName: NetworkName,
   userAddress: string
 ) {
-  const store = AccountCreatedIndexer.getStore(networkName);
+  const store = new AccountCreatedIndexer(networkName).getStore();
   const accountIds = await store.get(userAddress);
   return {
     result: accountIds ?? [],

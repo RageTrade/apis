@@ -1,3 +1,4 @@
+import { ethers } from "ethers";
 import { fetchJson, formatEther, parseEther } from "ethers/lib/utils";
 
 import {
@@ -8,15 +9,11 @@ import {
 } from "@ragetrade/sdk";
 
 import { getProviderAggregate } from "../../../providers";
-import { combine } from "../util/combine";
-import { EventFn, parallelize } from "../util/parallelize";
-import { GlobalTotalSharesResult } from "../total-shares";
-import { Entry } from "../util/types";
-import { depositWithdrawRebalance } from "../util/events/deposit-withdraw-rebalance";
-import { glpSwapped } from "../util/events/glp-swapped";
-import { ethers } from "ethers";
-import { glpRewards } from "../util/events/glp-rewards";
 import { ErrorWithStatusCode } from "../../../utils";
+import { GlobalTotalSharesResult } from "../total-shares";
+import { combine } from "../util/combine";
+import { parallelize } from "../util/parallelize";
+import { Entry } from "../util/types";
 
 export type UserSharesEntry = Entry<{
   timestamp: number;

@@ -12,7 +12,7 @@ import { EventFn, parallelize } from "./util/parallelize";
 import { Entry } from "./util/types";
 import { depositWithdrawRebalance } from "./util/events/deposit-withdraw-rebalance";
 import { ethers } from "ethers";
-import { glpRewards } from "./util/events/glp-rewards";
+import { depositToken } from "./util/events/deposit-token";
 import { glpSwapped } from "./util/events/glp-swapped";
 import { GlobalTraderPnlResult } from "./trader-pnl";
 
@@ -50,7 +50,7 @@ export async function getTotalShares(
     [
       depositWithdrawRebalance,
       glpSwapped,
-      glpRewards,
+      depositToken,
       // additional block numbers from trader pnl
       () => {
         const uniqueBlockNumbers = Array.from(

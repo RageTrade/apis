@@ -9,8 +9,11 @@ import { BaseIndexer } from "./base-indexer";
 const iface = ClearingHouse__factory.createInterface();
 
 export class AccountCreatedIndexer extends BaseIndexer<number[]> {
-  static getStore(networkName: NetworkName): JsonStore<number[]> {
-    return new JsonStore<number[]>(`data/${networkName}/accounts-created.json`);
+  getStore(): JsonStore<number[]> {
+    return new JsonStore<number[]>(
+      `data/${this._networkName}/accounts-created.json`,
+      true
+    );
   }
 
   async getFilter(
@@ -23,11 +26,12 @@ export class AccountCreatedIndexer extends BaseIndexer<number[]> {
   async forEachLog(log: ethers.providers.Log) {
     console.log("for each");
     const parsed = iface.parseLog(log) as unknown as AccountCreatedEvent;
-    const accountIds = await this._store.getOrSet<number[]>(
+    const store = this.getCachedStoreObject();
+    const accountIds = await store.getOrSet<number[]>(
       parsed.args.ownerAddress,
       () => []
     );
     accountIds.push(parsed.args.accountId.toNumber());
-    await this._store.set(parsed.args.ownerAddress, accountIds);
+    await store.set(parsed.args.ownerAddress, accountIds);
   }
 }

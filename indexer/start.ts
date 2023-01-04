@@ -1,6 +1,34 @@
 import { AccountCreatedIndexer } from "./account-created";
 
-new AccountCreatedIndexer("arbmain", 17185390, 5000).start();
-// new AccountCreatedIndexer("arbtest", 12705265, 5000).start();
-// new AccountCreatedIndexer("arbrinkeby", 12705265, 5000).start();
-new AccountCreatedIndexer("arbgoerli", 408336, 5000).start();
+new AccountCreatedIndexer("arbmain").start(17185390, 5000);
+new AccountCreatedIndexer("arbgoerli").start(408336, 5000);
+
+// dn vault events
+
+import { deltaNeutralGmxVaults, tokens } from "@ragetrade/sdk";
+import { SimpleEventCache } from "./simple-event-cache";
+
+const { DnGmxJuniorVaultDeployment } =
+  deltaNeutralGmxVaults.getDeployments("arbmain");
+const { dnGmxJuniorVault, dnGmxBatchingManager } =
+  deltaNeutralGmxVaults.getContractsSync("arbmain");
+
+new SimpleEventCache("arbmain", dnGmxJuniorVault.filters.Deposit()).start(
+  DnGmxJuniorVaultDeployment.receipt?.blockNumber ?? 0,
+  10000
+);
+new SimpleEventCache("arbmain", dnGmxJuniorVault.filters.Withdraw()).start(
+  DnGmxJuniorVaultDeployment.receipt?.blockNumber ?? 0,
+  10000
+);
+new SimpleEventCache("arbmain", dnGmxJuniorVault.filters.Rebalanced()).start(
+  DnGmxJuniorVaultDeployment.receipt?.blockNumber ?? 0,
+  10000
+);
+
+const { weth } = tokens.getContractsSync("arbmain");
+
+new SimpleEventCache(
+  "arbmain",
+  dnGmxBatchingManager.filters.DepositToken(null, weth.address)
+).start(DnGmxJuniorVaultDeployment.receipt?.blockNumber ?? 0, 10000);
