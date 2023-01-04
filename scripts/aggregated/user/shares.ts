@@ -1,4 +1,4 @@
-import { fetchJson, formatEther } from "ethers/lib/utils";
+import { fetchJson, formatEther, parseEther } from "ethers/lib/utils";
 
 import {
   deltaNeutralGmxVaults,
@@ -16,6 +16,7 @@ import { depositWithdrawRebalance } from "../util/events/deposit-withdraw-rebala
 import { glpSwapped } from "../util/events/glp-swapped";
 import { ethers } from "ethers";
 import { glpRewards } from "../util/events/glp-rewards";
+import { ErrorWithStatusCode } from "../../../utils";
 
 export type UserSharesEntry = Entry<{
   timestamp: number;
@@ -38,14 +39,22 @@ export async function getUserShares(
   const { dnGmxJuniorVault, dnGmxSeniorVault, dnGmxBatchingManager } =
     deltaNeutralGmxVaults.getContractsSync(networkName, provider);
 
-  const currentShares = await dnGmxJuniorVault.balanceOf(userAddress);
-  // TODO add this check
-  //   if (currentShares.isZero()) {
-  //     throw new ErrorWithStatusCode(
-  //       "Junior vault shares for this address is zero, hence not allowed to perform aggregate query",
-  //       400
-  //     );
-  //   }
+  const currentJuniorVaultShares = await dnGmxJuniorVault.balanceOf(
+    userAddress
+  );
+  const currentSeniorVaultShares = await dnGmxJuniorVault.balanceOf(
+    userAddress
+  );
+
+  if (
+    currentJuniorVaultShares.lt(parseEther("100")) &&
+    currentSeniorVaultShares.lt(parseEther("100"))
+  ) {
+    throw new ErrorWithStatusCode(
+      "Low balance of junior or senior vault shares, hence not allowed to perform user specific aggregate query for this address.",
+      400
+    );
+  }
 
   const totalSharesData: ResultWithMetadata<GlobalTotalSharesResult> =
     await fetchJson({
