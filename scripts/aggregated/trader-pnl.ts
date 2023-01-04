@@ -15,7 +15,7 @@ export interface GlobalTraderPnlEntry {
   timestamp: number;
   profit: number;
   loss: number;
-  traderPnl: number;
+  traderPnlGmxGlobal: number;
   vaultShare: number;
   traderPnlVault: number;
 }
@@ -23,7 +23,7 @@ export interface GlobalTraderPnlEntry {
 export interface GlobalTraderPnlDailyEntry {
   startTimestamp: number;
   endTimestamp: number;
-  traderPnlNet: number;
+  traderPnlGmxGlobalNet: number;
   traderPnlVaultNet: number;
 }
 
@@ -147,15 +147,15 @@ export async function getTraderPnl(): Promise<GlobalTraderPnlResult> {
     }
     // traderPnl.push(profit - loss);
     // vaultShare.push(vaultGlp / totalGlp);
-    const traderPnl = profit - loss;
+    const traderPnlGmxGlobal = profit - loss;
     const vaultShare = vaultGlp / totalGlp;
-    const traderPnlVault = traderPnl * vaultShare;
+    const traderPnlVault = traderPnlGmxGlobal * vaultShare;
     data.push({
       blockNumber,
       timestamp: each.timestamp,
       profit,
       loss,
-      traderPnl,
+      traderPnlGmxGlobal,
       vaultShare,
       traderPnlVault,
     });
@@ -171,13 +171,13 @@ export async function getTraderPnl(): Promise<GlobalTraderPnlResult> {
       (acc: GlobalTraderPnlDailyEntry[], cur: GlobalTraderPnlEntry) => {
         const lastEntry = acc[acc.length - 1];
         if (lastEntry && cur.timestamp <= lastEntry.endTimestamp) {
-          lastEntry.traderPnlNet += cur.traderPnl;
+          lastEntry.traderPnlGmxGlobalNet += cur.traderPnlGmxGlobal;
           lastEntry.traderPnlVaultNet += cur.traderPnlVault;
         } else {
           acc.push({
             startTimestamp: timestampRoundDown(cur.timestamp),
             endTimestamp: timestampRoundDown(cur.timestamp) + 1 * days - 1,
-            traderPnlNet: cur.traderPnl,
+            traderPnlGmxGlobalNet: cur.traderPnlGmxGlobal,
             traderPnlVaultNet: cur.traderPnlVault,
           });
         }
