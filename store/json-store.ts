@@ -49,7 +49,9 @@ export class JsonStore<Value> extends BaseStore<Value> {
     for (const { key, value } of entries) {
       json[key] = value;
     }
-    await writeJSON(this._path, json, { spaces: 2 });
+    // TODO find what is the best way to handle this
+    // json files get overwritten occasionally
+    await writeJSONSync(this._path, json, { spaces: 2 });
     this._writing = false;
   }
 
