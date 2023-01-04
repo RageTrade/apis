@@ -1,4 +1,5 @@
 export * from "./aave-borrows";
+export * from "./aave-lends";
 export * from "./aave-pnl";
 export * from "./delta-spread";
 export * from "./glp-pnl";
