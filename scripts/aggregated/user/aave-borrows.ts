@@ -59,7 +59,7 @@ export async function getUserAaveBorrows(
 
   const aaveBorrowsResponse: ResultWithMetadata<GlobalAaveBorrowsResult> =
     await fetchJson({
-      url: `http://localhost:3000/data/aggregated/get-aave-pnl?networkName=${networkName}`,
+      url: `http://localhost:3000/data/aggregated/get-aave-borrows?networkName=${networkName}`,
       timeout: 1_000_000_000, // huge number
     });
 
