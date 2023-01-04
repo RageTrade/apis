@@ -1,9 +1,12 @@
-import { fetchJson, formatUnits } from "ethers/lib/utils";
+import { fetchJson, formatEther, formatUnits } from "ethers/lib/utils";
 
 import {
+  aave,
   deltaNeutralGmxVaults,
+  gmxProtocol,
   NetworkName,
   ResultWithMetadata,
+  tokens,
 } from "@ragetrade/sdk";
 
 import { getProviderAggregate } from "../../providers";
@@ -20,6 +23,7 @@ export type GlobalDeltaSpreadEntry = Entry<{
   timestamp: number;
   volume: number;
   slippage: number;
+
   btcBought: number;
   ethBought: number;
   btcSold: number;
@@ -28,6 +32,19 @@ export type GlobalDeltaSpreadEntry = Entry<{
   ethBoughtSlippage: number;
   btcSoldSlippage: number;
   ethSoldSlippage: number;
+
+  btcPrice: number;
+  ethPrice: number;
+  btcAmountAfter: number;
+  ethAmountAfter: number;
+  btcUsdgAmount: number;
+  ethUsdgAmount: number;
+  fsGlp_balanceOf_juniorVault: number;
+  fsGlp_balanceOf_batchingManager: number;
+  glp_totalSupply: number;
+
+  btcHedgeDeltaPnl: number;
+  ethHedgeDeltaPnl: number;
 }>;
 
 export interface GlobalDeltaSpreadDailyEntry {
@@ -35,9 +52,14 @@ export interface GlobalDeltaSpreadDailyEntry {
   endTimestamp: number;
   slippageNet: number;
   volumeNet: number;
+  btcHedgeDeltaPnlNet: number;
+  ethHedgeDeltaPnlNet: number;
 }
 
 export interface GlobalDeltaSpreadResult {
+  data: GlobalDeltaSpreadEntry[];
+  dailyData: GlobalDeltaSpreadDailyEntry[];
+
   totalVolume: number;
   totalSlippage: number;
 
@@ -50,8 +72,8 @@ export interface GlobalDeltaSpreadResult {
   totalBtcSoldSlippage: number;
   totalEthSoldSlippage: number;
 
-  data: GlobalDeltaSpreadEntry[];
-  dailyData: GlobalDeltaSpreadDailyEntry[];
+  totalBtcHedgeDeltaPnl: number;
+  totalEthHedgeDeltaPnl: number;
 }
 
 export async function getDeltaSpread(
@@ -59,10 +81,21 @@ export async function getDeltaSpread(
 ): Promise<GlobalDeltaSpreadResult> {
   const provider = getProviderAggregate(networkName);
 
-  const { dnGmxJuniorVault } = deltaNeutralGmxVaults.getContractsSync(
+  const { dnGmxJuniorVault, dnGmxBatchingManager } =
+    deltaNeutralGmxVaults.getContractsSync(networkName, provider);
+  const { gmxUnderlyingVault } = gmxProtocol.getContractsSync(
     networkName,
     provider
   );
+  const { wbtc, weth, fsGLP, glp } = tokens.getContractsSync(
+    networkName,
+    provider
+  );
+  const { wbtcVariableDebtTokenAddress, wethVariableDebtTokenAddress } =
+    aave.getAddresses(networkName);
+  const { aUsdc } = aave.getContractsSync(networkName, provider);
+  const vdWbtc = aUsdc.attach(wbtcVariableDebtTokenAddress);
+  const vdWeth = aUsdc.attach(wethVariableDebtTokenAddress);
 
   const totalSharesData: ResultWithMetadata<GlobalTotalSharesResult> =
     await fetchJson({
@@ -95,6 +128,9 @@ export async function getDeltaSpread(
       let ethBoughtSlippage = 0;
       let btcSoldSlippage = 0;
       let ethSoldSlippage = 0;
+
+      let btcPrice: number = 0;
+      let ethPrice: number = 0;
 
       for (const event of parsed) {
         const fromPrice = await price(
@@ -129,28 +165,82 @@ export async function getDeltaSpread(
         if (name(event.args.fromToken, networkName) === "wbtc") {
           btcSold += fromDollar;
           btcSoldSlippage += slippageDollar;
+          btcPrice = fromPrice;
+          ethPrice = toPrice;
         }
         if (name(event.args.fromToken, networkName) === "weth") {
           ethSold += fromDollar;
           ethSoldSlippage += slippageDollar;
+          btcPrice = toPrice;
+          ethPrice = fromPrice;
         }
         if (name(event.args.toToken, networkName) === "wbtc") {
           btcBought += toDollar;
           btcBoughtSlippage += slippageDollar;
+          btcPrice = toPrice;
+          ethPrice = fromPrice;
         }
         if (name(event.args.toToken, networkName) === "weth") {
           ethBought += toDollar;
           ethBoughtSlippage += slippageDollar;
+          btcPrice = fromPrice;
+          ethPrice = toPrice;
         }
         volume += fromDollar;
         slippage += slippageDollar;
       }
 
+      const _btcAmountAfter = await vdWbtc.balanceOf(dnGmxJuniorVault.address, {
+        blockTag: blockNumber,
+      });
+      const btcAmountAfter = Number(formatUnits(_btcAmountAfter, 8));
+
+      const _ethAmountAfter = await vdWeth.balanceOf(dnGmxJuniorVault.address, {
+        blockTag: blockNumber,
+      });
+      const ethAmountAfter = Number(formatUnits(_ethAmountAfter, 18));
+
+      const _btcUsdgAmount = await gmxUnderlyingVault.usdgAmounts(
+        wbtc.address,
+        { blockTag: blockNumber }
+      );
+      const btcUsdgAmount = Number(formatEther(_btcUsdgAmount));
+
+      const _ethUsdgAmount = await gmxUnderlyingVault.usdgAmounts(
+        weth.address,
+        { blockTag: blockNumber }
+      );
+      const ethUsdgAmount = Number(formatEther(_ethUsdgAmount));
+
+      const fsGlp_balanceOf_juniorVault = Number(
+        formatEther(
+          await fsGLP.balanceOf(dnGmxJuniorVault.address, {
+            blockTag: blockNumber,
+          })
+        )
+      );
+      const fsGlp_balanceOf_batchingManager = Number(
+        formatEther(
+          await dnGmxBatchingManager.dnGmxJuniorVaultGlpBalance({
+            blockTag: blockNumber,
+          })
+        )
+      );
+      const glp_totalSupply = Number(
+        formatEther(
+          await glp.totalSupply({
+            blockTag: blockNumber,
+          })
+        )
+      );
+
+      // TODO export price and then do the "last" kind of loop after this
       return {
         blockNumber,
         transactionHash: event.transactionHash,
         volume,
         slippage,
+
         btcBought,
         ethBought,
         btcSold,
@@ -159,38 +249,81 @@ export async function getDeltaSpread(
         ethBoughtSlippage,
         btcSoldSlippage,
         ethSoldSlippage,
+
+        btcPrice,
+        ethPrice,
+        btcAmountAfter,
+        ethAmountAfter,
+        btcUsdgAmount,
+        ethUsdgAmount,
+        fsGlp_balanceOf_juniorVault,
+        fsGlp_balanceOf_batchingManager,
+        glp_totalSupply,
       };
     }
   );
 
-  const combinedData = combine(data, totalSharesData.result.data, (a, b) => ({
+  const dataWithTimestamp = combine(
+    data,
+    totalSharesData.result.data,
+    (a, b) => ({
+      ...a,
+      timestamp: b.timestamp,
+    })
+  );
+
+  const extraData: Entry<{
+    btcHedgeDeltaPnl: number;
+    ethHedgeDeltaPnl: number;
+  }>[] = [];
+
+  let last;
+  for (const current of dataWithTimestamp) {
+    if (last) {
+      const lastBtcAmountVault =
+        (last.btcUsdgAmount *
+          (last.fsGlp_balanceOf_juniorVault +
+            last.fsGlp_balanceOf_batchingManager)) /
+        last.glp_totalSupply /
+        last.btcPrice;
+      const lastEthAmountVault =
+        (last.ethUsdgAmount *
+          (last.fsGlp_balanceOf_juniorVault +
+            last.fsGlp_balanceOf_batchingManager)) /
+        last.glp_totalSupply /
+        last.ethPrice;
+
+      const priceDiffEth = current.ethPrice - last.ethPrice;
+      const priceDiffBtc = current.btcPrice - last.btcPrice;
+
+      const btcHedgeDeltaPnl =
+        (lastBtcAmountVault - last.btcAmountAfter) * priceDiffBtc;
+      const ethHedgeDeltaPnl =
+        (lastEthAmountVault - last.ethAmountAfter) * priceDiffEth;
+
+      extraData.push({
+        blockNumber: current.blockNumber,
+        transactionHash: current.transactionHash,
+        btcHedgeDeltaPnl,
+        ethHedgeDeltaPnl,
+      });
+    } else {
+      extraData.push({
+        blockNumber: current.blockNumber,
+        transactionHash: current.transactionHash,
+        btcHedgeDeltaPnl: 0,
+        ethHedgeDeltaPnl: 0,
+      });
+    }
+    last = current;
+  }
+
+  const combinedData = combine(dataWithTimestamp, extraData, (a, b) => ({
     ...a,
-    timestamp: b.timestamp,
+    ...b,
   }));
 
   return {
-    totalVolume: data.reduce((acc, cur) => acc + cur.volume, 0),
-    totalSlippage: data.reduce((acc, cur) => acc + cur.slippage, 0),
-    totalBtcBought: data.reduce((acc, cur) => acc + cur.btcBought, 0),
-    totalEthBought: data.reduce((acc, cur) => acc + cur.ethBought, 0),
-    totalBtcSold: data.reduce((acc, cur) => acc + cur.btcSold, 0),
-    totalEthSold: data.reduce((acc, cur) => acc + cur.ethSold, 0),
-    totalBtcBoughtSlippage: data.reduce(
-      (acc, cur) => acc + cur.btcBoughtSlippage,
-      0
-    ),
-    totalEthBoughtSlippage: data.reduce(
-      (acc, cur) => acc + cur.ethBoughtSlippage,
-      0
-    ),
-    totalBtcSoldSlippage: data.reduce(
-      (acc, cur) => acc + cur.btcSoldSlippage,
-      0
-    ),
-    totalEthSoldSlippage: data.reduce(
-      (acc, cur) => acc + cur.ethSoldSlippage,
-      0
-    ),
     data: combinedData,
     dailyData: combinedData.reduce(
       (acc: GlobalDeltaSpreadDailyEntry[], cur: GlobalDeltaSpreadEntry) => {
@@ -204,11 +337,44 @@ export async function getDeltaSpread(
             endTimestamp: timestampRoundDown(cur.timestamp) + 1 * days - 1,
             slippageNet: cur.slippage,
             volumeNet: cur.volume,
+            btcHedgeDeltaPnlNet: cur.btcHedgeDeltaPnl,
+            ethHedgeDeltaPnlNet: cur.ethHedgeDeltaPnl,
           });
         }
         return acc;
       },
       []
+    ),
+
+    totalVolume: combinedData.reduce((acc, cur) => acc + cur.volume, 0),
+    totalSlippage: combinedData.reduce((acc, cur) => acc + cur.slippage, 0),
+    totalBtcBought: combinedData.reduce((acc, cur) => acc + cur.btcBought, 0),
+    totalEthBought: combinedData.reduce((acc, cur) => acc + cur.ethBought, 0),
+    totalBtcSold: combinedData.reduce((acc, cur) => acc + cur.btcSold, 0),
+    totalEthSold: combinedData.reduce((acc, cur) => acc + cur.ethSold, 0),
+    totalBtcBoughtSlippage: data.reduce(
+      (acc, cur) => acc + cur.btcBoughtSlippage,
+      0
+    ),
+    totalEthBoughtSlippage: combinedData.reduce(
+      (acc, cur) => acc + cur.ethBoughtSlippage,
+      0
+    ),
+    totalBtcSoldSlippage: combinedData.reduce(
+      (acc, cur) => acc + cur.btcSoldSlippage,
+      0
+    ),
+    totalEthSoldSlippage: combinedData.reduce(
+      (acc, cur) => acc + cur.ethSoldSlippage,
+      0
+    ),
+    totalBtcHedgeDeltaPnl: combinedData.reduce(
+      (acc, cur) => acc + cur.btcHedgeDeltaPnl,
+      0
+    ),
+    totalEthHedgeDeltaPnl: combinedData.reduce(
+      (acc, cur) => acc + cur.ethHedgeDeltaPnl,
+      0
     ),
   };
 }
