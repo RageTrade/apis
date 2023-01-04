@@ -27,7 +27,7 @@ export async function rewardsHarvested(
 export async function rewardsHarvested_cached(networkName: NetworkName) {
   const { dnGmxJuniorVault } =
     deltaNeutralGmxVaults.getContractsSync(networkName);
-  const filter = dnGmxJuniorVault.filters.Rebalanced();
+  const filter = dnGmxJuniorVault.filters.RewardsHarvested();
 
   // @ts-ignore
   const runningEvent = dnGmxJuniorVault._getRunningEvent(filter);
