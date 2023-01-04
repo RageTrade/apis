@@ -130,8 +130,16 @@ export async function getDeltaSpread(
       let btcSoldSlippage = 0;
       let ethSoldSlippage = 0;
 
-      let btcPrice: number = 0;
-      let ethPrice: number = 0;
+      let btcPrice: number = await price(
+        wbtc.address,
+        blockNumber,
+        networkName
+      );
+      let ethPrice: number = await price(
+        weth.address,
+        blockNumber,
+        networkName
+      );
 
       for (const event of parsed) {
         const fromPrice = await price(
@@ -166,26 +174,18 @@ export async function getDeltaSpread(
         if (name(event.args.fromToken, networkName) === "wbtc") {
           btcSold += fromDollar;
           btcSoldSlippage += slippageDollar;
-          btcPrice = fromPrice;
-          ethPrice = toPrice;
         }
         if (name(event.args.fromToken, networkName) === "weth") {
           ethSold += fromDollar;
           ethSoldSlippage += slippageDollar;
-          btcPrice = toPrice;
-          ethPrice = fromPrice;
         }
         if (name(event.args.toToken, networkName) === "wbtc") {
           btcBought += toDollar;
           btcBoughtSlippage += slippageDollar;
-          btcPrice = toPrice;
-          ethPrice = fromPrice;
         }
         if (name(event.args.toToken, networkName) === "weth") {
           ethBought += toDollar;
           ethBoughtSlippage += slippageDollar;
-          btcPrice = fromPrice;
-          ethPrice = toPrice;
         }
         volume += fromDollar;
         slippage += slippageDollar;
