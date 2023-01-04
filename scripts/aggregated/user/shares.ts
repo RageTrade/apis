@@ -15,6 +15,8 @@ import { combine } from "../util/combine";
 import { parallelize } from "../util/parallelize";
 import { Entry } from "../util/types";
 
+import whitelist from "./whitelist";
+
 export type UserSharesEntry = Entry<{
   timestamp: number;
   userJuniorVaultShares: number;
@@ -37,7 +39,6 @@ export async function getUserShares(
     deltaNeutralGmxVaults.getContractsSync(networkName, provider);
 
   // for preventing abuse of user specific APIs
-  const whitelist: string[] = require("./whitelist.json");
   // check if user is in whitelist
   if (
     !whitelist.map((a) => a.toLowerCase()).includes(userAddress.toLowerCase())
