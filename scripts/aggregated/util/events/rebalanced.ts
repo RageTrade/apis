@@ -7,6 +7,13 @@ export async function rebalanced(
   networkName: NetworkName,
   provider: ethers.providers.Provider
 ) {
+  // if using a network that has indexer on for these logs, use the indexer
+  // if (networkName === "arbmain") {
+  //   return (await rebalanced_cached(networkName)).sort(
+  //     (a, b) => a.blockNumber - b.blockNumber
+  //   );
+  // }
+
   const { dnGmxJuniorVault } = deltaNeutralGmxVaults.getContractsSync(
     networkName,
     provider

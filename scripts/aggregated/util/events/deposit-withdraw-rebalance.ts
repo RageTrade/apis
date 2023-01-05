@@ -13,13 +13,13 @@ export async function depositWithdrawRebalance(
   provider: ethers.providers.Provider
 ): Promise<(DepositEvent | WithdrawEvent | RebalancedEvent)[]> {
   // if using a network that has indexer on for these logs, use the indexer
-  if (networkName === "arbmain") {
-    return [
-      ...(await deposit_cached(networkName)),
-      ...(await withdraw_cached(networkName)),
-      ...(await rebalanced_cached(networkName)),
-    ].sort((a, b) => a.blockNumber - b.blockNumber);
-  }
+  // if (networkName === "arbmain") {
+  //   return [
+  //     ...(await deposit_cached(networkName)),
+  //     ...(await withdraw_cached(networkName)),
+  //     ...(await rebalanced_cached(networkName)),
+  //   ].sort((a, b) => a.blockNumber - b.blockNumber);
+  // }
 
   const { dnGmxJuniorVault } = deltaNeutralGmxVaults.getContractsSync(
     networkName,

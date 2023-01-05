@@ -10,11 +10,11 @@ export async function depositToken(
   provider: ethers.providers.Provider
 ) {
   // if using a network that has indexer on for these logs, use the indexer
-  if (networkName === "arbmain") {
-    return (await depositToken_cached(networkName)).sort(
-      (a, b) => a.blockNumber - b.blockNumber
-    );
-  }
+  // if (networkName === "arbmain") {
+  //   return (await depositToken_cached(networkName)).sort(
+  //     (a, b) => a.blockNumber - b.blockNumber
+  //   );
+  // }
 
   const { weth } = tokens.getContractsSync(networkName, provider);
   const { dnGmxBatchingManager } = deltaNeutralGmxVaults.getContractsSync(

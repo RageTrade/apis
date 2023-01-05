@@ -8,11 +8,12 @@ export async function glpSwapped(
   provider: ethers.providers.Provider
 ) {
   // if using a network that has indexer on for these logs, use the indexer
-  if (networkName === "arbmain") {
-    return (await glpSwapped_cached(networkName)).sort(
-      (a, b) => a.blockNumber - b.blockNumber
-    );
-  }
+  // if (networkName === "arbmain") {
+  //   const allEvents = (await glpSwapped_cached(networkName)).sort(
+  //     (a, b) => a.blockNumber - b.blockNumber
+  //   );
+  //   return allEvents;
+  // }
 
   const { dnGmxJuniorVault } = deltaNeutralGmxVaults.getContractsSync(
     networkName,
