@@ -16,8 +16,8 @@ import { days, timestampRoundDown } from "../../../utils";
 export type UserDeltaSpreadEntry = Entry<{
   timestamp: number;
 
-  userVolume: number;
-  userSlippage: number;
+  userUniswapVolume: number;
+  userUniswapSlippage: number;
   userBtcBought: number;
   userEthBought: number;
   userBtcSold: number;
@@ -34,8 +34,8 @@ export interface UserDeltaSpreadDailyEntry {
   startTimestamp: number;
   endTimestamp: number;
 
-  userSlippageNet: number;
-  userVolumeNet: number;
+  userUniswapSlippageNet: number;
+  userUniswapVolumeNet: number;
   userBtcHedgeDeltaPnlNet: number;
   userEthHedgeDeltaPnlNet: number;
 }
@@ -44,8 +44,8 @@ export interface UserDeltaSpreadResult {
   data: UserDeltaSpreadEntry[];
   dailyData: UserDeltaSpreadDailyEntry[];
 
-  userTotalVolume: number;
-  userTotalSlippage: number;
+  userTotalUniswapVolume: number;
+  userTotalUniswapSlippage: number;
   userTotalBtcBought: number;
   userTotalEthBought: number;
   userTotalBtcSold: number;
@@ -80,10 +80,10 @@ export async function getUserDeltaSpread(
     (deltaSpreadData, userSharesData) => ({
       ...deltaSpreadData,
       ...userSharesData,
-      userVolume:
+      userUniswapVolume:
         (deltaSpreadData.uniswapVolume * userSharesData.userJuniorVaultShares) /
         userSharesData.totalJuniorVaultShares,
-      userSlippage:
+      userUniswapSlippage:
         (deltaSpreadData.uniswapSlippage *
           userSharesData.userJuniorVaultShares) /
         userSharesData.totalJuniorVaultShares,
@@ -140,16 +140,16 @@ export async function getUserDeltaSpread(
         (acc: UserDeltaSpreadDailyEntry[], cur: UserDeltaSpreadEntry) => {
           const lastEntry = acc[acc.length - 1];
           if (lastEntry && cur.timestamp <= lastEntry.endTimestamp) {
-            lastEntry.userSlippageNet += cur.userSlippage;
-            lastEntry.userVolumeNet += cur.userVolume;
+            lastEntry.userUniswapSlippageNet += cur.userUniswapSlippage;
+            lastEntry.userUniswapVolumeNet += cur.userUniswapVolume;
             lastEntry.userBtcHedgeDeltaPnlNet += cur.userBtcHedgeDeltaPnl;
             lastEntry.userEthHedgeDeltaPnlNet += cur.userEthHedgeDeltaPnl;
           } else {
             acc.push({
               startTimestamp: timestampRoundDown(cur.timestamp),
               endTimestamp: timestampRoundDown(cur.timestamp) + 1 * days - 1,
-              userSlippageNet: cur.userSlippage,
-              userVolumeNet: cur.userVolume,
+              userUniswapSlippageNet: cur.userUniswapSlippage,
+              userUniswapVolumeNet: cur.userUniswapVolume,
               userBtcHedgeDeltaPnlNet: cur.userBtcHedgeDeltaPnl,
               userEthHedgeDeltaPnlNet: cur.userEthHedgeDeltaPnl,
             });
@@ -158,8 +158,14 @@ export async function getUserDeltaSpread(
         },
         []
       ),
-      userTotalVolume: data.reduce((acc, cur) => acc + cur.userVolume, 0),
-      userTotalSlippage: data.reduce((acc, cur) => acc + cur.userSlippage, 0),
+      userTotalUniswapVolume: data.reduce(
+        (acc, cur) => acc + cur.userUniswapVolume,
+        0
+      ),
+      userTotalUniswapSlippage: data.reduce(
+        (acc, cur) => acc + cur.userUniswapSlippage,
+        0
+      ),
       userTotalBtcBought: data.reduce((acc, cur) => acc + cur.userBtcBought, 0),
       userTotalEthBought: data.reduce((acc, cur) => acc + cur.userEthBought, 0),
       userTotalBtcSold: data.reduce((acc, cur) => acc + cur.userBtcSold, 0),

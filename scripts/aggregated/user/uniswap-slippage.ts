@@ -15,22 +15,22 @@ import { timestampRoundDown, days } from "../../../utils";
 
 export type UserUniswapSlippageEntry = Entry<{
   timestamp: number;
-  userSlippage: number;
-  userVolume: number;
+  userUniswapSlippage: number;
+  userUniswapVolume: number;
 }>;
 
 export interface UserUniswapSlippageDailyEntry {
   startTimestamp: number;
   endTimestamp: number;
-  userSlippageNet: number;
-  userVolumeNet: number;
+  userUniswapSlippageNet: number;
+  userUniswapVolumeNet: number;
 }
 
 export interface UserUniswapSlippageResult {
   data: UserUniswapSlippageEntry[];
   dailyData: UserUniswapSlippageDailyEntry[];
   userTotalUniswapSlippage: number;
-  userTotalVolume: number;
+  userTotalUniswapVolume: number;
 }
 
 export async function getUserUniswapSlippage(
@@ -55,11 +55,11 @@ export async function getUserUniswapSlippage(
     (globalUniswapSlippageEntry, userSharesEntry) => ({
       ...globalUniswapSlippageEntry,
       ...userSharesEntry,
-      userSlippage:
+      userUniswapSlippage:
         (globalUniswapSlippageEntry.uniswapSlippage *
           userSharesEntry.userJuniorVaultShares) /
         userSharesEntry.totalJuniorVaultShares,
-      userVolume:
+      userUniswapVolume:
         (globalUniswapSlippageEntry.uniswapVolume *
           userSharesEntry.userJuniorVaultShares) /
         userSharesEntry.totalJuniorVaultShares,
@@ -84,14 +84,14 @@ export async function getUserUniswapSlippage(
         ) => {
           const lastEntry = acc[acc.length - 1];
           if (lastEntry && cur.timestamp <= lastEntry.endTimestamp) {
-            lastEntry.userSlippageNet += cur.userSlippage;
-            lastEntry.userVolumeNet += cur.userVolume;
+            lastEntry.userUniswapSlippageNet += cur.userUniswapSlippage;
+            lastEntry.userUniswapVolumeNet += cur.userUniswapVolume;
           } else {
             acc.push({
               startTimestamp: timestampRoundDown(cur.timestamp),
               endTimestamp: timestampRoundDown(cur.timestamp) + 1 * days - 1,
-              userSlippageNet: cur.userSlippage,
-              userVolumeNet: cur.userVolume,
+              userUniswapSlippageNet: cur.userUniswapSlippage,
+              userUniswapVolumeNet: cur.userUniswapVolume,
             });
           }
           return acc;
@@ -99,10 +99,13 @@ export async function getUserUniswapSlippage(
         []
       ),
       userTotalUniswapSlippage: data.reduce(
-        (acc, cur) => acc + cur.userSlippage,
+        (acc, cur) => acc + cur.userUniswapSlippage,
         0
       ),
-      userTotalVolume: data.reduce((acc, cur) => acc + cur.userVolume, 0),
+      userTotalUniswapVolume: data.reduce(
+        (acc, cur) => acc + cur.userUniswapVolume,
+        0
+      ),
     },
   };
 }
