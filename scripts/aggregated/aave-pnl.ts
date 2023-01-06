@@ -31,6 +31,7 @@ export interface GlobalAavePnlDailyEntry {
 export interface GlobalAavePnlResult {
   data: GlobalAavePnlEntry[];
   dailyData: GlobalAavePnlDailyEntry[];
+  totalAavePnl: number;
 }
 
 export async function getAavePnl(
@@ -167,6 +168,10 @@ export async function getAavePnl(
         return acc;
       },
       []
+    ),
+    totalAavePnl: combinedData.reduce(
+      (acc: number, cur: GlobalAavePnlEntry) => acc + cur.aavePnl,
+      0
     ),
   };
 }

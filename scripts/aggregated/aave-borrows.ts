@@ -38,6 +38,10 @@ export interface GlobalAaveBorrowsDailyEntry {
 export interface GlobalAaveBorrowsResult {
   data: GlobalAaveBorrowsEntry[];
   dailyData: GlobalAaveBorrowsDailyEntry[];
+  totalVdWbtcInterest: number;
+  totalVdWbtcInterestDollars: number;
+  totalVdWethInterest: number;
+  totalVdWethInterestDollars: number;
 }
 
 export async function getAaveBorrows(
@@ -178,6 +182,22 @@ export async function getAaveBorrows(
         return acc;
       },
       []
+    ),
+    totalVdWbtcInterest: combinedData.reduce(
+      (acc, cur) => acc + cur.vdWbtcInterest,
+      0
+    ),
+    totalVdWbtcInterestDollars: combinedData.reduce(
+      (acc, cur) => acc + cur.vdWbtcInterestDollars,
+      0
+    ),
+    totalVdWethInterest: combinedData.reduce(
+      (acc, cur) => acc + cur.vdWethInterest,
+      0
+    ),
+    totalVdWethInterestDollars: combinedData.reduce(
+      (acc, cur) => acc + cur.vdWethInterestDollars,
+      0
     ),
   };
 }
