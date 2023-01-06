@@ -18,8 +18,10 @@ import { rebalanced } from "./util/events/rebalanced";
 
 export type GlobalUniswapSlippageEntry = Entry<{
   timestamp: number;
-  volume: number;
-  slippage: number;
+
+  uniswapVolume: number;
+  uniswapSlippage: number;
+
   btcBought: number;
   ethBought: number;
   btcSold: number;
@@ -33,13 +35,16 @@ export type GlobalUniswapSlippageEntry = Entry<{
 export interface GlobalUniswapSlippageDailyEntry {
   startTimestamp: number;
   endTimestamp: number;
-  slippageNet: number;
-  volumeNet: number;
+  uniswapSlippageNet: number;
+  uniswapVolumeNet: number;
 }
 
 export interface GlobalUniswapSlippageResult {
-  totalVolume: number;
-  totalSlippage: number;
+  data: GlobalUniswapSlippageEntry[];
+  dailyData: GlobalUniswapSlippageDailyEntry[];
+
+  totalUniswapVolume: number;
+  totalUniswapSlippage: number;
 
   totalBtcBought: number;
   totalEthBought: number;
@@ -49,9 +54,6 @@ export interface GlobalUniswapSlippageResult {
   totalEthBoughtSlippage: number;
   totalBtcSoldSlippage: number;
   totalEthSoldSlippage: number;
-
-  data: GlobalUniswapSlippageEntry[];
-  dailyData: GlobalUniswapSlippageDailyEntry[];
 }
 
 export async function getUniswapSlippage(
@@ -84,8 +86,8 @@ export async function getUniswapSlippage(
           dnGmxJuniorVault.interface.parseLog(log)
         ) as unknown as TokenSwappedEvent[];
 
-      let volume = 0;
-      let slippage = 0;
+      let uniswapVolume = 0;
+      let uniswapSlippage = 0;
 
       let btcBought = 0;
       let ethBought = 0;
@@ -142,15 +144,15 @@ export async function getUniswapSlippage(
           ethBought += toDollar;
           ethBoughtSlippage += slippageDollar;
         }
-        volume += fromDollar;
-        slippage += slippageDollar;
+        uniswapVolume += fromDollar;
+        uniswapSlippage += slippageDollar;
       }
 
       return {
         blockNumber,
         transactionHash: event.transactionHash,
-        volume,
-        slippage,
+        uniswapVolume,
+        uniswapSlippage,
         btcBought,
         ethBought,
         btcSold,
@@ -169,8 +171,33 @@ export async function getUniswapSlippage(
   }));
 
   return {
-    totalVolume: data.reduce((acc, cur) => acc + cur.volume, 0),
-    totalSlippage: data.reduce((acc, cur) => acc + cur.slippage, 0),
+    data: combinedData,
+    dailyData: combinedData.reduce(
+      (
+        acc: GlobalUniswapSlippageDailyEntry[],
+        cur: GlobalUniswapSlippageEntry
+      ) => {
+        const lastEntry = acc[acc.length - 1];
+        if (lastEntry && cur.timestamp <= lastEntry.endTimestamp) {
+          lastEntry.uniswapSlippageNet += cur.uniswapSlippage;
+          lastEntry.uniswapVolumeNet += cur.uniswapVolume;
+        } else {
+          acc.push({
+            startTimestamp: timestampRoundDown(cur.timestamp),
+            endTimestamp: timestampRoundDown(cur.timestamp) + 1 * days - 1,
+            uniswapSlippageNet: cur.uniswapSlippage,
+            uniswapVolumeNet: cur.uniswapVolume,
+          });
+        }
+        return acc;
+      },
+      []
+    ),
+    totalUniswapVolume: data.reduce((acc, cur) => acc + cur.uniswapVolume, 0),
+    totalUniswapSlippage: data.reduce(
+      (acc, cur) => acc + cur.uniswapSlippage,
+      0
+    ),
     totalBtcBought: data.reduce((acc, cur) => acc + cur.btcBought, 0),
     totalEthBought: data.reduce((acc, cur) => acc + cur.ethBought, 0),
     totalBtcSold: data.reduce((acc, cur) => acc + cur.btcSold, 0),
@@ -190,28 +217,6 @@ export async function getUniswapSlippage(
     totalEthSoldSlippage: data.reduce(
       (acc, cur) => acc + cur.ethSoldSlippage,
       0
-    ),
-    data: combinedData,
-    dailyData: combinedData.reduce(
-      (
-        acc: GlobalUniswapSlippageDailyEntry[],
-        cur: GlobalUniswapSlippageEntry
-      ) => {
-        const lastEntry = acc[acc.length - 1];
-        if (lastEntry && cur.timestamp <= lastEntry.endTimestamp) {
-          lastEntry.slippageNet += cur.slippage;
-          lastEntry.volumeNet += cur.volume;
-        } else {
-          acc.push({
-            startTimestamp: timestampRoundDown(cur.timestamp),
-            endTimestamp: timestampRoundDown(cur.timestamp) + 1 * days - 1,
-            slippageNet: cur.slippage,
-            volumeNet: cur.volume,
-          });
-        }
-        return acc;
-      },
-      []
     ),
   };
 }

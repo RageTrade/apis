@@ -22,8 +22,8 @@ import { days, timestampRoundDown } from "../../utils";
 export type GlobalDeltaSpreadEntry = Entry<{
   timestamp: number;
 
-  volume: number;
-  slippage: number;
+  uniswapVolume: number;
+  uniswapSlippage: number;
 
   btcBought: number;
   ethBought: number;
@@ -51,8 +51,8 @@ export type GlobalDeltaSpreadEntry = Entry<{
 export interface GlobalDeltaSpreadDailyEntry {
   startTimestamp: number;
   endTimestamp: number;
-  slippageNet: number;
-  volumeNet: number;
+  uniswapSlippageNet: number;
+  uniswapVolumeNet: number;
   btcHedgeDeltaPnlNet: number;
   ethHedgeDeltaPnlNet: number;
 }
@@ -61,8 +61,8 @@ export interface GlobalDeltaSpreadResult {
   data: GlobalDeltaSpreadEntry[];
   dailyData: GlobalDeltaSpreadDailyEntry[];
 
-  totalVolume: number;
-  totalSlippage: number;
+  totalUniswapVolume: number;
+  totalUniswapSlippage: number;
 
   totalBtcBought: number;
   totalEthBought: number;
@@ -118,8 +118,8 @@ export async function getDeltaSpread(
           dnGmxJuniorVault.interface.parseLog(log)
         ) as unknown as TokenSwappedEvent[];
 
-      let volume = 0;
-      let slippage = 0;
+      let uniswapVolume = 0;
+      let uniswapSlippage = 0;
 
       let btcBought = 0;
       let ethBought = 0;
@@ -187,8 +187,8 @@ export async function getDeltaSpread(
           ethBought += toDollar;
           ethBoughtSlippage += slippageDollar;
         }
-        volume += fromDollar;
-        slippage += slippageDollar;
+        uniswapVolume += fromDollar;
+        uniswapSlippage += slippageDollar;
       }
 
       const _btcAmountAfter = await vdWbtc.balanceOf(dnGmxJuniorVault.address, {
@@ -239,8 +239,8 @@ export async function getDeltaSpread(
       return {
         blockNumber,
         transactionHash: event.transactionHash,
-        volume,
-        slippage,
+        uniswapVolume,
+        uniswapSlippage,
 
         btcBought,
         ethBought,
@@ -330,14 +330,14 @@ export async function getDeltaSpread(
       (acc: GlobalDeltaSpreadDailyEntry[], cur: GlobalDeltaSpreadEntry) => {
         const lastEntry = acc[acc.length - 1];
         if (lastEntry && cur.timestamp <= lastEntry.endTimestamp) {
-          lastEntry.slippageNet += cur.slippage;
-          lastEntry.volumeNet += cur.volume;
+          lastEntry.uniswapSlippageNet += cur.uniswapSlippage;
+          lastEntry.uniswapVolumeNet += cur.uniswapVolume;
         } else {
           acc.push({
             startTimestamp: timestampRoundDown(cur.timestamp),
             endTimestamp: timestampRoundDown(cur.timestamp) + 1 * days - 1,
-            slippageNet: cur.slippage,
-            volumeNet: cur.volume,
+            uniswapSlippageNet: cur.uniswapSlippage,
+            uniswapVolumeNet: cur.uniswapVolume,
             btcHedgeDeltaPnlNet: cur.btcHedgeDeltaPnl,
             ethHedgeDeltaPnlNet: cur.ethHedgeDeltaPnl,
           });
@@ -347,8 +347,14 @@ export async function getDeltaSpread(
       []
     ),
 
-    totalVolume: combinedData.reduce((acc, cur) => acc + cur.volume, 0),
-    totalSlippage: combinedData.reduce((acc, cur) => acc + cur.slippage, 0),
+    totalUniswapVolume: combinedData.reduce(
+      (acc, cur) => acc + cur.uniswapVolume,
+      0
+    ),
+    totalUniswapSlippage: combinedData.reduce(
+      (acc, cur) => acc + cur.uniswapSlippage,
+      0
+    ),
     totalBtcBought: combinedData.reduce((acc, cur) => acc + cur.btcBought, 0),
     totalEthBought: combinedData.reduce((acc, cur) => acc + cur.ethBought, 0),
     totalBtcSold: combinedData.reduce((acc, cur) => acc + cur.btcSold, 0),
