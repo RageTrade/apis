@@ -56,11 +56,11 @@ export async function getUserUniswapSlippage(
       ...globalUniswapSlippageEntry,
       ...userSharesEntry,
       userSlippage:
-        (globalUniswapSlippageEntry.slippage *
+        (globalUniswapSlippageEntry.uniswapSlippage *
           userSharesEntry.userJuniorVaultShares) /
         userSharesEntry.totalJuniorVaultShares,
       userVolume:
-        (globalUniswapSlippageEntry.volume *
+        (globalUniswapSlippageEntry.uniswapVolume *
           userSharesEntry.userJuniorVaultShares) /
         userSharesEntry.totalJuniorVaultShares,
     })

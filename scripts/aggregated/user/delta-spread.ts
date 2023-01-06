@@ -81,10 +81,11 @@ export async function getUserDeltaSpread(
       ...deltaSpreadData,
       ...userSharesData,
       userVolume:
-        (deltaSpreadData.volume * userSharesData.userJuniorVaultShares) /
+        (deltaSpreadData.uniswapVolume * userSharesData.userJuniorVaultShares) /
         userSharesData.totalJuniorVaultShares,
       userSlippage:
-        (deltaSpreadData.slippage * userSharesData.userJuniorVaultShares) /
+        (deltaSpreadData.uniswapSlippage *
+          userSharesData.userJuniorVaultShares) /
         userSharesData.totalJuniorVaultShares,
       userBtcBought:
         (deltaSpreadData.btcBought * userSharesData.userJuniorVaultShares) /
