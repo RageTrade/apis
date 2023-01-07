@@ -79,7 +79,7 @@ export async function getTotalShares(
         )
       );
       const totalSeniorVaultShares = Number(
-        formatEther(
+        formatUsdc(
           await dnGmxSeniorVault.totalSupply({
             blockTag: blockNumber,
           })

@@ -87,7 +87,7 @@ export async function getUserShares(
     { uniqueBlocks: true },
     async (_i, blockNumber, event) => {
       const userSeniorVaultShares = Number(
-        formatEther(
+        formatUsdc(
           await dnGmxSeniorVault.balanceOf(userAddress, {
             blockTag: blockNumber,
           })
