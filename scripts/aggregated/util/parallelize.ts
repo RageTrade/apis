@@ -13,6 +13,7 @@ export async function parallelize<Data, Event extends ethers.Event>(
     provider: ethers.providers.Provider;
     getEvents: EventFn<Event> | [EventFn<Event>];
     ignoreMoreEventsInSameBlock?: boolean;
+    startBlockNumber?: number;
   },
   onEachEvent: (_i: number, blockNumber: number, event: Event) => Promise<Data>
 ): Promise<Data[]>;
@@ -23,6 +24,7 @@ export async function parallelize<Data>(
     provider: ethers.providers.Provider;
     getEvents: EventFn<ethers.Event>[];
     ignoreMoreEventsInSameBlock?: boolean;
+    startBlockNumber?: number;
   },
   onEachEvent: (
     _i: number,
@@ -37,11 +39,17 @@ export async function parallelize<Data, Event extends ethers.Event>(
     provider: ethers.providers.Provider;
     getEvents: EventFn<Event> | EventFn<Event>[];
     ignoreMoreEventsInSameBlock?: boolean;
+    startBlockNumber?: number;
   },
   onEachEvent: (_i: number, blockNumber: number, event: Event) => Promise<Data>
 ) {
-  const { networkName, provider, getEvents, ignoreMoreEventsInSameBlock } =
-    options;
+  const {
+    networkName,
+    provider,
+    getEvents,
+    ignoreMoreEventsInSameBlock,
+    startBlockNumber,
+  } = options;
 
   let allEvents: Event[] = [];
 
@@ -54,6 +62,10 @@ export async function parallelize<Data, Event extends ethers.Event>(
   }
 
   allEvents = allEvents.sort((a, b) => a.blockNumber - b.blockNumber);
+
+  if (startBlockNumber) {
+    allEvents = allEvents.filter((e) => e.blockNumber >= startBlockNumber);
+  }
 
   if (ignoreMoreEventsInSameBlock) {
     const blockMap = new Map<number, boolean>();
