@@ -10,7 +10,7 @@ import {
 
 import { getProviderAggregate } from "../../providers";
 import { GlobalTraderPnlResult } from "./trader-pnl";
-import { batchingManager, juniorVault } from "./util/events";
+import { batchingManager, juniorVault, seniorVault } from "./util/events";
 import { parallelize } from "./util/parallelize";
 import { Entry } from "./util/types";
 
@@ -51,6 +51,8 @@ export async function getTotalShares(
         juniorVault.withdraw,
         juniorVault.rebalanced,
         juniorVault.glpSwapped,
+        seniorVault.deposit,
+        seniorVault.withdraw,
         batchingManager.depositToken,
         // additional block numbers from trader pnl
         () => {

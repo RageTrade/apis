@@ -13,7 +13,7 @@ import { getProviderAggregate } from "../../providers";
 import { days, timestampRoundDown } from "../../utils";
 import { GlobalTotalSharesResult } from "./total-shares";
 import { combine } from "./util/combine";
-import { juniorVault } from "./util/events";
+import { juniorVault, seniorVault } from "./util/events";
 import { parallelize } from "./util/parallelize";
 import { Entry } from "./util/types";
 
@@ -66,8 +66,11 @@ export async function getAaveLends(
         juniorVault.deposit,
         juniorVault.withdraw,
         juniorVault.rebalanced,
+        seniorVault.deposit,
+        seniorVault.withdraw,
       ],
       ignoreMoreEventsInSameBlock: true, // to prevent reprocessing same data
+      startBlockNumber: 45607856,
     },
     async (_i, blockNumber, event) => {
       const aUsdcJuniorBefore = Number(
