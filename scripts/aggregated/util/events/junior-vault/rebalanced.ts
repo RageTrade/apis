@@ -1,7 +1,7 @@
 import { deltaNeutralGmxVaults, NetworkName } from "@ragetrade/sdk";
 import { RebalancedEvent } from "@ragetrade/sdk/dist/typechain/delta-neutral-gmx-vaults/contracts/interfaces/IDnGmxJuniorVault";
 import { ethers } from "ethers";
-import { SimpleEventCache } from "../../../../indexer/simple-event-cache";
+import { SimpleEventCache } from "../../../../../indexer/simple-event-cache";
 
 export async function rebalanced(
   networkName: NetworkName,
@@ -18,7 +18,6 @@ export async function rebalanced(
     networkName,
     provider
   );
-
   const allRebalancedEvents = await dnGmxJuniorVault.queryFilter(
     dnGmxJuniorVault.filters.Rebalanced()
   );

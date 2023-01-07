@@ -7,15 +7,15 @@ import {
 } from "@ragetrade/sdk";
 
 import { getProviderAggregate } from "../../providers";
-import { parallelize } from "./util/parallelize";
-import { Entry } from "./util/types";
-import type { TokenSwappedEvent } from "@ragetrade/sdk/dist/typechain/delta-neutral-gmx-vaults/contracts/libraries/DnGmxJuniorVaultManager";
-import { decimals, price, name } from "./util/helpers";
+import { days, timestampRoundDown } from "../../utils";
 import { GlobalTotalSharesResult } from "./total-shares";
 import { combine } from "./util/combine";
-import { days, timestampRoundDown } from "../../utils";
-import { rebalanced } from "./util/events/rebalanced";
+import { decimals, name, price } from "./util/helpers";
+import { parallelize } from "./util/parallelize";
+import { Entry } from "./util/types";
 
+import type { TokenSwappedEvent } from "@ragetrade/sdk/dist/typechain/delta-neutral-gmx-vaults/contracts/libraries/DnGmxJuniorVaultManager";
+import { juniorVault } from "./util/events";
 export type GlobalUniswapSlippageEntry = Entry<{
   timestamp: number;
 
@@ -73,10 +73,11 @@ export async function getUniswapSlippage(
     });
 
   const data = await parallelize(
-    networkName,
-    provider,
-    rebalanced,
-    { uniqueBlocks: false }, // consider each block because we are using event.args
+    {
+      networkName,
+      provider,
+      getEvents: [juniorVault.rebalanced],
+    },
     async (_i, blockNumber, event) => {
       const rc = await provider.getTransactionReceipt(event.transactionHash);
       const filter = dnGmxJuniorVault.filters.TokenSwapped();

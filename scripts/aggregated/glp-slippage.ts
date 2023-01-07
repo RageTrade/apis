@@ -9,12 +9,12 @@ import {
 } from "@ragetrade/sdk";
 
 import { getProviderAggregate } from "../../providers";
+import { days, timestampRoundDown } from "../../utils";
+import { GlobalTotalSharesResult } from "./total-shares";
 import { combine } from "./util/combine";
+import { juniorVault } from "./util/events";
 import { parallelize } from "./util/parallelize";
 import { Entry } from "./util/types";
-import { glpSwapped } from "./util/events/glp-swapped";
-import { timestampRoundDown, days } from "../../utils";
-import { GlobalTotalSharesResult } from "./total-shares";
 
 export type GlobalGlpSlippageEntry = Entry<{
   timestamp: number;
@@ -53,10 +53,11 @@ export async function getGlpSlippage(
     });
 
   const data = await parallelize(
-    networkName,
-    provider,
-    glpSwapped,
-    { uniqueBlocks: false }, // consider each block because we are using event.args
+    {
+      networkName,
+      provider,
+      getEvents: [juniorVault.glpSwapped],
+    },
     async (_i, blockNumber, event) => {
       const scaling = 1;
       let pnlMin = 0;

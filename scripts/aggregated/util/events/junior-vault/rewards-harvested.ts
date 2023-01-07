@@ -1,7 +1,7 @@
 import { deltaNeutralGmxVaults, NetworkName, tokens } from "@ragetrade/sdk";
 import { RewardsHarvestedEvent } from "@ragetrade/sdk/dist/typechain/delta-neutral-gmx-vaults/contracts/vaults/DnGmxJuniorVault";
 import { ethers } from "ethers";
-import { SimpleEventCache } from "../../../../indexer/simple-event-cache";
+import { SimpleEventCache } from "../../../../../indexer/simple-event-cache";
 
 export async function rewardsHarvested(
   networkName: NetworkName,

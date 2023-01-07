@@ -14,7 +14,7 @@ import { parallelize } from "./util/parallelize";
 import { Entry } from "./util/types";
 import type { TokenSwappedEvent } from "@ragetrade/sdk/dist/typechain/delta-neutral-gmx-vaults/contracts/libraries/DnGmxJuniorVaultManager";
 import { decimals, price, name } from "./util/helpers";
-import { depositWithdrawRebalance } from "./util/events/deposit-withdraw-rebalance";
+import { juniorVault } from "./util/events";
 import { GlobalTotalSharesResult } from "./total-shares";
 import { combine } from "./util/combine";
 import { days, timestampRoundDown } from "../../utils";
@@ -105,10 +105,15 @@ export async function getDeltaSpread(
     });
 
   const data = await parallelize(
-    networkName,
-    provider,
-    depositWithdrawRebalance,
-    { uniqueBlocks: false }, // consider each block because we are using event.args
+    {
+      networkName,
+      provider,
+      getEvents: [
+        juniorVault.deposit,
+        juniorVault.withdraw,
+        juniorVault.rebalanced,
+      ],
+    },
     async (_i, blockNumber, event) => {
       const rc = await provider.getTransactionReceipt(event.transactionHash);
       const filter = dnGmxJuniorVault.filters.TokenSwapped();

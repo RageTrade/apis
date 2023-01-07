@@ -13,7 +13,7 @@ import { combine } from "./util/combine";
 import { parallelize } from "./util/parallelize";
 import { Entry } from "./util/types";
 import { price } from "./util/helpers";
-import { depositWithdrawRebalance } from "./util/events/deposit-withdraw-rebalance";
+import { juniorVault } from "./util/events";
 import { GlobalTotalSharesResult } from "./total-shares";
 import { timestampRoundDown, days } from "../../utils";
 
@@ -58,10 +58,16 @@ export async function getAavePnl(
     });
 
   const data = await parallelize(
-    networkName,
-    provider,
-    depositWithdrawRebalance,
-    { uniqueBlocks: true },
+    {
+      networkName,
+      provider,
+      getEvents: [
+        juniorVault.deposit,
+        juniorVault.withdraw,
+        juniorVault.rebalanced,
+      ],
+      ignoreMoreEventsInSameBlock: true, // to prevent reprocessing same data
+    },
     async (_i, blockNumber, event) => {
       const btcAmountBefore = Number(
         formatUnits(

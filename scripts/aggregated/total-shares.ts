@@ -1,3 +1,4 @@
+import { ethers } from "ethers";
 import { fetchJson, formatEther } from "ethers/lib/utils";
 
 import {
@@ -8,13 +9,10 @@ import {
 } from "@ragetrade/sdk";
 
 import { getProviderAggregate } from "../../providers";
-import { EventFn, parallelize } from "./util/parallelize";
-import { Entry } from "./util/types";
-import { depositWithdrawRebalance } from "./util/events/deposit-withdraw-rebalance";
-import { ethers } from "ethers";
-import { depositToken } from "./util/events/deposit-token";
-import { glpSwapped } from "./util/events/glp-swapped";
 import { GlobalTraderPnlResult } from "./trader-pnl";
+import { batchingManager, juniorVault } from "./util/events";
+import { parallelize } from "./util/parallelize";
+import { Entry } from "./util/types";
 
 export type GlobalTotalSharesEntry = Entry<{
   timestamp: number;
@@ -45,29 +43,33 @@ export async function getTotalShares(
     });
 
   const data = await parallelize(
-    networkName,
-    provider,
-    [
-      depositWithdrawRebalance,
-      glpSwapped,
-      depositToken,
-      // additional block numbers from trader pnl
-      () => {
-        const uniqueBlockNumbers = Array.from(
-          new Set(traderPnlData.result.data.map((entry) => entry.blockNumber))
-        );
-        return uniqueBlockNumbers.map(
-          (blockNumber) =>
-            ({
-              blockNumber,
-              event: "unknown",
-              transactionHash: "unknown",
-              logIndex: -1,
-            } as ethers.Event)
-        );
-      },
-    ] as EventFn<ethers.Event>[],
-    { uniqueBlocks: true },
+    {
+      networkName,
+      provider,
+      getEvents: [
+        juniorVault.deposit,
+        juniorVault.withdraw,
+        juniorVault.rebalanced,
+        juniorVault.glpSwapped,
+        batchingManager.depositToken,
+        // additional block numbers from trader pnl
+        () => {
+          const uniqueBlockNumbers = Array.from(
+            new Set(traderPnlData.result.data.map((entry) => entry.blockNumber))
+          );
+          return uniqueBlockNumbers.map(
+            (blockNumber) =>
+              ({
+                blockNumber,
+                event: "unknown",
+                transactionHash: "unknown",
+                logIndex: -1,
+              } as ethers.Event)
+          );
+        },
+      ],
+      ignoreMoreEventsInSameBlock: true, // to prevent reprocessing same data
+    },
     async (_i, blockNumber, event) => {
       const { timestamp } = await provider.getBlock(blockNumber);
 

@@ -1,22 +1,21 @@
-import { fetchJson, formatEther, formatUnits } from "ethers/lib/utils";
+import { fetchJson, formatUnits } from "ethers/lib/utils";
 
 import {
   aave,
   deltaNeutralGmxVaults,
-  formatUsdc,
   NetworkName,
   ResultWithMetadata,
   tokens,
 } from "@ragetrade/sdk";
 
 import { getProviderAggregate } from "../../providers";
+import { days, timestampRoundDown } from "../../utils";
+import { GlobalTotalSharesResult } from "./total-shares";
 import { combine } from "./util/combine";
+import { juniorVault } from "./util/events";
+import { price } from "./util/helpers";
 import { parallelize } from "./util/parallelize";
 import { Entry } from "./util/types";
-import { price } from "./util/helpers";
-import { depositWithdrawRebalance } from "./util/events/deposit-withdraw-rebalance";
-import { GlobalTotalSharesResult } from "./total-shares";
-import { timestampRoundDown, days } from "../../utils";
 
 export type GlobalAaveBorrowsEntry = Entry<{
   timestamp: number;
@@ -66,10 +65,16 @@ export async function getAaveBorrows(
     });
 
   const data = await parallelize(
-    networkName,
-    provider,
-    depositWithdrawRebalance,
-    { uniqueBlocks: true },
+    {
+      networkName,
+      provider,
+      getEvents: [
+        juniorVault.deposit,
+        juniorVault.withdraw,
+        juniorVault.rebalanced,
+      ],
+      ignoreMoreEventsInSameBlock: true, // to prevent reprocessing same data
+    },
     async (_i, blockNumber, event) => {
       const _btcAmountBefore = await vdWbtc.balanceOf(
         dnGmxJuniorVault.address,

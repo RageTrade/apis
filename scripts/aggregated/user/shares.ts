@@ -72,19 +72,21 @@ export async function getUserShares(
     });
 
   const data1 = await parallelize(
-    networkName,
-    provider,
-    // use all events from total shares
-    () =>
-      totalSharesData.result.data.map(
-        (entry) =>
-          ({
-            blockNumber: entry.blockNumber,
-            transactionHash: entry.transactionHash,
-            logIndex: entry.logIndex,
-          } as ethers.Event)
-      ),
-    { uniqueBlocks: true },
+    {
+      networkName,
+      provider,
+      getEvents: () =>
+        // use all events from total shares
+        totalSharesData.result.data.map(
+          (entry) =>
+            ({
+              blockNumber: entry.blockNumber,
+              transactionHash: entry.transactionHash,
+              logIndex: entry.logIndex,
+            } as ethers.Event)
+        ),
+      ignoreMoreEventsInSameBlock: true, // to prevent reprocessing same data
+    },
     async (_i, blockNumber, event) => {
       const userSeniorVaultShares = Number(
         formatUsdc(

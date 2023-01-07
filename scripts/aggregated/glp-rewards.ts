@@ -9,12 +9,12 @@ import {
 } from "@ragetrade/sdk";
 
 import { getProviderAggregate } from "../../providers";
-import { rewardsHarvested } from "./util/events/rewards-harvested";
-import { parallelize } from "./util/parallelize";
-import { Entry } from "./util/types";
+import { days, timestampRoundDown } from "../../utils";
 import { GlobalTotalSharesResult } from "./total-shares";
 import { combine } from "./util/combine";
-import { timestampRoundDown, days } from "../../utils";
+import { juniorVault } from "./util/events";
+import { parallelize } from "./util/parallelize";
+import { Entry } from "./util/types";
 
 export type GlobalGlpRewardsEntry = Entry<{
   timestamp: number;
@@ -51,10 +51,11 @@ export async function getGlpRewards(
     });
 
   const data = await parallelize(
-    networkName,
-    provider,
-    rewardsHarvested,
-    { uniqueBlocks: false }, // consider each block because we are using event.args
+    {
+      networkName,
+      provider,
+      getEvents: [juniorVault.rewardsHarvested],
+    },
     async (_i, blockNumber, event) => {
       const { juniorVaultGlp, seniorVaultAUsdc } = event.args;
 

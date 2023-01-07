@@ -3,7 +3,7 @@ import { ethers } from "ethers";
 import { deltaNeutralGmxVaults, NetworkName, tokens } from "@ragetrade/sdk";
 import { DepositTokenEvent } from "@ragetrade/sdk/dist/typechain/delta-neutral-gmx-vaults/contracts/vaults/DnGmxBatchingManager";
 
-import { SimpleEventCache } from "../../../../indexer/simple-event-cache";
+import { SimpleEventCache } from "../../../../../indexer/simple-event-cache";
 
 export async function depositToken(
   networkName: NetworkName,
