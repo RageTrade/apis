@@ -1,6 +1,7 @@
 import { fetchJson, formatEther, formatUnits } from "ethers/lib/utils";
 
 import {
+  deltaNeutralGmxVaults,
   formatUsdc,
   gmxProtocol,
   NetworkName,
@@ -15,12 +16,12 @@ import { combine } from "./util/combine";
 import { juniorVault } from "./util/events";
 import { parallelize } from "./util/parallelize";
 import { Entry } from "./util/types";
+import { GlpSwappedEvent } from "@ragetrade/sdk/dist/typechain/delta-neutral-gmx-vaults/contracts/libraries/DnGmxJuniorVaultManager";
 
 export type GlobalGlpSlippageEntry = Entry<{
   timestamp: number;
   glpAmt: number;
   usdcAmt: number;
-  fromGlpToUsdc: boolean;
   glpPriceMin: number;
   pnlMin: number;
   glpSlippage: number;
@@ -43,8 +44,11 @@ export async function getGlpSlippage(
   const provider = getProviderAggregate(networkName);
 
   const { fsGLP } = tokens.getContractsSync(networkName, provider);
-
   const { glpManager } = gmxProtocol.getContractsSync(networkName, provider);
+  const { dnGmxJuniorVault } = deltaNeutralGmxVaults.getContractsSync(
+    networkName,
+    provider
+  );
 
   const totalSharesData: ResultWithMetadata<GlobalTotalSharesResult> =
     await fetchJson({
@@ -56,41 +60,52 @@ export async function getGlpSlippage(
     {
       networkName,
       provider,
-      getEvents: [juniorVault.glpSwapped],
+      getEvents: [juniorVault.rebalanced],
     },
     async (_i, blockNumber, event) => {
-      const scaling = 1;
+      const rc = await provider.getTransactionReceipt(event.transactionHash);
+      const filter = dnGmxJuniorVault.filters.GlpSwapped();
+      const parsed = rc.logs
+        .filter((log) => log.topics[0] === filter.topics?.[0])
+        .map((log) =>
+          dnGmxJuniorVault.interface.parseLog(log)
+        ) as unknown as GlpSwappedEvent[];
+
+      let glpAmt = 0;
+      let usdcAmt = 0;
+
+      let glpPriceMin = 0;
       let pnlMin = 0;
 
-      const { glpQuantity, usdcQuantity, fromGlpToUsdc } = event.args;
+      for (const event of parsed) {
+        const _scaling = 1;
+        let _pnlMin = 0;
 
-      const glpAmt = Number(formatEther(glpQuantity));
-      const usdcAmt = Number(formatUsdc(usdcQuantity));
+        const { glpQuantity, usdcQuantity, fromGlpToUsdc } = event.args;
 
-      const [_, aumMin] = await glpManager.getAums({
-        blockTag: blockNumber,
-      });
+        const _glpAmt = Number(formatEther(glpQuantity));
+        const _usdcAmt = Number(formatUsdc(usdcQuantity));
 
-      const totalSuply = await fsGLP.totalSupply({
-        blockTag: blockNumber,
-      });
+        const [_, aumMin] = await glpManager.getAums({
+          blockTag: blockNumber,
+        });
 
-      const glpPriceMin = Number(formatUnits(aumMin.div(totalSuply), 12));
+        const totalSuply = await fsGLP.totalSupply({
+          blockTag: blockNumber,
+        });
 
-      if (fromGlpToUsdc) {
-        pnlMin = scaling * (usdcAmt - glpAmt * glpPriceMin);
+        const _glpPriceMin = Number(formatUnits(aumMin.div(totalSuply), 12));
 
-        // cumilativePnlMin += scaling * (usdcAmt - glpAmt * glpPriceMin);
+        if (fromGlpToUsdc) {
+          _pnlMin = _scaling * (_usdcAmt - _glpAmt * _glpPriceMin);
+        } else {
+          _pnlMin = _scaling * (_glpAmt * _glpPriceMin - _usdcAmt);
+        }
 
-        // glpAccumulator += scaling * glpAmt;
-        // usdcAccumulator += scaling * usdcAmt;
-      } else {
-        pnlMin = scaling * (glpAmt * glpPriceMin - usdcAmt);
-
-        // cumilativePnlMin += scaling * (glpAmt * glpPriceMin - usdcAmt);
-
-        // glpAccumulator -= scaling * glpAmt;
-        // usdcAccumulator -= scaling * usdcAmt;
+        glpAmt += _glpAmt;
+        usdcAmt += _usdcAmt;
+        glpPriceMin = glpPriceMin;
+        pnlMin += _pnlMin;
       }
 
       return {
@@ -99,7 +114,6 @@ export async function getGlpSlippage(
         logIndex: event.logIndex,
         glpAmt,
         usdcAmt,
-        fromGlpToUsdc,
         glpPriceMin,
         pnlMin,
         glpSlippage: pnlMin,
