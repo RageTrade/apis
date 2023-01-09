@@ -337,6 +337,8 @@ export async function getDeltaSpread(
         if (lastEntry && cur.timestamp <= lastEntry.endTimestamp) {
           lastEntry.uniswapSlippageNet += cur.uniswapSlippage;
           lastEntry.uniswapVolumeNet += cur.uniswapVolume;
+          lastEntry.btcHedgeDeltaPnlNet += cur.btcHedgeDeltaPnl;
+          lastEntry.ethHedgeDeltaPnlNet += cur.ethHedgeDeltaPnl;
         } else {
           acc.push({
             startTimestamp: timestampRoundDown(cur.timestamp),
