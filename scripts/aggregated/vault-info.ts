@@ -115,7 +115,14 @@ export async function getVaultInfo(
       ).toFixed(6)
     );
 
-    return { assetPrice, sharePrice };
+    const vaultMarketValue = Number(
+      formatUsdc(
+        await dnGmxJuniorVault.getVaultMarketValue({
+          blockTag: blockNumber,
+        })
+      )
+    );
+    return { assetPrice, sharePrice, vaultMarketValue };
   }
 
   async function getSeniorVaultInfo(blockNumber: number) {
@@ -138,6 +145,14 @@ export async function getVaultInfo(
         )
       ).toFixed(6)
     );
-    return { assetPrice, sharePrice };
+
+    const vaultMarketValue = Number(
+      formatUsdc(
+        await dnGmxSeniorVault.getVaultMarketValue({
+          blockTag: blockNumber,
+        })
+      )
+    );
+    return { assetPrice, sharePrice, vaultMarketValue };
   }
 }
