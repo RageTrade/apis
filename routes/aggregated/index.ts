@@ -106,6 +106,16 @@ router.get(
   })
 );
 
+router.get(
+  "/get-vault-info",
+  handleRuntimeErrors(async (req) => {
+    const networkName = getNetworkName(req);
+    return cacheFunctionResult(aggregated.getVaultInfo, [networkName], {
+      cacheSeconds: 20 * mins,
+    });
+  })
+);
+
 router.use("/user", UserRouter);
 
 export default router;

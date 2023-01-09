@@ -8,5 +8,6 @@ export * from "./total-shares";
 export * from "./uniswap-slippage";
 export * from "./delta-spread";
 export * from "./trader-pnl";
+export * from "./vault-info";
 
 export * as user from "./user";
