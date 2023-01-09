@@ -9,6 +9,19 @@ export async function getBlockByTimestamp(
   networkName: NetworkName,
   timestamp: number
 ): Promise<number> {
+  // try this single query first
+  if (networkName === "arbmain") {
+    try {
+      return Number(
+        (
+          await (
+            await fetch(`https://coins.llama.fi/block/arbitrum/${timestamp}`)
+          ).json()
+        ).height
+      );
+    } catch {}
+  }
+
   //  TODO change once etherscan supports this network
   if (networkName === "arbgoerli") {
     const block = await findBlockByTimestamp(
