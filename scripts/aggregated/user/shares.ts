@@ -9,7 +9,7 @@ import {
 } from "@ragetrade/sdk";
 
 import { getProviderAggregate } from "../../../providers";
-import { ErrorWithStatusCode } from "../../../utils";
+import { ErrorWithStatusCode, safeDivNumer } from "../../../utils";
 import { GlobalTotalSharesResult } from "../total-shares";
 import { combine } from "../util/combine";
 import { parallelize } from "../util/parallelize";
@@ -146,8 +146,10 @@ export async function getUserShares(
           user.userUnclaimedShares +
           user.userClaimedShares +
           (global.roundUsdcBalance > 0 && user.userRound === global.currentRound
-            ? (user.userUsdc * global.roundSharesMinted) /
-              global.roundUsdcBalance
+            ? safeDivNumer(
+                user.userUsdc * global.roundSharesMinted,
+                global.roundUsdcBalance
+              )
             : 0),
       };
     }

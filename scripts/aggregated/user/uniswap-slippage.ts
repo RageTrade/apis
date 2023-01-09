@@ -1,17 +1,12 @@
 import { fetchJson } from "ethers/lib/utils";
 
-import {
-  deltaNeutralGmxVaults,
-  NetworkName,
-  ResultWithMetadata,
-} from "@ragetrade/sdk";
+import { NetworkName, ResultWithMetadata } from "@ragetrade/sdk";
 
-import { getProviderAggregate } from "../../../providers";
 import { combine } from "../util/combine";
 import { UserSharesResult } from "./shares";
 import { GlobalUniswapSlippageResult } from "../uniswap-slippage";
 import { Entry } from "../util/types";
-import { timestampRoundDown, days } from "../../../utils";
+import { timestampRoundDown, days, safeDivNumer } from "../../../utils";
 
 export type UserUniswapSlippageEntry = Entry<{
   timestamp: number;
@@ -55,14 +50,16 @@ export async function getUserUniswapSlippage(
     (globalUniswapSlippageEntry, userSharesEntry) => ({
       ...globalUniswapSlippageEntry,
       ...userSharesEntry,
-      userUniswapSlippage:
-        (globalUniswapSlippageEntry.uniswapSlippage *
-          userSharesEntry.userJuniorVaultShares) /
-        userSharesEntry.totalJuniorVaultShares,
-      userUniswapVolume:
-        (globalUniswapSlippageEntry.uniswapVolume *
-          userSharesEntry.userJuniorVaultShares) /
-        userSharesEntry.totalJuniorVaultShares,
+      userUniswapSlippage: safeDivNumer(
+        globalUniswapSlippageEntry.uniswapSlippage *
+          userSharesEntry.userJuniorVaultShares,
+        userSharesEntry.totalJuniorVaultShares
+      ),
+      userUniswapVolume: safeDivNumer(
+        globalUniswapSlippageEntry.uniswapVolume *
+          userSharesEntry.userJuniorVaultShares,
+        userSharesEntry.totalJuniorVaultShares
+      ),
     })
   );
 

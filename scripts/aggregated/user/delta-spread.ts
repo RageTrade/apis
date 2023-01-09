@@ -1,17 +1,12 @@
 import { fetchJson } from "ethers/lib/utils";
 
-import {
-  deltaNeutralGmxVaults,
-  NetworkName,
-  ResultWithMetadata,
-} from "@ragetrade/sdk";
+import { NetworkName, ResultWithMetadata } from "@ragetrade/sdk";
 
-import { getProviderAggregate } from "../../../providers";
 import { combine } from "../util/combine";
 import { GlobalDeltaSpreadResult } from "../delta-spread";
 import { Entry } from "../util/types";
 import { UserSharesResult } from "./shares";
-import { days, timestampRoundDown } from "../../../utils";
+import { days, safeDivNumer, timestampRoundDown } from "../../../utils";
 
 export type UserDeltaSpreadEntry = Entry<{
   timestamp: number;
@@ -80,49 +75,56 @@ export async function getUserDeltaSpread(
     (deltaSpreadData, userSharesData) => ({
       ...deltaSpreadData,
       ...userSharesData,
-      userUniswapVolume:
-        (deltaSpreadData.uniswapVolume * userSharesData.userJuniorVaultShares) /
-        userSharesData.totalJuniorVaultShares,
-      userUniswapSlippage:
-        (deltaSpreadData.uniswapSlippage *
-          userSharesData.userJuniorVaultShares) /
-        userSharesData.totalJuniorVaultShares,
-      userBtcBought:
-        (deltaSpreadData.btcBought * userSharesData.userJuniorVaultShares) /
-        userSharesData.totalJuniorVaultShares,
-      userEthBought:
-        (deltaSpreadData.ethBought * userSharesData.userJuniorVaultShares) /
-        userSharesData.totalJuniorVaultShares,
-      userBtcSold:
-        (deltaSpreadData.btcSold * userSharesData.userJuniorVaultShares) /
-        userSharesData.totalJuniorVaultShares,
-      userEthSold:
-        (deltaSpreadData.ethSold * userSharesData.userJuniorVaultShares) /
-        userSharesData.totalJuniorVaultShares,
-      userBtcBoughtSlippage:
-        (deltaSpreadData.btcBoughtSlippage *
-          userSharesData.userJuniorVaultShares) /
-        userSharesData.totalJuniorVaultShares,
-      userEthBoughtSlippage:
-        (deltaSpreadData.ethBoughtSlippage *
-          userSharesData.userJuniorVaultShares) /
-        userSharesData.totalJuniorVaultShares,
-      userBtcSoldSlippage:
-        (deltaSpreadData.btcSoldSlippage *
-          userSharesData.userJuniorVaultShares) /
-        userSharesData.totalJuniorVaultShares,
-      userEthSoldSlippage:
-        (deltaSpreadData.ethSoldSlippage *
-          userSharesData.userJuniorVaultShares) /
-        userSharesData.totalJuniorVaultShares,
-      userBtcHedgeDeltaPnl:
-        (deltaSpreadData.btcHedgeDeltaPnl *
-          userSharesData.userJuniorVaultShares) /
-        userSharesData.totalJuniorVaultShares,
-      userEthHedgeDeltaPnl:
-        (deltaSpreadData.ethHedgeDeltaPnl *
-          userSharesData.userJuniorVaultShares) /
-        userSharesData.totalJuniorVaultShares,
+      userUniswapVolume: safeDivNumer(
+        deltaSpreadData.uniswapVolume * userSharesData.userJuniorVaultShares,
+        userSharesData.totalJuniorVaultShares
+      ),
+      userUniswapSlippage: safeDivNumer(
+        deltaSpreadData.uniswapSlippage * userSharesData.userJuniorVaultShares,
+        userSharesData.totalJuniorVaultShares
+      ),
+      userBtcBought: safeDivNumer(
+        deltaSpreadData.btcBought * userSharesData.userJuniorVaultShares,
+        userSharesData.totalJuniorVaultShares
+      ),
+      userEthBought: safeDivNumer(
+        deltaSpreadData.ethBought * userSharesData.userJuniorVaultShares,
+        userSharesData.totalJuniorVaultShares
+      ),
+      userBtcSold: safeDivNumer(
+        deltaSpreadData.btcSold * userSharesData.userJuniorVaultShares,
+        userSharesData.totalJuniorVaultShares
+      ),
+      userEthSold: safeDivNumer(
+        deltaSpreadData.ethSold * userSharesData.userJuniorVaultShares,
+        userSharesData.totalJuniorVaultShares
+      ),
+      userBtcBoughtSlippage: safeDivNumer(
+        deltaSpreadData.btcBoughtSlippage *
+          userSharesData.userJuniorVaultShares,
+        userSharesData.totalJuniorVaultShares
+      ),
+      userEthBoughtSlippage: safeDivNumer(
+        deltaSpreadData.ethBoughtSlippage *
+          userSharesData.userJuniorVaultShares,
+        userSharesData.totalJuniorVaultShares
+      ),
+      userBtcSoldSlippage: safeDivNumer(
+        deltaSpreadData.btcSoldSlippage * userSharesData.userJuniorVaultShares,
+        userSharesData.totalJuniorVaultShares
+      ),
+      userEthSoldSlippage: safeDivNumer(
+        deltaSpreadData.ethSoldSlippage * userSharesData.userJuniorVaultShares,
+        userSharesData.totalJuniorVaultShares
+      ),
+      userBtcHedgeDeltaPnl: safeDivNumer(
+        deltaSpreadData.btcHedgeDeltaPnl * userSharesData.userJuniorVaultShares,
+        userSharesData.totalJuniorVaultShares
+      ),
+      userEthHedgeDeltaPnl: safeDivNumer(
+        deltaSpreadData.ethHedgeDeltaPnl * userSharesData.userJuniorVaultShares,
+        userSharesData.totalJuniorVaultShares
+      ),
     })
   );
 

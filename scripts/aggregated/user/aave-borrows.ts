@@ -1,17 +1,12 @@
 import { fetchJson } from "ethers/lib/utils";
 
-import {
-  deltaNeutralGmxVaults,
-  NetworkName,
-  ResultWithMetadata,
-} from "@ragetrade/sdk";
+import { NetworkName, ResultWithMetadata } from "@ragetrade/sdk";
 
-import { getProviderAggregate } from "../../../providers";
 import { combine } from "../util/combine";
 import { GlobalAaveBorrowsResult } from "../aave-borrows";
 import { Entry } from "../util/types";
 import { UserSharesResult } from "./shares";
-import { days, timestampRoundDown } from "../../../utils";
+import { days, safeDivNumer, timestampRoundDown } from "../../../utils";
 
 export type UserAaveBorrowsEntry = Entry<{
   timestamp: number;
@@ -61,22 +56,24 @@ export async function getUserAaveBorrows(
     (aaveBorrowsData, userSharesData) => ({
       ...aaveBorrowsData,
       ...userSharesData,
-      userVdWbtcInterest:
-        (aaveBorrowsData.vdWbtcInterest *
-          userSharesData.userJuniorVaultShares) /
-        userSharesData.totalJuniorVaultShares,
-      userVdWbtcInterestDollars:
-        (aaveBorrowsData.vdWbtcInterestDollars *
-          userSharesData.userJuniorVaultShares) /
-        userSharesData.totalJuniorVaultShares,
-      userVdWethInterest:
-        (aaveBorrowsData.vdWethInterest *
-          userSharesData.userJuniorVaultShares) /
-        userSharesData.totalJuniorVaultShares,
-      userVdWethInterestDollars:
-        (aaveBorrowsData.vdWethInterestDollars *
-          userSharesData.userJuniorVaultShares) /
-        userSharesData.totalJuniorVaultShares,
+      userVdWbtcInterest: safeDivNumer(
+        aaveBorrowsData.vdWbtcInterest * userSharesData.userJuniorVaultShares,
+        userSharesData.totalJuniorVaultShares
+      ),
+      userVdWbtcInterestDollars: safeDivNumer(
+        aaveBorrowsData.vdWbtcInterestDollars *
+          userSharesData.userJuniorVaultShares,
+        userSharesData.totalJuniorVaultShares
+      ),
+      userVdWethInterest: safeDivNumer(
+        aaveBorrowsData.vdWethInterest * userSharesData.userJuniorVaultShares,
+        userSharesData.totalJuniorVaultShares
+      ),
+      userVdWethInterestDollars: safeDivNumer(
+        aaveBorrowsData.vdWethInterestDollars *
+          userSharesData.userJuniorVaultShares,
+        userSharesData.totalJuniorVaultShares
+      ),
     })
   );
 

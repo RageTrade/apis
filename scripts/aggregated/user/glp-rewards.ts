@@ -1,17 +1,12 @@
 import { fetchJson } from "ethers/lib/utils";
 
-import {
-  deltaNeutralGmxVaults,
-  NetworkName,
-  ResultWithMetadata,
-} from "@ragetrade/sdk";
+import { NetworkName, ResultWithMetadata } from "@ragetrade/sdk";
 
-import { getProviderAggregate } from "../../../providers";
 import { combine } from "../util/combine";
 import { GlobalGlpRewardsResult } from "../glp-rewards";
 import { Entry } from "../util/types";
 import { UserSharesResult } from "./shares";
-import { timestampRoundDown, days } from "../../../utils";
+import { timestampRoundDown, days, safeDivNumer } from "../../../utils";
 
 export type UserGlpRewardsEntry = Entry<{
   timestamp: number;
@@ -55,14 +50,16 @@ export async function getUserGlpRewards(
     (glpRewardsData, userSharesData) => ({
       ...glpRewardsData,
       ...userSharesData,
-      userJuniorVaultWethReward:
-        (glpRewardsData.juniorVaultWethReward *
-          userSharesData.userJuniorVaultShares) /
-        userSharesData.totalJuniorVaultShares,
-      userSeniorVaultWethReward:
-        (glpRewardsData.seniorVaultWethReward *
-          userSharesData.userSeniorVaultShares) /
-        userSharesData.totalSeniorVaultShares,
+      userJuniorVaultWethReward: safeDivNumer(
+        glpRewardsData.juniorVaultWethReward *
+          userSharesData.userJuniorVaultShares,
+        userSharesData.totalJuniorVaultShares
+      ),
+      userSeniorVaultWethReward: safeDivNumer(
+        glpRewardsData.seniorVaultWethReward *
+          userSharesData.userSeniorVaultShares,
+        userSharesData.totalSeniorVaultShares
+      ),
     })
   );
 

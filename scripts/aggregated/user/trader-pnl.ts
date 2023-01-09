@@ -1,17 +1,12 @@
 import { fetchJson } from "ethers/lib/utils";
 
-import {
-  deltaNeutralGmxVaults,
-  NetworkName,
-  ResultWithMetadata,
-} from "@ragetrade/sdk";
+import { NetworkName, ResultWithMetadata } from "@ragetrade/sdk";
 
-import { getProviderAggregate } from "../../../providers";
 import { combine } from "../util/combine";
 import { UserSharesResult } from "./shares";
 import { GlobalTraderPnlResult } from "../trader-pnl";
 import { Entry } from "../util/types";
-import { timestampRoundDown, days } from "../../../utils";
+import { timestampRoundDown, days, safeDivNumer } from "../../../utils";
 
 export type UserTraderPnlEntry = Entry<{
   timestamp: number;
@@ -52,10 +47,11 @@ export async function getUserTraderPnl(
     (globalTraderPnlEntry, userSharesEntry) => ({
       ...globalTraderPnlEntry,
       ...userSharesEntry,
-      userTraderPnl:
-        (globalTraderPnlEntry.traderPnlVault *
-          userSharesEntry.userJuniorVaultShares) /
-        userSharesEntry.totalJuniorVaultShares,
+      userTraderPnl: safeDivNumer(
+        globalTraderPnlEntry.traderPnlVault *
+          userSharesEntry.userJuniorVaultShares,
+        userSharesEntry.totalJuniorVaultShares
+      ),
     })
   );
 

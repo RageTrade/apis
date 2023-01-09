@@ -1,17 +1,12 @@
 import { fetchJson } from "ethers/lib/utils";
 
-import {
-  deltaNeutralGmxVaults,
-  NetworkName,
-  ResultWithMetadata,
-} from "@ragetrade/sdk";
+import { NetworkName, ResultWithMetadata } from "@ragetrade/sdk";
 
-import { getProviderAggregate } from "../../../providers";
 import { combine } from "../util/combine";
 import { GlobalAavePnlResult } from "../aave-pnl";
 import { Entry } from "../util/types";
 import { UserSharesResult } from "./shares";
-import { days, timestampRoundDown } from "../../../utils";
+import { days, safeDivNumer, timestampRoundDown } from "../../../utils";
 
 export type UserAavePnlEntry = Entry<{
   timestamp: number;
@@ -52,9 +47,10 @@ export async function getUserAavePnl(
     (aavePnlData, userSharesData) => ({
       ...aavePnlData,
       ...userSharesData,
-      userAavePnl:
-        (aavePnlData.aavePnl * userSharesData.userJuniorVaultShares) /
-        userSharesData.totalJuniorVaultShares,
+      userAavePnl: safeDivNumer(
+        aavePnlData.aavePnl * userSharesData.userJuniorVaultShares,
+        userSharesData.totalJuniorVaultShares
+      ),
     })
   );
 

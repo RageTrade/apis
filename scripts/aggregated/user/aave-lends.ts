@@ -1,17 +1,12 @@
 import { fetchJson } from "ethers/lib/utils";
 
-import {
-  deltaNeutralGmxVaults,
-  NetworkName,
-  ResultWithMetadata,
-} from "@ragetrade/sdk";
+import { NetworkName, ResultWithMetadata } from "@ragetrade/sdk";
 
-import { getProviderAggregate } from "../../../providers";
 import { combine } from "../util/combine";
 import { GlobalAaveLendsResult } from "../aave-lends";
 import { Entry } from "../util/types";
 import { UserSharesResult } from "./shares";
-import { days, timestampRoundDown } from "../../../utils";
+import { days, safeDivNumer, timestampRoundDown } from "../../../utils";
 
 export type UserAaveLendsEntry = Entry<{
   timestamp: number;
@@ -55,14 +50,16 @@ export async function getUserAaveLends(
     (aaveLendsData, userSharesData) => ({
       ...aaveLendsData,
       ...userSharesData,
-      userAUsdcInterestJunior:
-        (aaveLendsData.aUsdcInterestJunior *
-          userSharesData.userSeniorVaultShares) /
-        userSharesData.totalSeniorVaultShares,
-      userAUsdcInterestSenior:
-        (aaveLendsData.aUsdcInterestSenior *
-          userSharesData.userSeniorVaultShares) /
-        userSharesData.totalSeniorVaultShares,
+      userAUsdcInterestJunior: safeDivNumer(
+        aaveLendsData.aUsdcInterestJunior *
+          userSharesData.userSeniorVaultShares,
+        userSharesData.totalSeniorVaultShares
+      ),
+      userAUsdcInterestSenior: safeDivNumer(
+        aaveLendsData.aUsdcInterestSenior *
+          userSharesData.userSeniorVaultShares,
+        userSharesData.totalSeniorVaultShares
+      ),
     })
   );
 

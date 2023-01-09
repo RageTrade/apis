@@ -1,17 +1,12 @@
 import { fetchJson } from "ethers/lib/utils";
 
-import {
-  deltaNeutralGmxVaults,
-  NetworkName,
-  ResultWithMetadata,
-} from "@ragetrade/sdk";
+import { NetworkName, ResultWithMetadata } from "@ragetrade/sdk";
 
-import { getProviderAggregate } from "../../../providers";
 import { combine } from "../util/combine";
 import { GlobalGlpPnlResult } from "../glp-pnl";
 import { Entry } from "../util/types";
 import { UserSharesResult } from "./shares";
-import { timestampRoundDown, days } from "../../../utils";
+import { timestampRoundDown, days, safeDivNumer } from "../../../utils";
 
 export type UserGlpPnlEntry = Entry<{
   timestamp: number;
@@ -52,9 +47,10 @@ export async function getUserGlpPnl(
     (glpPnlData, userSharesData) => ({
       ...glpPnlData,
       ...userSharesData,
-      userGlpPnl:
-        (glpPnlData.glpPnl * userSharesData.userJuniorVaultShares) /
-        userSharesData.totalJuniorVaultShares,
+      userGlpPnl: safeDivNumer(
+        glpPnlData.glpPnl * userSharesData.userJuniorVaultShares,
+        userSharesData.totalJuniorVaultShares
+      ),
     })
   );
 

@@ -1,17 +1,12 @@
 import { fetchJson } from "ethers/lib/utils";
 
-import {
-  deltaNeutralGmxVaults,
-  NetworkName,
-  ResultWithMetadata,
-} from "@ragetrade/sdk";
+import { NetworkName, ResultWithMetadata } from "@ragetrade/sdk";
 
-import { getProviderAggregate } from "../../../providers";
 import { combine } from "../util/combine";
 import { GlobalGlpSlippageResult } from "../glp-slippage";
 import { Entry } from "../util/types";
 import { UserSharesResult } from "./shares";
-import { timestampRoundDown, days } from "../../../utils";
+import { timestampRoundDown, days, safeDivNumer } from "../../../utils";
 
 export type UserGlpSlippageEntry = Entry<{
   timestamp: number;
@@ -52,9 +47,10 @@ export async function getUserGlpSlippage(
     (glpSlippageData, userSharesData) => ({
       ...glpSlippageData,
       ...userSharesData,
-      userGlpSlippage:
-        (glpSlippageData.glpSlippage * userSharesData.userJuniorVaultShares) /
-        userSharesData.totalJuniorVaultShares,
+      userGlpSlippage: safeDivNumer(
+        glpSlippageData.glpSlippage * userSharesData.userJuniorVaultShares,
+        userSharesData.totalJuniorVaultShares
+      ),
     })
   );
 
