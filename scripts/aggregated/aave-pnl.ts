@@ -170,7 +170,7 @@ export async function getAavePnl(
     (a, b) => ({
       ...a,
       ...b,
-      aavePnl: a.aavePnl - b.vdWbtcInterestDollars - b.vdWethInterestDollars,
+      aavePnl: a.aavePnl + b.vdWbtcInterestDollars + b.vdWethInterestDollars,
     })
   );
 
