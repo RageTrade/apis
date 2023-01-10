@@ -16,6 +16,7 @@ import { price } from "./util/helpers";
 import { juniorVault } from "./util/events";
 import { GlobalTotalSharesResult } from "./total-shares";
 import { timestampRoundDown, days } from "../../utils";
+import { GlobalAaveBorrowsResult } from "./aave-borrows";
 
 export type GlobalAavePnlEntry = Entry<{
   timestamp: number;
@@ -153,10 +154,26 @@ export async function getAavePnl(
   }
 
   // combines both information
-  const combinedData = combine(dataWithTimestamp, extraData, (a, b) => ({
+  const combinedData1 = combine(dataWithTimestamp, extraData, (a, b) => ({
     ...a,
     ...b,
   }));
+
+  const aaveBorrowsResponse: ResultWithMetadata<GlobalAaveBorrowsResult> =
+    await fetchJson({
+      url: `http://localhost:3000/data/aggregated/get-aave-borrows?networkName=${networkName}`,
+      timeout: 1_000_000_000, // huge number
+    });
+  const combinedData = combine(
+    combinedData1,
+    aaveBorrowsResponse.result.data,
+    (a, b) => ({
+      ...a,
+      ...b,
+      aavePnl: a.aavePnl - b.vdWbtcInterestDollars - b.vdWethInterestDollars,
+    })
+  );
+
   return {
     data: combinedData,
     dailyData: combinedData.reduce(
