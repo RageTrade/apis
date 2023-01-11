@@ -46,12 +46,22 @@ async function generateResponse(
     }
   } catch (error: any) {
     // cache the error resp (to prevent DoS, hitting with an input which reverts in middle
-    return {
-      error: error.message,
-      status: error.status,
-      cacheTimestamp: currentTimestamp(),
-      cacheSeconds: Math.min(cacheSeconds, 15),
-    };
+    if (error.status < 500) {
+      // cache normal errors for 15 seconds
+      return {
+        error: error.message,
+        status: error.status,
+        cacheTimestamp: currentTimestamp(),
+        cacheSeconds: Math.min(cacheSeconds, 15),
+      };
+    } else {
+      // do not cache server errors they might be temporary
+      return {
+        error: error.message,
+        status: error.status,
+        cacheSeconds: 0, // do not cache server errors
+      };
+    }
   }
 }
 

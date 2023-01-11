@@ -40,8 +40,12 @@ export class RedisStore<Value> extends BaseStore<Value> {
       }
       try {
         const value = await valuePromise;
-        if (typeof value.cacheSeconds === "number" && value.cacheSeconds > 0) {
-          expirySeconds = value.cacheSeconds;
+        if (typeof value.cacheSeconds === "number") {
+          if (value.cacheSeconds > 0) {
+            expirySeconds = value.cacheSeconds;
+          } else {
+            expirySeconds = undefined;
+          }
         }
         await this.set<V>(key, value, expirySeconds);
         this._promises.set(key, undefined);
