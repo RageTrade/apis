@@ -61,4 +61,5 @@ function onListening() {
         : "port " + addr.port
       : "address is null";
   debug("Listening on " + bind);
+  console.log("Listening on " + bind);
 }
