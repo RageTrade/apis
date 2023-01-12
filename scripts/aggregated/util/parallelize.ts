@@ -103,7 +103,7 @@ export async function parallelize<Data, Event extends ethers.Event>(
           await new Promise((r) =>
             setTimeout(r, Math.floor(Math.random() * 10_000))
           );
-          if (inflight >= 700) continue;
+          if (inflight >= 100) continue;
           try {
             inflight++;
             data[_i] = await onEachEvent(_i, blockNumber, event);
