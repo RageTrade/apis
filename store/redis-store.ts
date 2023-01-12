@@ -97,13 +97,13 @@ export class RedisStore<Value> extends BaseStore<Value> {
     valueFn: () => any;
     expirySeconds: number;
   }) {
-    if (newQuery.key.startsWith("getAccountIdsByAddress")) {
+    if (newQuery.key.toLowerCase().includes("address")) {
       return; // do not include these queries in cache updater
     }
     if (!this.updatingCache) {
       debug("initiate update cache");
       this.updatingCache = true;
-      this.queries = this.queries.slice(-100); // use only recent 100 entries
+      this.queries = this.queries.slice(-200); // use only recent 200 entries
       const _queries = this.queries;
       if (!this.queries.find((q) => q.key === newQuery.key)) {
         this.queries.push(newQuery);
