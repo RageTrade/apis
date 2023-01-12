@@ -59,7 +59,7 @@ async function generateResponse(
       return {
         error: error.message,
         status: error.status,
-        cacheSeconds: 0, // do not cache server errors
+        cacheSeconds: 1, // cache server errors for just 1 sec
       };
     }
   }
