@@ -111,7 +111,7 @@ router.get(
     return cacheFunctionResult(
       aggregated.user.getUserShares,
       [networkName, userAddress],
-      { cacheSeconds: 6 * hours } // this is very slow, so cache for a long time
+      { cacheSeconds: 24 * hours } // this is very slow, so cache for a long time
     );
   })
 );

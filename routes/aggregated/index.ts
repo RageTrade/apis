@@ -52,7 +52,7 @@ router.get(
   handleRuntimeErrors(async (req) => {
     const networkName = getNetworkName(req);
     return cacheFunctionResult(aggregated.getTotalShares, [networkName], {
-      cacheSeconds: 6 * hours,
+      cacheSeconds: 9 * hours,
     });
   })
 );
