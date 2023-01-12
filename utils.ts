@@ -155,6 +155,7 @@ export function removeApiKeysFromString(msg: string): string {
   if (!msg) return msg;
   const apiKeys = [
     process.env.ALCHEMY_KEY,
+    process.env.ALCHEMY_KEY_AGGREGATE,
     process.env.INFURA_KEY,
     process.env.ARBISCAN_KEY,
   ].filter((v) => !!v) as string[];
