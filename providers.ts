@@ -7,7 +7,8 @@ config();
 
 export const arbmain = new ethers.providers.StaticJsonRpcProvider(
   // "https://arb1.arbitrum.io/rpc"
-  "https://arb-mainnet.g.alchemy.com/v2/" + process.env.ALCHEMY_KEY
+  // "https://arb-mainnet.g.alchemy.com/v2/" + process.env.ALCHEMY_KEY,
+  "https://rpc.ankr.com/arbitrum"
 );
 export const arbtest = new ethers.providers.StaticJsonRpcProvider(
   // "https://rinkeby.arbitrum.io/rpc"
