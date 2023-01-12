@@ -47,7 +47,9 @@ export class RedisStore<Value> extends BaseStore<Value> {
             expirySeconds = undefined;
           }
         }
-        await this.set<V>(key, value, expirySeconds);
+        if (expirySeconds) {
+          await this.set<V>(key, value, expirySeconds);
+        }
         this._promises.set(key, undefined);
         return value;
       } catch (e) {

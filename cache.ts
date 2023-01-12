@@ -46,7 +46,7 @@ async function generateResponse(
     }
   } catch (error: any) {
     // cache the error resp (to prevent DoS, hitting with an input which reverts in middle
-    if (error.status < 500) {
+    if (error.status && error.status < 500) {
       // cache normal errors for 15 seconds
       return {
         error: error.message,
@@ -59,7 +59,6 @@ async function generateResponse(
       return {
         error: error.message,
         status: error.status,
-        cacheSeconds: 0,
       };
     }
   }
