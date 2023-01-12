@@ -12,7 +12,7 @@ router.get(
   handleRuntimeErrors(async (req) => {
     const networkName = getNetworkName(req);
     return cacheFunctionResult(aggregated.getAavePnl, [networkName], {
-      cacheSeconds: 20 * mins,
+      cacheSeconds: 6 * hours,
     });
   })
 );
@@ -22,7 +22,7 @@ router.get(
   handleRuntimeErrors(async (req) => {
     const networkName = getNetworkName(req);
     return cacheFunctionResult(aggregated.getGlpPnl, [networkName], {
-      cacheSeconds: 20 * mins,
+      cacheSeconds: 6 * hours,
     });
   })
 );
@@ -32,7 +32,7 @@ router.get(
   handleRuntimeErrors(async (req) => {
     const networkName = getNetworkName(req);
     return cacheFunctionResult(aggregated.getGlpSlippage, [networkName], {
-      cacheSeconds: 20 * mins,
+      cacheSeconds: 6 * hours,
     });
   })
 );
@@ -42,7 +42,7 @@ router.get(
   handleRuntimeErrors(async (req) => {
     const networkName = getNetworkName(req);
     return cacheFunctionResult(aggregated.getGlpRewards, [networkName], {
-      cacheSeconds: 20 * mins,
+      cacheSeconds: 6 * hours,
     });
   })
 );
@@ -52,7 +52,7 @@ router.get(
   handleRuntimeErrors(async (req) => {
     const networkName = getNetworkName(req);
     return cacheFunctionResult(aggregated.getTotalShares, [networkName], {
-      cacheSeconds: 20 * mins,
+      cacheSeconds: 6 * hours,
     });
   })
 );
@@ -62,7 +62,7 @@ router.get(
   handleRuntimeErrors(async (req) => {
     const networkName = getNetworkName(req);
     return cacheFunctionResult(aggregated.getUniswapSlippage, [networkName], {
-      cacheSeconds: 20 * mins,
+      cacheSeconds: 6 * hours,
     });
   })
 );
@@ -72,7 +72,7 @@ router.get(
   handleRuntimeErrors(async (req) => {
     const networkName = getNetworkName(req);
     return cacheFunctionResult(aggregated.getDeltaSpread, [networkName], {
-      cacheSeconds: 20 * mins,
+      cacheSeconds: 6 * hours,
     });
   })
 );
@@ -82,7 +82,7 @@ router.get(
   handleRuntimeErrors(async (req) => {
     const networkName = getNetworkName(req);
     return cacheFunctionResult(aggregated.getAaveLends, [networkName], {
-      cacheSeconds: 20 * mins,
+      cacheSeconds: 6 * hours,
     });
   })
 );
@@ -92,7 +92,7 @@ router.get(
   handleRuntimeErrors(async (req) => {
     const networkName = getNetworkName(req);
     return cacheFunctionResult(aggregated.getAaveBorrows, [networkName], {
-      cacheSeconds: 20 * mins,
+      cacheSeconds: 6 * hours,
     });
   })
 );
@@ -101,7 +101,7 @@ router.get(
   "/get-trader-pnl",
   handleRuntimeErrors(async () => {
     return cacheFunctionResult(aggregated.getTraderPnl, [], {
-      cacheSeconds: 20 * mins,
+      cacheSeconds: 6 * hours,
     });
   })
 );
@@ -111,7 +111,7 @@ router.get(
   handleRuntimeErrors(async (req) => {
     const networkName = getNetworkName(req);
     return cacheFunctionResult(aggregated.getVaultInfo, [networkName], {
-      cacheSeconds: 20 * mins,
+      cacheSeconds: 6 * hours,
     });
   })
 );

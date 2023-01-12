@@ -20,7 +20,7 @@ router.get(
     return cacheFunctionResult(
       aggregated.user.getUserAaveBorrows,
       [networkName, userAddress],
-      { cacheSeconds: 20 * mins }
+      { cacheSeconds: 6 * hours }
     );
   })
 );
@@ -33,7 +33,7 @@ router.get(
     return cacheFunctionResult(
       aggregated.user.getUserAaveLends,
       [networkName, userAddress],
-      { cacheSeconds: 20 * mins }
+      { cacheSeconds: 6 * hours }
     );
   })
 );
@@ -46,7 +46,7 @@ router.get(
     return cacheFunctionResult(
       aggregated.user.getUserAavePnl,
       [networkName, userAddress],
-      { cacheSeconds: 20 * mins }
+      { cacheSeconds: 6 * hours }
     );
   })
 );
@@ -59,7 +59,7 @@ router.get(
     return cacheFunctionResult(
       aggregated.user.getUserDeltaSpread,
       [networkName, userAddress],
-      { cacheSeconds: 20 * mins }
+      { cacheSeconds: 6 * hours }
     );
   })
 );
@@ -72,7 +72,7 @@ router.get(
     return cacheFunctionResult(
       aggregated.user.getUserGlpPnl,
       [networkName, userAddress],
-      { cacheSeconds: 20 * mins }
+      { cacheSeconds: 6 * hours }
     );
   })
 );
@@ -85,7 +85,7 @@ router.get(
     return cacheFunctionResult(
       aggregated.user.getUserGlpSlippage,
       [networkName, userAddress],
-      { cacheSeconds: 20 * mins }
+      { cacheSeconds: 6 * hours }
     );
   })
 );
@@ -98,7 +98,7 @@ router.get(
     return cacheFunctionResult(
       aggregated.user.getUserGlpRewards,
       [networkName, userAddress],
-      { cacheSeconds: 20 * mins }
+      { cacheSeconds: 6 * hours }
     );
   })
 );
@@ -111,7 +111,7 @@ router.get(
     return cacheFunctionResult(
       aggregated.user.getUserShares,
       [networkName, userAddress],
-      { cacheSeconds: 20 * mins } // this is very slow, so cache for a long time
+      { cacheSeconds: 6 * hours } // this is very slow, so cache for a long time
     );
   })
 );
@@ -124,7 +124,7 @@ router.get(
     return cacheFunctionResult(
       aggregated.user.getUserTraderPnl,
       [networkName, userAddress],
-      { cacheSeconds: 20 * mins }
+      { cacheSeconds: 6 * hours }
     );
   })
 );
@@ -137,7 +137,7 @@ router.get(
     return cacheFunctionResult(
       aggregated.user.getUserUniswapSlippage,
       [networkName, userAddress],
-      { cacheSeconds: 20 * mins }
+      { cacheSeconds: 6 * hours }
     );
   })
 );
