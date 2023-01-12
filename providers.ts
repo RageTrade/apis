@@ -2,20 +2,21 @@ import { chainIds, NetworkName, sdk } from "@ragetrade/sdk";
 import { config } from "dotenv";
 import { ethers } from "ethers";
 import { ArchiveCacheProvider } from "./archive-cache-provider";
+import { RetryProvider } from "./retry-provider";
 
 config();
 
-export const arbmain = new ethers.providers.StaticJsonRpcProvider(
+export const arbmain = new RetryProvider(
   // "https://arb1.arbitrum.io/rpc"
   "https://arb-mainnet.g.alchemy.com/v2/" + process.env.ALCHEMY_KEY
   // process.env.QUICKNODE_URL
   // "https://rpc.ankr.com/arbitrum"
 );
-export const arbtest = new ethers.providers.StaticJsonRpcProvider(
+export const arbtest = new RetryProvider(
   // "https://rinkeby.arbitrum.io/rpc"
   "https://arb-rinkeby.g.alchemy.com/v2/" + process.env.ALCHEMY_KEY
 );
-export const arbgoerli = new ethers.providers.StaticJsonRpcProvider(
+export const arbgoerli = new RetryProvider(
   "https://arb-goerli.g.alchemy.com/v2/" + process.env.ALCHEMY_KEY
 );
 // sdk.getProvider("arbgoerli");

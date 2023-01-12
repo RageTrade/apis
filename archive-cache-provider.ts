@@ -2,17 +2,14 @@ import {
   BlockTag,
   TransactionRequest,
   Block,
-  TransactionReceipt,
 } from "@ethersproject/abstract-provider";
 import { Networkish } from "@ethersproject/providers";
-import { stringifyBigNumber } from "@ragetrade/sdk";
-import { ethers } from "ethers";
-import { ConnectionInfo, Deferrable, id } from "ethers/lib/utils";
-import { FileStore } from "./store/file-store";
-import { JsonStore } from "./store/json-store";
 
-export class ArchiveCacheProvider extends ethers.providers
-  .StaticJsonRpcProvider {
+import { ConnectionInfo, Deferrable, id } from "ethers/lib/utils";
+import { RetryProvider } from "./retry-provider";
+import { FileStore } from "./store/file-store";
+
+export class ArchiveCacheProvider extends RetryProvider {
   store: FileStore<string>;
 
   constructor(url?: ConnectionInfo | string, network?: Networkish) {
