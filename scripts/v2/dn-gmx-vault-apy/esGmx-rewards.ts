@@ -1,5 +1,3 @@
-import fetch from "isomorphic-unfetch";
-
 import { BigNumber, Contract } from "ethers";
 import { formatEther, formatUnits } from "ethers/lib/utils";
 import { getProvider } from "../../../providers";
@@ -12,6 +10,7 @@ import {
 } from "@ragetrade/sdk";
 
 import RewardTracker from "./RewardTracker.json";
+import { fetchRetry } from "../../../utils";
 
 const provMain = getProvider("arbmain");
 
@@ -26,7 +25,7 @@ const ONE_ETHER = BigNumber.from(10).pow(18);
 const PRICE_PRECISION = BigNumber.from(10).pow(30);
 
 const getGmxPrice = async () => {
-  const res = await fetch(
+  const res = await fetchRetry(
     "https://api.coingecko.com/api/v3/simple/price?ids=gmx&vs_currencies=usd"
   );
 

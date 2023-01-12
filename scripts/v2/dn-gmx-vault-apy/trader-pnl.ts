@@ -1,10 +1,11 @@
 import "isomorphic-unfetch";
+import { fetchRetry } from "../../../utils";
 
 const gmxSubgraphUrl =
   "https://api.thegraph.com/subgraphs/name/gmx-io/gmx-stats";
 
 const queryTraderData = async (from_ts: string, to_ts: string) => {
-  const results = await fetch(gmxSubgraphUrl, {
+  const results = await fetchRetry(gmxSubgraphUrl, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -34,7 +35,7 @@ const queryTraderData = async (from_ts: string, to_ts: string) => {
 };
 
 const queryFeesData = async (from_ts: string, to_ts: string) => {
-  const results = await fetch(gmxSubgraphUrl, {
+  const results = await fetchRetry(gmxSubgraphUrl, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -63,7 +64,7 @@ const queryFeesData = async (from_ts: string, to_ts: string) => {
 };
 
 const queryGlpData = async (from_ts: string, to_ts: string) => {
-  const results = await fetch(gmxSubgraphUrl, {
+  const results = await fetchRetry(gmxSubgraphUrl, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({

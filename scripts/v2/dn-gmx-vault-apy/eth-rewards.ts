@@ -1,11 +1,11 @@
 import "isomorphic-unfetch";
-import { BigNumber } from "ethers";
 import { getProvider } from "../../../providers";
-import { formatUnits, hexZeroPad } from "ethers/lib/utils";
+import { formatUnits } from "ethers/lib/utils";
 import { deltaNeutralGmxVaults, formatUsdc, NetworkName } from "@ragetrade/sdk";
+import { fetchRetry } from "../../../utils";
 
 const getEthPrice = async () => {
-  const res = await fetch(
+  const res = await fetchRetry(
     "https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd"
   );
 

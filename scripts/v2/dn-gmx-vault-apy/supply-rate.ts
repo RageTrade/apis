@@ -2,6 +2,7 @@ import "isomorphic-unfetch";
 import { NetworkName } from "@ragetrade/sdk";
 import { getProvider } from "../../../providers";
 import { deltaNeutralGmxVaults } from "@ragetrade/sdk";
+import { fetchRetry } from "../../../utils";
 
 const dataUrl =
   "https://yields.llama.fi/poolsEnriched?pool=7aab7b0f-01c1-4467-bc0d-77826d870f19";
@@ -14,7 +15,7 @@ export const getSupplyApy = async (networkName: NetworkName) => {
   const [_seniorTvl, _dnUsdcDeposited, response] = await Promise.all([
     dn.dnGmxSeniorVault.getVaultMarketValue(),
     dn.dnGmxJuniorVault.dnUsdcDeposited(),
-    fetch(dataUrl),
+    fetchRetry(dataUrl),
   ]);
 
   const seniorTvl = _seniorTvl.toNumber();

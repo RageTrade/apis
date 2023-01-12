@@ -11,7 +11,7 @@ import {
 } from "@ragetrade/sdk";
 
 import { getSubgraph } from "../../subgraphs";
-import { safeDivNumer } from "../../utils";
+import { fetchRetry, safeDivNumer } from "../../utils";
 
 import type { Client } from "urql";
 const TRICRYPTO_POOL_ADDRESS =
@@ -65,7 +65,7 @@ async function getApyEstimation(
   graphqlClient: Client,
   vaultAddress: string
 ): Promise<Array<[name: string, value: number | undefined]> | undefined> {
-  const apyPayload = await fetch(
+  const apyPayload = await fetchRetry(
     "https://api.curve.fi/api/getFactoGaugesCrvRewards/arbitrum"
   );
   const apyResponse: CurveApyApiResponse = await apyPayload.json();
@@ -74,7 +74,7 @@ async function getApyEstimation(
     (item) => item.address.toLowerCase() === TRICRYPTO_POOL_ADDRESS
   );
 
-  const feesPayload = await fetch(
+  const feesPayload = await fetchRetry(
     "https://api.curve.fi/api/getSubgraphData/arbitrum"
   );
   const feesResponse: CurvePoolsApiResponse = await feesPayload.json();

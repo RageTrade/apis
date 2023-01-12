@@ -1,7 +1,7 @@
 import { NetworkName, findBlockByTimestamp } from "@ragetrade/sdk";
 import Debugger from "debug";
-import { fetchJson } from "ethers/lib/utils";
 import { getProvider } from "../providers";
+import { fetchJsonRetry, fetchRetry } from "../utils";
 
 const debug = Debugger("apis:scripts:getBlockByTimestamp");
 
@@ -15,7 +15,9 @@ export async function getBlockByTimestamp(
       return Number(
         (
           await (
-            await fetch(`https://coins.llama.fi/block/arbitrum/${timestamp}`)
+            await fetchRetry(
+              `https://coins.llama.fi/block/arbitrum/${timestamp}`
+            )
           ).json()
         ).height
       );
@@ -41,7 +43,7 @@ export async function getBlockByTimestamp(
 
   while (1) {
     const request = `${baseUrl}/api?module=block&action=getblocknobytime&timestamp=${timestamp}&closest=before&apikey=${process.env.ARBISCAN_KEY}`;
-    const resp = await fetchJson(request);
+    const resp = await fetchJsonRetry(request);
     if (resp.status === "1") {
       const result = parseInt(resp.result);
       if (!isNaN(result)) {

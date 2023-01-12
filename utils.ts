@@ -1,7 +1,8 @@
-import { getAddress, isAddress } from "ethers/lib/utils";
+import { fetchJson, getAddress, isAddress } from "ethers/lib/utils";
 import express from "express";
 import createError from "http-errors";
 import { Request } from "express";
+import "isomorphic-unfetch";
 
 import {
   NetworkName,
@@ -197,6 +198,21 @@ export async function retryRequest<R>(
   }
   // if we get here, we've retried 5 times and so lets fail
   throw lastError;
+}
+
+export async function fetchRetry(
+  input: RequestInfo | URL,
+  init?: RequestInit | undefined
+) {
+  return await retryRequest(async () => fetch(input, init), {
+    name: String(input),
+  });
+}
+
+export async function fetchJsonRetry(input: string) {
+  return await retryRequest(async () => fetchJson(input), {
+    name: String(input),
+  });
 }
 
 export function removeApiKeysFromString(msg: string): string {

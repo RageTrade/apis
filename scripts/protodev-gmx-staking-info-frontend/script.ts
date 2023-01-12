@@ -12,6 +12,7 @@ import Vault from "./abis/Vault.json";
 import { getContract } from "./Addresses";
 
 import "../../fetch-polyfill";
+import { fetchRetry } from "../../utils";
 
 const chainId = 42161;
 
@@ -660,7 +661,7 @@ const main = async (PLACEHOLDER_ACCOUNT: any) => {
   // console.log("gmxPrice", gmxPrice);
 
   const gmxSupply = await (
-    await fetch(getServerUrl(chainId, "/gmx_supply"))
+    await fetchRetry(getServerUrl(chainId, "/gmx_supply"))
   ).text();
   // console.log("gmxSupply", gmxSupply);
 

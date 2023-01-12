@@ -4,6 +4,7 @@ import { NetworkName } from "@ragetrade/sdk";
 import { getProvider } from "../../../providers";
 import { formatUnits } from "ethers/lib/utils";
 import { deltaNeutralGmxVaults } from "@ragetrade/sdk";
+import { fetchRetry } from "../../../utils";
 
 const idWeth =
   "42161-0x82af49447d8a07e3bd95bd0d56f35241523fbab1-0xa97684ead0e402dc232d5a977953df7ecbab3cdb";
@@ -17,7 +18,7 @@ const getBtcPrice = async (networkName: NetworkName) => {
     networkName == "arbmain"
       ? (
           await (
-            await fetch(
+            await fetchRetry(
               "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd"
             )
           ).json()
@@ -32,7 +33,7 @@ const getETHPrice = async (networkName: NetworkName) => {
     networkName == "arbmain"
       ? (
           await (
-            await fetch(
+            await fetchRetry(
               "https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd"
             )
           ).json()
@@ -62,7 +63,7 @@ export const getBorrowApy = async (networkName: NetworkName) => {
     deltaNeutralGmxVaults.getContracts(provider),
     getBtcPrice(networkName),
     getETHPrice(networkName),
-    fetch(dataUrl),
+    fetchRetry(dataUrl),
   ]);
 
   const [aaveResponseJson, _btcQuantity, _ethQuantity, _vmv] =

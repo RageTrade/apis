@@ -1,14 +1,8 @@
-import {
-  chainlink,
-  deltaNeutralGmxVaults,
-  tokens,
-  gmxProtocol,
-  aave,
-} from "@ragetrade/sdk";
+import { deltaNeutralGmxVaults, tokens } from "@ragetrade/sdk";
 import { formatEther, formatUnits } from "ethers/lib/utils";
 import { getProviderAggregate } from "../../providers";
 import "../../fetch-polyfill";
-import { days, timestampRoundDown } from "../../utils";
+import { days, fetchRetry, timestampRoundDown } from "../../utils";
 
 export interface GlobalTraderPnlEntry {
   blockNumber: number;
@@ -48,7 +42,7 @@ export async function getTraderPnl(): Promise<GlobalTraderPnlResult> {
     "https://api.thegraph.com/subgraphs/name/gmx-io/gmx-stats";
 
   const queryTraderData = async (from_ts: string, to_ts: string) => {
-    const results = await fetch(gmxSubgraphUrl, {
+    const results = await fetchRetry(gmxSubgraphUrl, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -113,7 +107,9 @@ export async function getTraderPnl(): Promise<GlobalTraderPnlResult> {
 
     const blockNumber = (
       await (
-        await fetch(`https://coins.llama.fi/block/arbitrum/${each.timestamp}`)
+        await fetchRetry(
+          `https://coins.llama.fi/block/arbitrum/${each.timestamp}`
+        )
       ).json()
     ).height;
 
