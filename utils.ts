@@ -151,6 +151,54 @@ export async function retry<R>(
   }
 }
 
+export async function retryRequest<R>(
+  fn: () => R | Promise<R>,
+  options: { errorKeywords?: string[]; name?: string; maxRetries?: number } = {}
+): Promise<R> {
+  options.errorKeywords = [
+    "socket hang up",
+    "ECONNRESET",
+    ...(options.errorKeywords ?? []),
+  ];
+
+  options.maxRetries = options.maxRetries ?? 5;
+  const delay: number = Math.floor(Math.random() * 2000);
+
+  let lastError: any;
+
+  for (let i = 0; i < options.maxRetries; i++) {
+    try {
+      const result = await fn();
+      if (i > 0) {
+        console.error(
+          `retryRequest: ${options.name}: Success after ${i} retries`
+        );
+      }
+      return result;
+    } catch (e: any) {
+      const errorKeyword = options.errorKeywords.find((ek) =>
+        JSON.stringify(e).includes(ek)
+      );
+      if (errorKeyword) {
+        // this is likely a temporary error, so it's worth retrying in 0 to 2 sec
+        console.error(
+          `retryRequest: ${options.name}: ${errorKeyword} at time ${String(
+            new Date()
+          )}, retrying ${i}: ${options.name}`
+        );
+        await new Promise((res) => setTimeout(res, delay));
+        lastError = e;
+        continue;
+      } else {
+        // we don't think this is a temporary error, so lets fail immediately
+        throw e;
+      }
+    }
+  }
+  // if we get here, we've retried 5 times and so lets fail
+  throw lastError;
+}
+
 export function removeApiKeysFromString(msg: string): string {
   if (!msg) return msg;
   const apiKeys = [
