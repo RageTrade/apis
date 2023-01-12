@@ -7,7 +7,7 @@ const debug = Debugger("apis:redis-store");
 
 export class RedisStore<Value> extends BaseStore<Value> {
   client: Redis;
-  queries: Array<{ key: string; valueFn: () => any; expirySeconds?: number }> =
+  queries: Array<{ key: string; valueFn: () => any; expirySeconds: number }> =
     [];
   updatingCache = false;
 
@@ -16,14 +16,22 @@ export class RedisStore<Value> extends BaseStore<Value> {
     this.client = redis.createClient();
   }
 
+  /**
+   * Get a value from the store, or set it if needed and it doesn't exist.
+   * @param key The key to get or set.
+   * @param valueFn The function to call to get the value if it doesn't exist.
+   * @param expirySeconds -1 for persistent cache, 0 for no cache, > 0 for expiry in seconds
+   * @returns value if present in cache
+   */
   async getOrSet<V = Value>(
     key: string,
     valueFn: () => V | Promise<V>,
-    expirySeconds?: number
+    expirySeconds: number
   ): Promise<V> {
     this.startCacheUpdater({ key, valueFn, expirySeconds });
 
-    const read = await this.get<V>(key);
+    // do not read cache if expiry is 0
+    const read = expirySeconds !== 0 ? await this.get<V>(key) : undefined;
 
     let valuePromise = this._promises.get(key);
     if (read !== undefined) {
@@ -40,14 +48,12 @@ export class RedisStore<Value> extends BaseStore<Value> {
       }
       try {
         const value = await valuePromise;
+        // override expirySeconds if cacheSeconds is provided
         if (typeof value.cacheSeconds === "number") {
-          if (value.cacheSeconds > 0) {
-            expirySeconds = value.cacheSeconds;
-          } else {
-            expirySeconds = undefined;
-          }
+          expirySeconds = value.cacheSeconds;
         }
-        if (expirySeconds) {
+        // do not write to cache if expiry is 0
+        if (expirySeconds !== 0) {
           await this.set<V>(key, value, expirySeconds);
         }
         this._promises.set(key, undefined);
@@ -68,23 +74,28 @@ export class RedisStore<Value> extends BaseStore<Value> {
   async set<V = Value>(
     _key: string,
     _value: V,
-    expirySeconds?: number
+    expirySeconds: number = -1
   ): Promise<void> {
-    if (expirySeconds) {
+    if (expirySeconds === -1) {
+      // cache with no expiry (persistent)
+      debug(`RedisStore.set: setting key ${_key} with no expiry`);
+      await this.client.set(_key, JSON.stringify(_value));
+    } else if (expirySeconds === 0) {
+      // no cache
+      await this.client.del(_key);
+    } else {
+      // cache with expiry
       debug(
         `RedisStore.set: setting key ${_key} with expiry ${expirySeconds} seconds`
       );
-      this.client.set(_key, JSON.stringify(_value), "EX", expirySeconds);
-    } else {
-      debug(`RedisStore.set: setting key ${_key} with no expiry`);
-      this.client.set(_key, JSON.stringify(_value));
+      await this.client.set(_key, JSON.stringify(_value), "EX", expirySeconds);
     }
   }
 
   async startCacheUpdater(newQuery: {
     key: string;
     valueFn: () => any;
-    expirySeconds?: number;
+    expirySeconds: number;
   }) {
     if (newQuery.key.startsWith("getAccountIdsByAddress")) {
       return; // do not include these queries in cache updater

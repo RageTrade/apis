@@ -2,7 +2,7 @@ import { RedisStore } from "./store/redis-store";
 import { currentTimestamp } from "./utils";
 
 interface Options {
-  cacheSeconds?: number;
+  cacheSeconds: number;
   tags?: string[];
 }
 
@@ -11,7 +11,7 @@ const cache = new RedisStore<any>();
 export function cacheFunctionResult<F extends (...args: any[]) => any>(
   fn: F,
   args: Parameters<F>,
-  { cacheSeconds, tags }: Options = {}
+  { cacheSeconds, tags }: Options = { cacheSeconds: 0 }
 ) {
   tags = tags || [];
   return cache.getOrSet(
@@ -42,7 +42,7 @@ async function generateResponse(
         cacheSeconds,
       };
     } else {
-      return { result, cacheTimestamp: currentTimestamp() };
+      return { result, cacheTimestamp: currentTimestamp(), cacheSeconds };
     }
   } catch (error: any) {
     // cache the error resp (to prevent DoS, hitting with an input which reverts in middle
@@ -59,6 +59,7 @@ async function generateResponse(
       return {
         error: error.message,
         status: error.status,
+        cacheSeconds: 0,
       };
     }
   }
