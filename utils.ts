@@ -201,7 +201,7 @@ export async function retryRequest<R>(
 }
 
 export async function fetchRetry(
-  input: RequestInfo | URL,
+  input: string,
   init?: RequestInit | undefined
 ) {
   return await retryRequest(async () => fetch(input, init), {
