@@ -197,7 +197,7 @@ router.get(
     const networkName = getNetworkName(req);
     const vaultName = getVaultName(req);
     return cacheFunctionResult(getVaultInfo, [networkName, vaultName], {
-      cacheSeconds: 1 * mins,
+      cacheSeconds: 5 * mins,
     });
   })
 );
@@ -245,7 +245,7 @@ router.get(
   handleRuntimeErrors(async (req) => {
     const networkName = getNetworkName(req);
     return cacheFunctionResult(v2.getTricryptoVaultApy, [networkName], {
-      cacheSeconds: 1 * mins,
+      cacheSeconds: 5 * mins,
       tags: ["v2"],
     });
   })
@@ -259,7 +259,7 @@ router.get(
     return cacheFunctionResult(
       getGmxVaultInfoByTokenAddress,
       [networkName, tokenAddress],
-      { cacheSeconds: 1 * mins }
+      { cacheSeconds: 5 * mins }
     );
   })
 );
@@ -271,7 +271,7 @@ router.get(
     return cacheFunctionResult(
       v2.getGmxVaultInfoByTokenAddress,
       [networkName, tokenAddress],
-      { cacheSeconds: 1 * mins, tags: ["v2"] }
+      { cacheSeconds: 5 * mins, tags: ["v2"] }
     );
   })
 );
@@ -322,7 +322,7 @@ router.get(
   handleRuntimeErrors(async (req) => {
     const networkName = getNetworkName(req);
     return cacheFunctionResult(v2.getDnGmxApyBreakdown, [networkName], {
-      cacheSeconds: 15 * secs,
+      cacheSeconds: 5 * mins,
       tags: ["v2"],
     });
   })
