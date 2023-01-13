@@ -163,6 +163,13 @@ export async function perInterval(networkName: NetworkName) {
           })
         )
       );
+      const fsGlp_totalSuply = Number(
+        formatEther(
+          await fsGLP.totalSupply({
+            blockTag: blockNumber,
+          })
+        )
+      );
 
       // result
       const res: { [key: string]: string | number } = {
@@ -183,6 +190,7 @@ export async function perInterval(networkName: NetworkName) {
         uniPrice,
         fsGlp_balanceOf_juniorVault,
         fsGlp_balanceOf_batchingManager,
+        fsGlp_totalSuply,
       };
 
       for (let i = 0; i < allWhitelistedTokens.length; i++) {
