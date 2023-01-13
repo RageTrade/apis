@@ -68,10 +68,22 @@ export async function getUserTraderPnl(
       data,
       dailyData: data.reduce(
         (acc: UserTraderPnlDailyEntry[], cur: UserTraderPnlEntry) => {
-          const lastEntry = acc[acc.length - 1];
+          let lastEntry = acc[acc.length - 1];
           if (lastEntry && cur.timestamp <= lastEntry.endTimestamp) {
             lastEntry.userTraderPnlNet += cur.userTraderPnl;
           } else {
+            while (
+              lastEntry &&
+              lastEntry.startTimestamp + 1 * days <
+                timestampRoundDown(cur.timestamp)
+            ) {
+              acc.push({
+                startTimestamp: lastEntry.startTimestamp + 1 * days,
+                endTimestamp: lastEntry.startTimestamp + 2 * days - 1,
+                userTraderPnlNet: 0,
+              });
+              lastEntry = acc[acc.length - 1];
+            }
             acc.push({
               startTimestamp: timestampRoundDown(cur.timestamp),
               endTimestamp: timestampRoundDown(cur.timestamp) + 1 * days - 1,

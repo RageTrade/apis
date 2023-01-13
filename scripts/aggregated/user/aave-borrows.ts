@@ -89,7 +89,7 @@ export async function getUserAaveBorrows(
       data,
       dailyData: data.reduce(
         (acc: UserAaveBorrowsDailyEntry[], cur: UserAaveBorrowsEntry) => {
-          const lastEntry = acc[acc.length - 1];
+          let lastEntry = acc[acc.length - 1];
           if (lastEntry && cur.timestamp <= lastEntry.endTimestamp) {
             lastEntry.userVdWbtcInterestNet += cur.userVdWbtcInterest;
             lastEntry.userVdWbtcInterestDollarsNet +=
@@ -98,6 +98,21 @@ export async function getUserAaveBorrows(
             lastEntry.userVdWethInterestDollarsNet +=
               cur.userVdWethInterestDollars;
           } else {
+            while (
+              lastEntry &&
+              lastEntry.startTimestamp + 1 * days <
+                timestampRoundDown(cur.timestamp)
+            ) {
+              acc.push({
+                startTimestamp: lastEntry.startTimestamp + 1 * days,
+                endTimestamp: lastEntry.startTimestamp + 2 * days - 1,
+                userVdWbtcInterestNet: 0,
+                userVdWbtcInterestDollarsNet: 0,
+                userVdWethInterestNet: 0,
+                userVdWethInterestDollarsNet: 0,
+              });
+              lastEntry = acc[acc.length - 1];
+            }
             acc.push({
               startTimestamp: timestampRoundDown(cur.timestamp),
               endTimestamp: timestampRoundDown(cur.timestamp) + 1 * days - 1,

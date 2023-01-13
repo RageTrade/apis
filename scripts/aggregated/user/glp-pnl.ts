@@ -66,10 +66,22 @@ export async function getUserGlpPnl(
       data,
       dailyData: data.reduce(
         (acc: UserGlpPnlDailyEntry[], cur: UserGlpPnlEntry) => {
-          const lastEntry = acc[acc.length - 1];
+          let lastEntry = acc[acc.length - 1];
           if (lastEntry && cur.timestamp <= lastEntry.endTimestamp) {
             lastEntry.userGlpPnlNet += cur.userGlpPnl;
           } else {
+            while (
+              lastEntry &&
+              lastEntry.startTimestamp + 1 * days <
+                timestampRoundDown(cur.timestamp)
+            ) {
+              acc.push({
+                startTimestamp: lastEntry.startTimestamp + 1 * days,
+                endTimestamp: lastEntry.startTimestamp + 2 * days - 1,
+                userGlpPnlNet: 0,
+              });
+              lastEntry = acc[acc.length - 1];
+            }
             acc.push({
               startTimestamp: timestampRoundDown(cur.timestamp),
               endTimestamp: timestampRoundDown(cur.timestamp) + 1 * days - 1,

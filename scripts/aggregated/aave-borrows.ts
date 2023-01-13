@@ -168,13 +168,28 @@ export async function getAaveBorrows(
     data: combinedData,
     dailyData: combinedData.reduce(
       (acc: GlobalAaveBorrowsDailyEntry[], cur: GlobalAaveBorrowsEntry) => {
-        const lastEntry = acc[acc.length - 1];
+        let lastEntry = acc[acc.length - 1];
         if (lastEntry && cur.timestamp <= lastEntry.endTimestamp) {
           lastEntry.vdWbtcInterestNet += cur.vdWbtcInterest;
           lastEntry.vdWbtcInterestDollarsNet += cur.vdWbtcInterestDollars;
           lastEntry.vdWethInterestNet += cur.vdWethInterest;
           lastEntry.vdWethInterestDollarsNet += cur.vdWethInterestDollars;
         } else {
+          while (
+            lastEntry &&
+            lastEntry.startTimestamp + 1 * days <
+              timestampRoundDown(cur.timestamp)
+          ) {
+            acc.push({
+              startTimestamp: lastEntry.startTimestamp + 1 * days,
+              endTimestamp: lastEntry.startTimestamp + 2 * days - 1,
+              vdWbtcInterestNet: 0,
+              vdWbtcInterestDollarsNet: 0,
+              vdWethInterestNet: 0,
+              vdWethInterestDollarsNet: 0,
+            });
+            lastEntry = acc[acc.length - 1];
+          }
           acc.push({
             startTimestamp: timestampRoundDown(cur.timestamp),
             endTimestamp: timestampRoundDown(cur.timestamp) + 1 * days - 1,

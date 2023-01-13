@@ -66,10 +66,22 @@ export async function getUserGlpSlippage(
       data,
       dailyData: data.reduce(
         (acc: UserGlpSlippageDailyEntry[], cur: UserGlpSlippageEntry) => {
-          const lastEntry = acc[acc.length - 1];
+          let lastEntry = acc[acc.length - 1];
           if (lastEntry && cur.timestamp <= lastEntry.endTimestamp) {
             lastEntry.userGlpSlippageNet += cur.userGlpSlippage;
           } else {
+            while (
+              lastEntry &&
+              lastEntry.startTimestamp + 1 * days <
+                timestampRoundDown(cur.timestamp)
+            ) {
+              acc.push({
+                startTimestamp: lastEntry.startTimestamp + 1 * days,
+                endTimestamp: lastEntry.startTimestamp + 2 * days - 1,
+                userGlpSlippageNet: 0,
+              });
+              lastEntry = acc[acc.length - 1];
+            }
             acc.push({
               startTimestamp: timestampRoundDown(cur.timestamp),
               endTimestamp: timestampRoundDown(cur.timestamp) + 1 * days - 1,

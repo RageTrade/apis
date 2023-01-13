@@ -75,11 +75,24 @@ export async function getUserAaveLends(
       data,
       dailyData: data.reduce(
         (acc: UserAaveLendsDailyEntry[], cur: UserAaveLendsEntry) => {
-          const lastEntry = acc[acc.length - 1];
+          let lastEntry = acc[acc.length - 1];
           if (lastEntry && cur.timestamp <= lastEntry.endTimestamp) {
             lastEntry.userAUsdcInterestJuniorNet += cur.userAUsdcInterestJunior;
             lastEntry.userAUsdcInterestSeniorNet += cur.userAUsdcInterestSenior;
           } else {
+            while (
+              lastEntry &&
+              lastEntry.startTimestamp + 1 * days <
+                timestampRoundDown(cur.timestamp)
+            ) {
+              acc.push({
+                startTimestamp: lastEntry.startTimestamp + 1 * days,
+                endTimestamp: lastEntry.startTimestamp + 2 * days - 1,
+                userAUsdcInterestJuniorNet: 0,
+                userAUsdcInterestSeniorNet: 0,
+              });
+              lastEntry = acc[acc.length - 1];
+            }
             acc.push({
               startTimestamp: timestampRoundDown(cur.timestamp),
               endTimestamp: timestampRoundDown(cur.timestamp) + 1 * days - 1,

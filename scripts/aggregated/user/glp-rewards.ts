@@ -75,13 +75,26 @@ export async function getUserGlpRewards(
       data,
       dailyData: data.reduce(
         (acc: UserGlpRewardsDailyEntry[], cur: UserGlpRewardsEntry) => {
-          const lastEntry = acc[acc.length - 1];
+          let lastEntry = acc[acc.length - 1];
           if (lastEntry && cur.timestamp <= lastEntry.endTimestamp) {
             lastEntry.userJuniorVaultWethRewardNet +=
               cur.userJuniorVaultWethReward;
             lastEntry.userSeniorVaultWethRewardNet +=
               cur.userSeniorVaultWethReward;
           } else {
+            while (
+              lastEntry &&
+              lastEntry.startTimestamp + 1 * days <
+                timestampRoundDown(cur.timestamp)
+            ) {
+              acc.push({
+                startTimestamp: lastEntry.startTimestamp + 1 * days,
+                endTimestamp: lastEntry.startTimestamp + 2 * days - 1,
+                userJuniorVaultWethRewardNet: 0,
+                userSeniorVaultWethRewardNet: 0,
+              });
+              lastEntry = acc[acc.length - 1];
+            }
             acc.push({
               startTimestamp: timestampRoundDown(cur.timestamp),
               endTimestamp: timestampRoundDown(cur.timestamp) + 1 * days - 1,

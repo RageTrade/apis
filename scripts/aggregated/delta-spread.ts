@@ -333,13 +333,28 @@ export async function getDeltaSpread(
     data: combinedData,
     dailyData: combinedData.reduce(
       (acc: GlobalDeltaSpreadDailyEntry[], cur: GlobalDeltaSpreadEntry) => {
-        const lastEntry = acc[acc.length - 1];
+        let lastEntry = acc[acc.length - 1];
         if (lastEntry && cur.timestamp <= lastEntry.endTimestamp) {
           lastEntry.uniswapSlippageNet += cur.uniswapSlippage;
           lastEntry.uniswapVolumeNet += cur.uniswapVolume;
           lastEntry.btcHedgeDeltaPnlNet += cur.btcHedgeDeltaPnl;
           lastEntry.ethHedgeDeltaPnlNet += cur.ethHedgeDeltaPnl;
         } else {
+          while (
+            lastEntry &&
+            lastEntry.startTimestamp + 1 * days <
+              timestampRoundDown(cur.timestamp)
+          ) {
+            acc.push({
+              startTimestamp: lastEntry.startTimestamp + 1 * days,
+              endTimestamp: lastEntry.startTimestamp + 2 * days - 1,
+              uniswapSlippageNet: 0,
+              uniswapVolumeNet: 0,
+              btcHedgeDeltaPnlNet: 0,
+              ethHedgeDeltaPnlNet: 0,
+            });
+            lastEntry = acc[acc.length - 1];
+          }
           acc.push({
             startTimestamp: timestampRoundDown(cur.timestamp),
             endTimestamp: timestampRoundDown(cur.timestamp) + 1 * days - 1,

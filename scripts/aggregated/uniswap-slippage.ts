@@ -178,11 +178,24 @@ export async function getUniswapSlippage(
         acc: GlobalUniswapSlippageDailyEntry[],
         cur: GlobalUniswapSlippageEntry
       ) => {
-        const lastEntry = acc[acc.length - 1];
+        let lastEntry = acc[acc.length - 1];
         if (lastEntry && cur.timestamp <= lastEntry.endTimestamp) {
           lastEntry.uniswapSlippageNet += cur.uniswapSlippage;
           lastEntry.uniswapVolumeNet += cur.uniswapVolume;
         } else {
+          while (
+            lastEntry &&
+            lastEntry.startTimestamp + 1 * days <
+              timestampRoundDown(cur.timestamp)
+          ) {
+            acc.push({
+              startTimestamp: lastEntry.startTimestamp + 1 * days,
+              endTimestamp: lastEntry.startTimestamp + 2 * days - 1,
+              uniswapSlippageNet: 0,
+              uniswapVolumeNet: 0,
+            });
+            lastEntry = acc[acc.length - 1];
+          }
           acc.push({
             startTimestamp: timestampRoundDown(cur.timestamp),
             endTimestamp: timestampRoundDown(cur.timestamp) + 1 * days - 1,
