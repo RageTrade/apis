@@ -4,6 +4,7 @@ import {
   Block,
 } from "@ethersproject/abstract-provider";
 import { Networkish } from "@ethersproject/providers";
+import { ethers } from "ethers";
 
 import { ConnectionInfo, Deferrable, id } from "ethers/lib/utils";
 import { RetryProvider } from "./retry-provider";
@@ -48,6 +49,23 @@ export class ArchiveCacheProvider extends RetryProvider {
       });
     } else {
       return await super.getBlock(blockHashOrBlockTag);
+    }
+  }
+
+  async getLogs(
+    filter: ethers.providers.Filter
+  ): Promise<Array<ethers.providers.Log>> {
+    if (
+      typeof filter.toBlock === "number" &&
+      typeof filter.fromBlock === "number"
+    ) {
+      const requestId =
+        "getLogs" + id(["getLogs", filter.fromBlock, filter.toBlock].join("-"));
+      return await this.store.getOrSet(requestId, async () => {
+        return await super.getLogs(filter);
+      });
+    } else {
+      return await super.getLogs(filter);
     }
   }
 
