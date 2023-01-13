@@ -2,7 +2,13 @@ import express from "express";
 
 import { cacheFunctionResult } from "../../cache";
 import * as aggregated from "../../scripts/aggregated";
-import { getNetworkName, handleRuntimeErrors, hours, mins } from "../../utils";
+import {
+  getNetworkName,
+  handleRuntimeErrors,
+  hours,
+  mins,
+  secs,
+} from "../../utils";
 import UserRouter from "./user";
 
 const router = express.Router();
@@ -112,6 +118,16 @@ router.get(
     const networkName = getNetworkName(req);
     return cacheFunctionResult(aggregated.getVaultInfo, [networkName], {
       cacheSeconds: 6 * hours,
+    });
+  })
+);
+
+router.get(
+  "/per-interval",
+  handleRuntimeErrors(async (req) => {
+    const networkName = getNetworkName(req);
+    return cacheFunctionResult(aggregated.perInterval, [networkName], {
+      cacheSeconds: 6 * secs,
     });
   })
 );

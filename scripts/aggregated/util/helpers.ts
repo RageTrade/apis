@@ -3,6 +3,7 @@ import { formatUnits } from "ethers/lib/utils";
 import { chainlink, NetworkName, tokens } from "@ragetrade/sdk";
 
 import { getProviderAggregate } from "../../../providers";
+import { ethers } from "ethers";
 
 export function name(addr: string, networkName: NetworkName) {
   const { weth, wbtc, usdc } = tokens.getContractsSync(networkName);
@@ -87,4 +88,23 @@ export async function price(
     default:
       throw new Error("i dont know");
   }
+}
+
+export async function getLogsInLoop(
+  contract: ethers.Contract,
+  event: ethers.EventFilter,
+  fromBlock: number,
+  toBlock: number,
+  intervalBlocks: number
+): Promise<ethers.Event[]> {
+  const logs: ethers.Event[] = [];
+  for (let i = fromBlock; i < toBlock; i += intervalBlocks) {
+    const _logs = await contract.queryFilter(
+      event,
+      i,
+      Math.min(toBlock, i + intervalBlocks - 1)
+    );
+    logs.push(..._logs);
+  }
+  return logs;
 }
