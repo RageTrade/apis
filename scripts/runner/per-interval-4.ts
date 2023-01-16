@@ -10,9 +10,9 @@ import { ethers } from "ethers";
 import { formatEther, formatUnits } from "ethers/lib/utils";
 import { getProviderAggregate } from "../../providers";
 import { days, mins } from "../../utils";
-import { juniorVault } from "./util/events";
-import { getLogsInLoop, price } from "./util/helpers";
-import { parallelize } from "./util/parallelize";
+import { juniorVault } from "../aggregated/util/events";
+import { getLogsInLoop, price } from "../aggregated/util/helpers";
+import { parallelize } from "../aggregated/util/parallelize";
 
 export async function perInterval2(networkName: NetworkName) {
   const provider = getProviderAggregate(networkName);

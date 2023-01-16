@@ -123,26 +123,6 @@ router.get(
 );
 
 router.get(
-  "/per-interval",
-  handleRuntimeErrors(async (req) => {
-    const networkName = getNetworkName(req);
-    return cacheFunctionResult(aggregated.perInterval, [networkName], {
-      cacheSeconds: 6 * hours,
-    });
-  })
-);
-
-router.get(
-  "/per-interval-2",
-  handleRuntimeErrors(async (req) => {
-    const networkName = getNetworkName(req);
-    return cacheFunctionResult(aggregated.perInterval, [networkName], {
-      cacheSeconds: 6 * hours,
-    });
-  })
-);
-
-router.get(
   "/get-market-movement",
   handleRuntimeErrors(async (req) => {
     const networkName = getNetworkName(req);

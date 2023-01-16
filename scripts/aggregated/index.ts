@@ -9,8 +9,6 @@ export * from "./uniswap-slippage";
 export * from "./delta-spread";
 export * from "./trader-pnl";
 export * from "./vault-info";
-export * from "./per-interval";
-export * from "./per-interval-2";
 export * from "./market-movement";
 
 export * as user from "./user";
