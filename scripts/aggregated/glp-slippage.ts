@@ -60,7 +60,11 @@ export async function getGlpSlippage(
     {
       networkName,
       provider,
-      getEvents: [juniorVault.rebalanced],
+      getEvents: [
+        juniorVault.deposit,
+        juniorVault.withdraw,
+        juniorVault.rebalanced,
+      ],
     },
     async (_i, blockNumber, event) => {
       const rc = await provider.getTransactionReceipt(event.transactionHash);
