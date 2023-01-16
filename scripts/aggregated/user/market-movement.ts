@@ -2,7 +2,7 @@ import { fetchJson } from "ethers/lib/utils";
 
 import { NetworkName, ResultWithMetadata } from "@ragetrade/sdk";
 
-import { intersection } from "../util/combine";
+import { combine } from "../util/combine";
 import { GlobalMarketMovementResult } from "../market-movement";
 import { Entry } from "../util/types";
 import { UserSharesResult } from "./shares";
@@ -55,12 +55,19 @@ export async function getUserMarketMovement(
       timeout: 1_000_000_000, // huge number
     });
 
-  const data = intersection(
+  const data = combine(
     marketMovementResponse.result.data,
     userSharesResponse.result.data,
+    (marketMovementEntry, userSharesEntry, mi, ui) => {
+      const userSharesEntryNext = userSharesResponse.result.data[ui + 1];
+      return (
+        userSharesEntry.blockNumber <= marketMovementEntry.blockNumber &&
+        marketMovementEntry.blockNumber < userSharesEntryNext.blockNumber
+      );
+    },
     (marketMovementData, userSharesData) => ({
+      ...userSharesData, // some of this data can get overriden by the next line
       ...marketMovementData,
-      ...userSharesData,
       userEthPnl: safeDivNumer(
         marketMovementData.ethPnl * userSharesData.userJuniorVaultShares,
         userSharesData.totalJuniorVaultShares

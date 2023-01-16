@@ -9,19 +9,19 @@ import { EntryBase } from "./types";
 export function combine<
   A extends EntryBase,
   B extends EntryBase,
-  Combiner extends (a: A, b: B) => any
+  Combiner extends (a: A, b: B, aIndex: number, bIndex: number) => any
 >(
   a: A[],
   b: B[],
-  matcher: (a: A, b: B) => boolean,
+  matcher: (a: A, b: B, aIndex: number, bIndex: number) => boolean,
   combiner: Combiner
 ): ReturnType<Combiner>[] {
   const combined: ReturnType<Combiner>[] = [];
 
-  for (const aItem of a) {
-    for (const bItem of b) {
-      if (matcher(aItem, bItem)) {
-        combined.push(combiner(aItem, bItem));
+  for (let aIndex = 0; aIndex < a.length; aIndex++) {
+    for (let bIndex = 0; bIndex < b.length; bIndex++) {
+      if (matcher(a[aIndex], b[bIndex], aIndex, bIndex)) {
+        combined.push(combiner(a[aIndex], b[bIndex], aIndex, bIndex));
         break;
       }
     }
