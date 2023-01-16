@@ -8,3 +8,4 @@ export * from "./glp-rewards";
 export * from "./shares";
 export * from "./trader-pnl";
 export * from "./uniswap-slippage";
+export * from "./market-movement";

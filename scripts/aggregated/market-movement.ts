@@ -16,7 +16,7 @@ import { getLogsInLoop, price } from "./util/helpers";
 import { parallelize } from "./util/parallelize";
 import { Entry } from "./util/types";
 
-export type MarketMovementEntry = Entry<{
+export type GlobalMarketMovementEntry = Entry<{
   timestamp: number;
 
   vaultGlp: number;
@@ -47,7 +47,7 @@ export type MarketMovementEntry = Entry<{
   pnl: number;
 }>;
 
-export interface MarketMovementDailyEntry {
+export interface GlobalMarketMovementDailyEntry {
   startTimestamp: number;
   endTimestamp: number;
   ethPnlNet: number;
@@ -56,9 +56,9 @@ export interface MarketMovementDailyEntry {
   uniPnlNet: number;
   pnlNet: number;
 }
-export interface MarketMovementResult {
-  data: MarketMovementEntry[];
-  dailyData: MarketMovementDailyEntry[];
+export interface GlobalMarketMovementResult {
+  data: GlobalMarketMovementEntry[];
+  dailyData: GlobalMarketMovementDailyEntry[];
   totalEthPnl: number;
   totalBtcPnl: number;
   totalLinkPnl: number;
@@ -68,7 +68,7 @@ export interface MarketMovementResult {
 
 export async function getMarketMovement(
   networkName: NetworkName
-): Promise<MarketMovementResult> {
+): Promise<GlobalMarketMovementResult> {
   const provider = getProviderAggregate(networkName);
 
   const { dnGmxJuniorVault, dnGmxBatchingManager } =
@@ -374,7 +374,10 @@ export async function getMarketMovement(
   return {
     data: combinedData,
     dailyData: combinedData.reduce(
-      (acc: MarketMovementDailyEntry[], cur: MarketMovementEntry) => {
+      (
+        acc: GlobalMarketMovementDailyEntry[],
+        cur: GlobalMarketMovementEntry
+      ) => {
         let lastEntry = acc[acc.length - 1];
         if (lastEntry && cur.timestamp <= lastEntry.endTimestamp) {
           lastEntry.btcPnlNet += cur.btcPnl;

@@ -142,4 +142,17 @@ router.get(
   })
 );
 
+router.get(
+  "/get-market-movement",
+  handleRuntimeErrors(async (req) => {
+    const networkName = getNetworkName(req);
+    const userAddress = getParamAsAddress(req, "userAddress");
+    return cacheFunctionResult(
+      aggregated.user.getUserMarketMovement,
+      [networkName, userAddress],
+      { cacheSeconds: 6 * hours }
+    );
+  })
+);
+
 export default router;
