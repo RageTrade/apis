@@ -2,7 +2,7 @@ import { fetchJson } from "ethers/lib/utils";
 
 import { NetworkName, ResultWithMetadata } from "@ragetrade/sdk";
 
-import { combine } from "../util/combine";
+import { intersection } from "../util/combine";
 import { UserSharesResult } from "./shares";
 import { GlobalUniswapSlippageResult } from "../uniswap-slippage";
 import { Entry } from "../util/types";
@@ -44,7 +44,7 @@ export async function getUserUniswapSlippage(
       timeout: 1_000_000_000, // huge number
     });
 
-  const data = combine(
+  const data = intersection(
     globalUniswapSlippageResponse.result.data,
     userSharesResponse.result.data,
     (globalUniswapSlippageEntry, userSharesEntry) => ({

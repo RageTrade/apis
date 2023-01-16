@@ -10,19 +10,17 @@ export function combine<
   A extends EntryBase,
   B extends EntryBase,
   Combiner extends (a: A, b: B) => any
->(a: A[], b: B[], combiner: Combiner): ReturnType<Combiner>[] {
+>(
+  a: A[],
+  b: B[],
+  matcher: (a: A, b: B) => boolean,
+  combiner: Combiner
+): ReturnType<Combiner>[] {
   const combined: ReturnType<Combiner>[] = [];
 
   for (const aItem of a) {
     for (const bItem of b) {
-      if (
-        // check block number
-        aItem.blockNumber === bItem.blockNumber &&
-        // if log index exists then check that as well
-        (!!aItem.logIndex && !!bItem.logIndex
-          ? aItem.logIndex === bItem.logIndex
-          : true)
-      ) {
+      if (matcher(aItem, bItem)) {
         combined.push(combiner(aItem, bItem));
         break;
       }
@@ -30,4 +28,23 @@ export function combine<
   }
 
   return combined;
+}
+
+export function intersection<
+  A extends EntryBase,
+  B extends EntryBase,
+  Combiner extends (a: A, b: B) => any
+>(a: A[], b: B[], combiner: Combiner): ReturnType<Combiner>[] {
+  return combine(
+    a,
+    b,
+    // require block number and log index if it exists to be same
+    (aItem, bItem) =>
+      aItem.blockNumber === bItem.blockNumber &&
+      // if log index exists then check that as well
+      (!!aItem.logIndex && !!bItem.logIndex
+        ? aItem.logIndex === bItem.logIndex
+        : true),
+    combiner
+  );
 }

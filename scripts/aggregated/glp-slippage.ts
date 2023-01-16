@@ -12,7 +12,7 @@ import {
 import { getProviderAggregate } from "../../providers";
 import { days, timestampRoundDown } from "../../utils";
 import { GlobalTotalSharesResult } from "./total-shares";
-import { combine } from "./util/combine";
+import { intersection } from "./util/combine";
 import { juniorVault } from "./util/events";
 import { parallelize } from "./util/parallelize";
 import { Entry } from "./util/types";
@@ -125,10 +125,14 @@ export async function getGlpSlippage(
     }
   );
 
-  const combinedData = combine(data, totalSharesData.result.data, (a, b) => ({
-    ...a,
-    timestamp: b.timestamp,
-  }));
+  const combinedData = intersection(
+    data,
+    totalSharesData.result.data,
+    (a, b) => ({
+      ...a,
+      timestamp: b.timestamp,
+    })
+  );
 
   return {
     data: combinedData,

@@ -10,7 +10,7 @@ import { BigNumber, ethers } from "ethers";
 import { formatEther, formatUnits, parseEther } from "ethers/lib/utils";
 import { getProviderAggregate } from "../../providers";
 import { days, mins, timestampRoundDown } from "../../utils";
-import { combine } from "./util/combine";
+import { intersection } from "./util/combine";
 import { juniorVault } from "./util/events";
 import { getLogsInLoop, price } from "./util/helpers";
 import { parallelize } from "./util/parallelize";
@@ -314,7 +314,7 @@ export async function getMarketMovement(
     last = current;
   }
 
-  const combinedData = combine(data, extraData, (a, b) => ({
+  const combinedData = intersection(data, extraData, (a, b) => ({
     ...a,
     ...b,
   }));

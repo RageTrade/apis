@@ -2,7 +2,7 @@ import { fetchJson } from "ethers/lib/utils";
 
 import { NetworkName, ResultWithMetadata } from "@ragetrade/sdk";
 
-import { combine } from "../util/combine";
+import { intersection } from "../util/combine";
 import { GlobalGlpSlippageResult } from "../glp-slippage";
 import { Entry } from "../util/types";
 import { UserSharesResult } from "./shares";
@@ -41,7 +41,7 @@ export async function getUserGlpSlippage(
       timeout: 1_000_000_000, // huge number
     });
 
-  const data = combine(
+  const data = intersection(
     glpSlippageResponse.result.data,
     userSharesResponse.result.data,
     (glpSlippageData, userSharesData) => ({

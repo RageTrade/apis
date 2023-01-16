@@ -9,7 +9,7 @@ import {
 } from "@ragetrade/sdk";
 
 import { getProviderAggregate } from "../../providers";
-import { combine } from "./util/combine";
+import { intersection } from "./util/combine";
 import { parallelize } from "./util/parallelize";
 import { Entry } from "./util/types";
 import { price } from "./util/helpers";
@@ -116,7 +116,7 @@ export async function getAavePnl(
     }
   );
 
-  const dataWithTimestamp = combine(
+  const dataWithTimestamp = intersection(
     data,
     totalSharesData.result.data,
     (a, b) => ({
@@ -154,7 +154,7 @@ export async function getAavePnl(
   }
 
   // combines both information
-  const combinedData1 = combine(dataWithTimestamp, extraData, (a, b) => ({
+  const combinedData1 = intersection(dataWithTimestamp, extraData, (a, b) => ({
     ...a,
     ...b,
   }));
@@ -164,7 +164,7 @@ export async function getAavePnl(
       url: `http://localhost:3000/data/aggregated/get-aave-borrows?networkName=${networkName}`,
       timeout: 1_000_000_000, // huge number
     });
-  const combinedData = combine(
+  const combinedData = intersection(
     combinedData1,
     aaveBorrowsResponse.result.data,
     (a, b) => ({

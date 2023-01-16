@@ -11,7 +11,7 @@ import {
 import { getProviderAggregate } from "../../../providers";
 import { ErrorWithStatusCode, safeDivNumer } from "../../../utils";
 import { GlobalTotalSharesResult } from "../total-shares";
-import { combine } from "../util/combine";
+import { intersection } from "../util/combine";
 import { parallelize } from "../util/parallelize";
 import { Entry } from "../util/types";
 
@@ -135,7 +135,7 @@ export async function getUserShares(
     }
   );
 
-  const data: UserSharesEntry[] = combine(
+  const data: UserSharesEntry[] = intersection(
     totalSharesData.result.data,
     data1,
     (global, user) => {

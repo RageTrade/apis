@@ -12,7 +12,7 @@ import {
 import { getProviderAggregate } from "../../providers";
 import { days, timestampRoundDown } from "../../utils";
 import { GlobalTotalSharesResult } from "./total-shares";
-import { combine } from "./util/combine";
+import { intersection } from "./util/combine";
 import { juniorVault, seniorVault } from "./util/events";
 import { parallelize } from "./util/parallelize";
 import { Entry } from "./util/types";
@@ -114,7 +114,7 @@ export async function getAaveLends(
     }
   );
 
-  const dataWithTimestamp = combine(
+  const dataWithTimestamp = intersection(
     data,
     totalSharesData.result.data,
     (a, b) => ({
@@ -148,7 +148,7 @@ export async function getAaveLends(
     last = current;
   }
 
-  const combinedData = combine(dataWithTimestamp, extraData, (a, b) => ({
+  const combinedData = intersection(dataWithTimestamp, extraData, (a, b) => ({
     ...a,
     ...b,
   }));

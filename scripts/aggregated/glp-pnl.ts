@@ -8,7 +8,7 @@ import {
 } from "@ragetrade/sdk";
 
 import { getProviderAggregate } from "../../providers";
-import { combine } from "./util/combine";
+import { intersection } from "./util/combine";
 import { parallelize } from "./util/parallelize";
 import { Entry } from "./util/types";
 import { juniorVault } from "./util/events";
@@ -97,7 +97,7 @@ export async function getGlpPnl(
     }
   );
 
-  const data2 = combine(data, totalSharesData.result.data, (a, b) => ({
+  const data2 = intersection(data, totalSharesData.result.data, (a, b) => ({
     ...a,
     timestamp: b.timestamp,
   }));
@@ -136,7 +136,10 @@ export async function getGlpPnl(
   }
 
   // combines all information
-  const combinedData = combine(data2, extraData, (a, b) => ({ ...a, ...b }));
+  const combinedData = intersection(data2, extraData, (a, b) => ({
+    ...a,
+    ...b,
+  }));
   return {
     data: combinedData,
     dailyData: combinedData.reduce(

@@ -2,7 +2,7 @@ import { fetchJson } from "ethers/lib/utils";
 
 import { NetworkName, ResultWithMetadata } from "@ragetrade/sdk";
 
-import { combine } from "../util/combine";
+import { intersection } from "../util/combine";
 import { GlobalAaveBorrowsResult } from "../aave-borrows";
 import { Entry } from "../util/types";
 import { UserSharesResult } from "./shares";
@@ -50,7 +50,7 @@ export async function getUserAaveBorrows(
       timeout: 1_000_000_000, // huge number
     });
 
-  const data = combine(
+  const data = intersection(
     aaveBorrowsResponse.result.data,
     userSharesResponse.result.data,
     (aaveBorrowsData, userSharesData) => ({

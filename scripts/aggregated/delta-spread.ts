@@ -16,7 +16,7 @@ import type { TokenSwappedEvent } from "@ragetrade/sdk/dist/typechain/delta-neut
 import { decimals, price, name } from "./util/helpers";
 import { juniorVault } from "./util/events";
 import { GlobalTotalSharesResult } from "./total-shares";
-import { combine } from "./util/combine";
+import { intersection } from "./util/combine";
 import { days, timestampRoundDown } from "../../utils";
 
 export type GlobalDeltaSpreadEntry = Entry<{
@@ -269,7 +269,7 @@ export async function getDeltaSpread(
     }
   );
 
-  const dataWithTimestamp = combine(
+  const dataWithTimestamp = intersection(
     data,
     totalSharesData.result.data,
     (a, b) => ({
@@ -324,7 +324,7 @@ export async function getDeltaSpread(
     last = current;
   }
 
-  const combinedData = combine(dataWithTimestamp, extraData, (a, b) => ({
+  const combinedData = intersection(dataWithTimestamp, extraData, (a, b) => ({
     ...a,
     ...b,
   }));
