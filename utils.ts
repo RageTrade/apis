@@ -160,6 +160,7 @@ export async function retryRequest<R>(
     "socket hang up",
     "ECONNRESET",
     "TIMEOUT",
+    "ETIMEDOUT",
     ...(options.errorKeywords ?? []),
   ];
 
