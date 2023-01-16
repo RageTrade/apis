@@ -21,6 +21,7 @@ export type GlobalMarketMovementEntry = Entry<{
 
   fsGlp_balanceOf_juniorVault: number;
   fsGlp_balanceOf_batchingManager: number;
+  glp_totalSupply: number;
   vaultGlp: number;
   glpPrice: number;
   wethUsdgAmount: number;
@@ -85,7 +86,10 @@ export async function getMarketMovement(
   for (let i = 0; i < allWhitelistedTokensLength; i++) {
     allWhitelistedTokens.push(await gmxUnderlyingVault.allWhitelistedTokens(i));
   }
-  const { weth, wbtc, fsGLP } = tokens.getContractsSync(networkName, provider);
+  const { weth, wbtc, fsGLP, glp } = tokens.getContractsSync(
+    networkName,
+    provider
+  );
   const link = wbtc.attach("0xf97f4df75117a78c1A5a0DBb814Af92458539FB4");
   const uni = wbtc.attach("0xFa7F8980b0f1E64A2062791cc3b0871572f1F7f0");
 
@@ -235,6 +239,15 @@ export async function getMarketMovement(
         )
       );
 
+      // this is not used, but here for reference in output data
+      const glp_totalSupply = Number(
+        formatEther(
+          await glp.totalSupply({
+            blockTag: blockNumber,
+          })
+        )
+      );
+
       const vaultGlp =
         fsGlp_balanceOf_juniorVault + fsGlp_balanceOf_batchingManager;
 
@@ -251,6 +264,7 @@ export async function getMarketMovement(
         timestamp: block.timestamp,
         fsGlp_balanceOf_juniorVault,
         fsGlp_balanceOf_batchingManager,
+        glp_totalSupply,
         vaultGlp,
         glpPrice,
         wethUsdgAmount,
