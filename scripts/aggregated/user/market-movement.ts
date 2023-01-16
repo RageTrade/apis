@@ -60,10 +60,10 @@ export async function getUserMarketMovement(
     userSharesResponse.result.data,
     (marketMovementEntry, userSharesEntry, mi, ui) => {
       const userSharesEntryNext = userSharesResponse.result.data[ui + 1];
-      return (
-        userSharesEntry.blockNumber <= marketMovementEntry.blockNumber &&
-        marketMovementEntry.blockNumber < userSharesEntryNext.blockNumber
-      );
+      return userSharesEntryNext !== undefined
+        ? userSharesEntry.blockNumber <= marketMovementEntry.blockNumber &&
+            marketMovementEntry.blockNumber < userSharesEntryNext.blockNumber
+        : true;
     },
     (marketMovementData, userSharesData) => ({
       ...userSharesData, // some of this data can get overriden by the next line
