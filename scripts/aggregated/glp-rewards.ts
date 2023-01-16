@@ -15,6 +15,7 @@ import { combine } from "./util/combine";
 import { juniorVault } from "./util/events";
 import { parallelize } from "./util/parallelize";
 import { Entry } from "./util/types";
+import { price } from "./util/helpers";
 
 export type GlobalGlpRewardsEntry = Entry<{
   timestamp: number;
@@ -42,7 +43,7 @@ export async function getGlpRewards(
   const provider = getProviderAggregate(networkName);
 
   const { glpManager } = gmxProtocol.getContractsSync(networkName, provider);
-  const { fsGLP } = tokens.getContractsSync(networkName, provider);
+  const { fsGLP, weth } = tokens.getContractsSync(networkName, provider);
 
   const totalSharesData: ResultWithMetadata<GlobalTotalSharesResult> =
     await fetchJson({
@@ -72,10 +73,21 @@ export async function getGlpRewards(
         Number(formatEther(juniorVaultGlp)) * glpPrice;
       const seniorVaultWethReward = Number(formatUsdc(seniorVaultAUsdc));
 
+      const ethPrice = await price(weth.address, blockNumber, networkName);
+
       return {
         blockNumber,
         transactionHash: event.transactionHash,
+        wethHarvested: Number(formatEther(event.args.wethHarvested)),
+        juniorVaultWeth: Number(formatEther(event.args.juniorVaultWeth)),
+        seniorVaultWeth: Number(formatEther(event.args.seniorVaultWeth)),
+        esGmxStaked: Number(formatEther(event.args.esGmxStaked)),
+        juniorVaultGlp: Number(formatEther(juniorVaultGlp)),
+        seniorVaultAUsdc: Number(formatUsdc(seniorVaultAUsdc)),
+        aumMax: Number(formatUnits(aumMax, 30)),
+        glpTotalSuply: Number(formatEther(glpTotalSuply)),
         glpPrice,
+        ethPrice,
         juniorVaultWethReward,
         seniorVaultWethReward,
       };
