@@ -19,8 +19,9 @@ import { Entry } from "./util/types";
 export type GlobalMarketMovementEntry = Entry<{
   timestamp: number;
 
+  fsGlp_balanceOf_juniorVault: number;
+  fsGlp_balanceOf_batchingManager: number;
   vaultGlp: number;
-
   glpPrice: number;
   wethUsdgAmount: number;
   wbtcUsdgAmount: number;
@@ -88,12 +89,6 @@ export async function getMarketMovement(
   const link = wbtc.attach("0xf97f4df75117a78c1A5a0DBb814Af92458539FB4");
   const uni = wbtc.attach("0xFa7F8980b0f1E64A2062791cc3b0871572f1F7f0");
 
-  const { wbtcVariableDebtTokenAddress, wethVariableDebtTokenAddress } =
-    aave.getAddresses(networkName);
-  const { aUsdc } = aave.getContractsSync(networkName, provider);
-  const vdWbtc = aUsdc.attach(wbtcVariableDebtTokenAddress);
-  const vdWeth = aUsdc.attach(wethVariableDebtTokenAddress);
-
   const { ethUsdAggregator } = chainlink.getContractsSync(
     networkName,
     provider
@@ -109,12 +104,8 @@ export async function getMarketMovement(
     "0x9C917083fDb403ab5ADbEC26Ee294f6EcAda2720"
   );
 
-  // const startBlock = 52181070;
-  // const endBlock = 52419731;
-
   const startBlock = 44570369;
   const endBlock = await provider.getBlockNumber();
-  // const interval = 497; // Math.floor(((endBlock - startBlock) * 3 * mins) / days);
 
   const _vault = new ethers.Contract(
     gmxUnderlyingVault.address,
@@ -130,9 +121,6 @@ export async function getMarketMovement(
       networkName,
       provider,
       getEvents: [
-        // juniorVault.deposit,
-        // juniorVault.withdraw,
-        // juniorVault.rebalanced,
         async () => {
           const logs = await getLogsInLoop(
             _vault,
@@ -154,15 +142,6 @@ export async function getMarketMovement(
           return logs.filter((l) => l.blockNumber % 200 === 0);
         },
       ],
-      //   () => {
-      //     const events = [];
-      //     for (let i = startBlock; i <= endBlock; i += interval) {
-      //       events.push({
-      //         blockNumber: i,
-      //       });
-      //     }
-      //     return events as ethers.Event[];
-      //   },
       ignoreMoreEventsInSameBlock: true,
     },
     async (_i, blockNumber) => {
@@ -171,21 +150,7 @@ export async function getMarketMovement(
         allWhitelistedTokens.map((token) =>
           gmxUnderlyingVault.usdgAmounts(token, { blockTag: blockNumber })
         )
-      ); // 18
-      // const usdgAmounts: number[] = [
-      //   await gmxUnderlyingVault.usdgAmounts(weth.address, {
-      //     blockTag: blockNumber,
-      //   }),
-      //   await gmxUnderlyingVault.usdgAmounts(wbtc.address, {
-      //     blockTag: blockNumber,
-      //   }),
-      //   await gmxUnderlyingVault.usdgAmounts(link.address, {
-      //     blockTag: blockNumber,
-      //   }),
-      //   await gmxUnderlyingVault.usdgAmounts(uni.address, {
-      //     blockTag: blockNumber,
-      //   }),
-      // ].map((x) => Number(formatUnits(x, 18)));
+      );
 
       const wethUsdgAmount = Number(
         formatEther(
@@ -224,15 +189,6 @@ export async function getMarketMovement(
       const wbtcTokenWeight = wbtcUsdgAmount / totalUsdcAmount;
       const linkTokenWeight = linkUsdgAmount / totalUsdcAmount;
       const uniTokenWeight = uniUsdgAmount / totalUsdcAmount;
-
-      // const vdWbtc_balanceOf_dnGmxJuniorVault = await vdWbtc.balanceOf(
-      //   dnGmxJuniorVault.address,
-      //   { blockTag: blockNumber }
-      // );
-      // const vdWeth_balanceOf_dnGmxJuniorVault = await vdWeth.balanceOf(
-      //   dnGmxJuniorVault.address,
-      //   { blockTag: blockNumber }
-      // );
 
       const glpPrice = Number(
         formatEther(
@@ -278,13 +234,6 @@ export async function getMarketMovement(
           })
         )
       );
-      // const fsGlp_totalSuply = Number(
-      //   formatEther(
-      //     await fsGLP.totalSupply({
-      //       blockTag: blockNumber,
-      //     })
-      //   )
-      // );
 
       const vaultGlp =
         fsGlp_balanceOf_juniorVault + fsGlp_balanceOf_batchingManager;
@@ -300,9 +249,8 @@ export async function getMarketMovement(
       return {
         blockNumber: blockNumber,
         timestamp: block.timestamp,
-        // fsGlp_balanceOf_juniorVault,
-        // fsGlp_balanceOf_batchingManager,
-        // fsGlp_totalSuply,
+        fsGlp_balanceOf_juniorVault,
+        fsGlp_balanceOf_batchingManager,
         vaultGlp,
         glpPrice,
         wethUsdgAmount,
