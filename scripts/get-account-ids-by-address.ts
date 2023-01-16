@@ -10,16 +10,17 @@ export async function getAccountIdsByAddress(
   userAddress: string
 ) {
   try {
+    const store = new AccountCreatedIndexer(networkName).getStore();
+    const accountIds = await store.get(userAddress);
+    const syncedBlock = Number(await store.get("synced-block"));
+    return {
+      result: accountIds ?? [],
+      syncedBlock,
+    };
+  } catch {
     return {
       result: await getAccountIdsByAddressSDK(userAddress, networkName),
       syncedBlock: "latest",
     };
-  } catch {}
-
-  const store = new AccountCreatedIndexer(networkName).getStore();
-  const accountIds = await store.get(userAddress);
-  return {
-    result: accountIds ?? [],
-    syncedBlock: Number(await store.get("synced-block")),
-  };
+  }
 }
