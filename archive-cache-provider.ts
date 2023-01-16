@@ -5,6 +5,7 @@ import {
 } from "@ethersproject/abstract-provider";
 import { Networkish } from "@ethersproject/providers";
 import { ethers } from "ethers";
+import path from "path";
 
 import { ConnectionInfo, Deferrable, id } from "ethers/lib/utils";
 import { RetryProvider } from "./retry-provider";
@@ -20,7 +21,9 @@ export class ArchiveCacheProvider extends RetryProvider {
         "Second arg of ArchiveCacheProvider must be a chainId number"
       );
     }
-    this.store = new FileStore(`data/_archive/${network}/`);
+    this.store = new FileStore(
+      path.resolve(__dirname, `data/_archive/${network}/`)
+    );
   }
 
   async call(
