@@ -129,7 +129,7 @@ export async function getMarketMovement(
             endBlock,
             2000
           );
-          return logs.filter((l) => l.blockNumber % 200 === 0);
+          return logs.filter((l) => [0].includes(l.blockNumber % 50));
         },
         async () => {
           const logs = await getLogsInLoop(
@@ -139,7 +139,7 @@ export async function getMarketMovement(
             endBlock,
             2000
           );
-          return logs.filter((l) => l.blockNumber % 200 === 0);
+          return logs.filter((l) => [0].includes(l.blockNumber % 50));
         },
       ],
       ignoreMoreEventsInSameBlock: true,
