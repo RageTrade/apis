@@ -9,18 +9,21 @@ export async function getAccountIdsByAddress(
   networkName: NetworkName,
   userAddress: string
 ) {
-  try {
-    const store = new AccountCreatedIndexer(networkName).getStore();
-    const accountIds = await store.get(userAddress);
-    const syncedBlock = Number(await store.get("synced-block"));
-    return {
-      result: accountIds ?? [],
-      syncedBlock,
-    };
-  } catch {
-    return {
-      result: await getAccountIdsByAddressSDK(userAddress, networkName),
-      syncedBlock: "latest",
-    };
+  const store = new AccountCreatedIndexer(networkName).getStore();
+  const accountIds = (await store.get(userAddress)) ?? [];
+  const syncedBlock = Number(await store.get("synced-block"));
+
+  if (accountIds.length === 0) {
+    try {
+      return {
+        result: await getAccountIdsByAddressSDK(userAddress, networkName),
+        syncedBlock: "latest",
+      };
+    } catch {}
   }
+
+  return {
+    result: accountIds,
+    syncedBlock,
+  };
 }
