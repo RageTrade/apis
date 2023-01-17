@@ -1,7 +1,7 @@
 import { AccountCreatedIndexer } from "./account-created";
 
-new AccountCreatedIndexer("arbmain").start(17185390, 5000);
-new AccountCreatedIndexer("arbgoerli").start(408336, 5000);
+new AccountCreatedIndexer("arbmain").start(17185390, 1000000);
+new AccountCreatedIndexer("arbgoerli").start(408336, 1000000);
 
 // dn vault events
 

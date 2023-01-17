@@ -3,16 +3,15 @@ import { ethers } from "ethers";
 import { ClearingHouse__factory, core, NetworkName } from "@ragetrade/sdk";
 import { AccountCreatedEvent } from "@ragetrade/sdk/dist/typechain/core/contracts/interfaces/IClearingHouse";
 
-import { JsonStore } from "../store/json-store";
+import { FileStore } from "../store/file-store";
 import { BaseIndexer } from "./base-indexer";
 
 const iface = ClearingHouse__factory.createInterface();
 
 export class AccountCreatedIndexer extends BaseIndexer<number[]> {
-  getStore(): JsonStore<number[]> {
-    return new JsonStore<number[]>(
-      `data/${this._networkName}/accounts-created.json`,
-      true
+  getStore(): FileStore<number[]> {
+    return new FileStore<number[]>(
+      `data/${this._networkName}/accounts-created`
     );
   }
 
