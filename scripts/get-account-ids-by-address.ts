@@ -23,7 +23,7 @@ export async function getAccountIdsByAddress(
   }
 
   return {
-    result: accountIds,
+    result: Array.from(new Set(accountIds).values()),
     syncedBlock,
   };
 }
