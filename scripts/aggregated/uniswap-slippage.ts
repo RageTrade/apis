@@ -77,6 +77,7 @@ export async function getUniswapSlippage(
       networkName,
       provider,
       getEvents: [juniorVault.rebalanced],
+      startBlockNumber: 45412307,
     },
     async (_i, blockNumber, event) => {
       const rc = await provider.getTransactionReceipt(event.transactionHash);

@@ -68,6 +68,7 @@ export async function getAavePnl(
         juniorVault.rebalanced,
       ],
       ignoreMoreEventsInSameBlock: true, // to prevent reprocessing same data
+      startBlockNumber: 45412307,
     },
     async (_i, blockNumber, event) => {
       const btcAmountBefore = Number(

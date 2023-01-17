@@ -29,7 +29,7 @@ export interface GlobalTraderPnlResult {
 }
 
 export async function getTraderPnl(): Promise<GlobalTraderPnlResult> {
-  const START_BLOCK = 45607856;
+  const START_BLOCK = 45412307;
 
   const provider = getProviderAggregate("arbmain");
 

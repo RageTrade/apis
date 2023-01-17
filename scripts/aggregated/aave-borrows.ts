@@ -74,6 +74,7 @@ export async function getAaveBorrows(
         juniorVault.rebalanced,
       ],
       ignoreMoreEventsInSameBlock: true, // to prevent reprocessing same data
+      startBlockNumber: 45412307,
     },
     async (_i, blockNumber, event) => {
       const _btcAmountBefore = await vdWbtc.balanceOf(

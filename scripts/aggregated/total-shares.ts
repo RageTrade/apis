@@ -71,6 +71,7 @@ export async function getTotalShares(
         },
       ],
       ignoreMoreEventsInSameBlock: true, // to prevent reprocessing same data
+      startBlockNumber: 45412307,
     },
     async (_i, blockNumber, event) => {
       const { timestamp } = await provider.getBlock(blockNumber);

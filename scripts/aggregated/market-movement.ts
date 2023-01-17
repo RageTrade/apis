@@ -147,6 +147,7 @@ export async function getMarketMovement(
         },
       ],
       ignoreMoreEventsInSameBlock: true,
+      startBlockNumber: 45412307,
     },
     async (_i, blockNumber) => {
       const block = await provider.getBlock(blockNumber);

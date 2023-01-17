@@ -61,6 +61,7 @@ export async function getGlpPnl(
         juniorVault.rebalanced,
       ],
       ignoreMoreEventsInSameBlock: true, // to prevent reprocessing same data
+      startBlockNumber: 45412307,
     },
     async (_i, blockNumber, event) => {
       const fsGlp_balanceOf_juniorVault = Number(

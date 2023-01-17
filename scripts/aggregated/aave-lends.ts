@@ -70,7 +70,7 @@ export async function getAaveLends(
         seniorVault.withdraw,
       ],
       ignoreMoreEventsInSameBlock: true, // to prevent reprocessing same data
-      startBlockNumber: 45607856,
+      startBlockNumber: 45412307,
     },
     async (_i, blockNumber, event) => {
       const aUsdcJuniorBefore = Number(

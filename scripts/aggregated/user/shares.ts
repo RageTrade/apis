@@ -86,6 +86,7 @@ export async function getUserShares(
             } as ethers.Event)
         ),
       ignoreMoreEventsInSameBlock: true, // to prevent reprocessing same data
+      startBlockNumber: 45412307,
     },
     async (_i, blockNumber, event) => {
       const userSeniorVaultShares = Number(
