@@ -11,9 +11,12 @@ export class RedisStore<Value> extends BaseStore<Value> {
     [];
   updatingCache = false;
 
-  constructor() {
+  constructor({ updateCache = true }) {
     super();
     this.client = redis.createClient();
+    if (!updateCache) {
+      this.updatingCache = true; // does not trigger cache update
+    }
   }
 
   /**

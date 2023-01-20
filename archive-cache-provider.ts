@@ -10,9 +10,11 @@ import path from "path";
 import { ConnectionInfo, Deferrable, id } from "ethers/lib/utils";
 import { RetryProvider } from "./retry-provider";
 import { FileStore } from "./store/file-store";
+import { RedisStore } from "./store/redis-store";
 
 export class ArchiveCacheProvider extends RetryProvider {
-  store: FileStore<string>;
+  // store: FileStore<string>;
+  redisStore: RedisStore<string>;
 
   constructor(url?: ConnectionInfo | string, network?: Networkish) {
     super(url, network);
@@ -21,9 +23,10 @@ export class ArchiveCacheProvider extends RetryProvider {
         "Second arg of ArchiveCacheProvider must be a chainId number"
       );
     }
-    this.store = new FileStore(
-      path.resolve(__dirname, `data/_archive/${network}/`)
-    );
+    // this.store = new FileStore(
+    //   path.resolve(__dirname, `data/_archive/${network}/`)
+    // );
+    this.redisStore = new RedisStore({ updateCache: false });
   }
 
   async call(
@@ -31,12 +34,20 @@ export class ArchiveCacheProvider extends RetryProvider {
     blockTag?: BlockTag | Promise<BlockTag>
   ): Promise<string> {
     if (typeof blockTag === "number") {
-      const requestId = id(
-        [transaction.to ?? "", transaction.data ?? "", blockTag].join("-")
+      const key = getKey([
+        this.network.name,
+        "call",
+        String(blockTag),
+        (await transaction.to) ?? "no-to",
+        id([transaction.to ?? "", transaction.data ?? "", blockTag].join("-")),
+      ]);
+      return await this.redisStore.getOrSet(
+        key,
+        async () => {
+          return await super.call(transaction, blockTag);
+        },
+        -1
       );
-      return await this.store.getOrSet(requestId, async () => {
-        return await super.call(transaction, blockTag);
-      });
     } else {
       return await super.call(transaction, blockTag);
     }
@@ -46,10 +57,18 @@ export class ArchiveCacheProvider extends RetryProvider {
     blockHashOrBlockTag: BlockTag | string | Promise<BlockTag | string>
   ): Promise<Block> {
     if (typeof blockHashOrBlockTag === "number") {
-      const requestId = id(["getBlock", blockHashOrBlockTag].join("-"));
-      return await this.store.getOrSet(requestId, async () => {
-        return await super.getBlock(blockHashOrBlockTag);
-      });
+      const key = getKey([
+        this.network.name,
+        "getBlock",
+        String(blockHashOrBlockTag),
+      ]);
+      return await this.redisStore.getOrSet(
+        key,
+        async () => {
+          return await super.getBlock(blockHashOrBlockTag);
+        },
+        -1
+      );
     } else {
       return await super.getBlock(blockHashOrBlockTag);
     }
@@ -62,11 +81,20 @@ export class ArchiveCacheProvider extends RetryProvider {
       typeof filter.toBlock === "number" &&
       typeof filter.fromBlock === "number"
     ) {
-      const requestId =
-        "getLogs" + id(["getLogs", filter.fromBlock, filter.toBlock].join("-"));
-      return await this.store.getOrSet(requestId, async () => {
-        return await super.getLogs(filter);
-      });
+      const key = getKey([
+        this.network.name,
+        "getLogs",
+        String(filter.fromBlock),
+        String(filter.toBlock),
+        filter.topics?.join("-") ?? "no-topics",
+      ]);
+      return await this.redisStore.getOrSet(
+        key,
+        async () => {
+          return await super.getLogs(filter);
+        },
+        -1
+      );
     } else {
       return await super.getLogs(filter);
     }
@@ -74,12 +102,20 @@ export class ArchiveCacheProvider extends RetryProvider {
 
   async send(method: string, params: any): Promise<any> {
     if (method === "eth_getTransactionReceipt") {
-      const requestId = id(["send", method, ...params].join("-"));
-      return await this.store.getOrSet(requestId, async () => {
-        return await super.send(method, params);
-      });
+      const key = getKey([this.network.name, "send", method, ...params]);
+      return await this.redisStore.getOrSet(
+        key,
+        async () => {
+          return await super.send(method, params);
+        },
+        -1
+      );
     } else {
       return await super.send(method, params);
     }
   }
+}
+
+function getKey(items: string[]) {
+  return "archive-cache-provider-" + items.join("-");
 }
