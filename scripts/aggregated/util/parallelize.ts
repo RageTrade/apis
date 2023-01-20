@@ -98,6 +98,7 @@ export async function parallelize<Data, Event extends ethers.Event>(
         logIndex: number,
         event: Event
       ) => {
+        let thisFailed = 0;
         while (1) {
           // add random delay to avoid lot of requests being shot at same time
           await new Promise((r) =>
@@ -113,10 +114,19 @@ export async function parallelize<Data, Event extends ethers.Event>(
           } catch (e: any) {
             // console.log("retrying", e);
             failed++;
+            thisFailed++;
             inflight--;
 
             if (failed > allEvents.length * 4) {
               throw e;
+            }
+            if (thisFailed > 4) {
+              console.error(
+                "thisFailed > 4",
+                blockNumber,
+                event.event ?? "",
+                e
+              );
             }
           }
         }
