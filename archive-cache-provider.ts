@@ -26,7 +26,10 @@ export class ArchiveCacheProvider extends RetryProvider {
     // this.store = new FileStore(
     //   path.resolve(__dirname, `data/_archive/${network}/`)
     // );
-    this.redisStore = new RedisStore({ updateCache: false });
+    this.redisStore = new RedisStore({
+      client: (global as any).redisClient,
+      updateCache: false,
+    });
   }
 
   async call(

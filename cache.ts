@@ -7,7 +7,10 @@ interface Options {
 }
 
 // const cache = new MemoryStore<any>("cache");
-const cache = new RedisStore<any>({ updateCache: true });
+const cache = new RedisStore<any>({
+  client: (global as any).redisClient,
+  updateCache: true,
+});
 export function cacheFunctionResult<F extends (...args: any[]) => any>(
   fn: F,
   args: Parameters<F>,

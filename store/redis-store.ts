@@ -1,7 +1,9 @@
-import redis from "ioredis";
 import { Redis } from "ioredis";
 import { BaseStore } from "./base-store";
 import Debugger from "debug";
+import redis from "ioredis";
+// @ts-ignore
+global.redisClient = redis.createClient();
 
 const debug = Debugger("apis:redis-store");
 
@@ -11,9 +13,15 @@ export class RedisStore<Value> extends BaseStore<Value> {
     [];
   updatingCache = false;
 
-  constructor({ updateCache = true }) {
+  constructor({
+    client,
+    updateCache = true,
+  }: {
+    client: Redis;
+    updateCache?: boolean;
+  }) {
     super();
-    this.client = redis.createClient();
+    this.client = client;
     if (!updateCache) {
       this.updatingCache = true; // does not trigger cache update
     }
