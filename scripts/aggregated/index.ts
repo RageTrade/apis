@@ -10,5 +10,6 @@ export * from "./delta-spread";
 export * from "./trader-pnl";
 export * from "./vault-info";
 export * from "./market-movement";
+export * from "./rebalance-info";
 
 export * as user from "./user";

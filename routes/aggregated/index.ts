@@ -132,6 +132,16 @@ router.get(
   })
 );
 
+router.get(
+  "/get-rebalance-info",
+  handleRuntimeErrors(async (req) => {
+    const networkName = getNetworkName(req);
+    return cacheFunctionResult(aggregated.getRebalanceInfo, [networkName], {
+      cacheSeconds: 6 * hours,
+    });
+  })
+);
+
 router.use("/user", UserRouter);
 
 export default router;
