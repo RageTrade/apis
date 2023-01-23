@@ -53,10 +53,14 @@ export async function perInterval2(networkName: NetworkName) {
     "0x9C917083fDb403ab5ADbEC26Ee294f6EcAda2720"
   );
 
-  const startBlock = 45682985; // Dec-13-2022 12:00:00 AM +UTC
-  const endBlock = 52689519; // 13 Jan
-  // const endBlock = 52419731; // await provider.getBlockNumber();
-  const interval = 3000; // 497; // Math.floor(((endBlock - startBlock) * 3 * mins) / days);
+  // const startBlock = 45682985; // Dec-13-2022 12:00:00 AM +UTC
+  // const endBlock = 52689519; // 13 Jan
+  // // const endBlock = 52419731; // await provider.getBlockNumber();
+  // const interval = 3000; // 497; // Math.floor(((endBlock - startBlock) * 3 * mins) / days);
+
+  const startBlock = 50084140; // Oct 1
+  const endBlock = 53574140;
+  const interval = 2000; // 497; // Math.floor(((endBlock - startBlock) * 3 * mins) / days);
 
   const _vault = new ethers.Contract(
     gmxUnderlyingVault.address,
@@ -88,7 +92,7 @@ export async function perInterval2(networkName: NetworkName) {
       //     gmxUnderlyingVault.usdgAmounts(token, { blockTag: blockNumber })
       //   )
       // ); // 18 or 30
-      const block = await provider.getBlock(blockNumber);
+      // const block = await provider.getBlock(blockNumber);
       // const vdWbtc_balanceOf_dnGmxJuniorVault = await vdWbtc.balanceOf(
       //   dnGmxJuniorVault.address,
       //   { blockTag: blockNumber }
@@ -127,20 +131,20 @@ export async function perInterval2(networkName: NetworkName) {
       //     8
       //   )
       // );
-      const fsGlp_balanceOf_juniorVault = Number(
-        formatEther(
-          await fsGLP.balanceOf(dnGmxJuniorVault.address, {
-            blockTag: blockNumber,
-          })
-        )
-      );
-      const fsGlp_balanceOf_batchingManager = Number(
-        formatEther(
-          await dnGmxBatchingManager.dnGmxJuniorVaultGlpBalance({
-            blockTag: blockNumber,
-          })
-        )
-      );
+      // const fsGlp_balanceOf_juniorVault = Number(
+      //   formatEther(
+      //     await fsGLP.balanceOf(dnGmxJuniorVault.address, {
+      //       blockTag: blockNumber,
+      //     })
+      //   )
+      // );
+      // const fsGlp_balanceOf_batchingManager = Number(
+      //   formatEther(
+      //     await dnGmxBatchingManager.dnGmxJuniorVaultGlpBalance({
+      //       blockTag: blockNumber,
+      //     })
+      //   )
+      // );
       const fsGlp_totalSuply = Number(
         formatEther(
           await fsGLP.totalSupply({
@@ -152,7 +156,7 @@ export async function perInterval2(networkName: NetworkName) {
       // result
       const res: { [key: string]: string | number } = {
         blockNumber: blockNumber.toString(),
-        timestamp: block.timestamp.toString(),
+        // timestamp: block.timestamp.toString(),
         // vdWbtc_balanceOf_dnGmxJuniorVault: formatUnits(
         //   vdWbtc_balanceOf_dnGmxJuniorVault,
         //   8
@@ -166,8 +170,8 @@ export async function perInterval2(networkName: NetworkName) {
         // glpPrice,
         // linkPrice,
         // uniPrice,
-        fsGlp_balanceOf_juniorVault,
-        fsGlp_balanceOf_batchingManager,
+        // fsGlp_balanceOf_juniorVault,
+        // fsGlp_balanceOf_batchingManager,
         fsGlp_totalSuply,
       };
 
