@@ -2,11 +2,12 @@ import { fetchJson } from "ethers/lib/utils";
 
 import { NetworkName, ResultWithMetadata } from "@ragetrade/sdk";
 
-import { intersection } from "../util/combine";
+import { combine } from "../util/combine";
 import { GlobalAavePnlResult } from "../aave-pnl";
 import { Entry } from "../util/types";
 import { UserSharesResult } from "./shares";
 import { days, safeDivNumer, timestampRoundDown } from "../../../utils";
+import { matchWithUserShares } from "./common";
 
 export type UserAavePnlEntry = Entry<{
   timestamp: number;
@@ -41,9 +42,10 @@ export async function getUserAavePnl(
       timeout: 1_000_000_000, // huge number
     });
 
-  const data = intersection(
+  const data = combine(
     aavePnlResponse.result.data,
     userSharesResponse.result.data,
+    matchWithUserShares.bind(null, userSharesResponse.result),
     (aavePnlData, userSharesData) => ({
       ...aavePnlData,
       ...userSharesData,

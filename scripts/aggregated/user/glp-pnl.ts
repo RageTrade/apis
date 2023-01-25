@@ -2,11 +2,12 @@ import { fetchJson } from "ethers/lib/utils";
 
 import { NetworkName, ResultWithMetadata } from "@ragetrade/sdk";
 
-import { intersection } from "../util/combine";
+import { combine } from "../util/combine";
 import { GlobalGlpPnlResult } from "../glp-pnl";
 import { Entry } from "../util/types";
 import { UserSharesResult } from "./shares";
 import { timestampRoundDown, days, safeDivNumer } from "../../../utils";
+import { matchWithUserShares } from "./common";
 
 export type UserGlpPnlEntry = Entry<{
   timestamp: number;
@@ -41,9 +42,10 @@ export async function getUserGlpPnl(
       timeout: 1_000_000_000, // huge number
     });
 
-  const data = intersection(
+  const data = combine(
     glpPnlResponse.result.data,
     userSharesResponse.result.data,
+    matchWithUserShares.bind(null, userSharesResponse.result),
     (glpPnlData, userSharesData) => ({
       ...glpPnlData,
       ...userSharesData,

@@ -7,6 +7,7 @@ import { GlobalMarketMovementResult } from "../market-movement";
 import { Entry } from "../util/types";
 import { UserSharesResult } from "./shares";
 import { timestampRoundDown, days, safeDivNumer } from "../../../utils";
+import { matchWithUserShares } from "./common";
 
 export type UserMarketMovementEntry = Entry<{
   timestamp: number;
@@ -58,13 +59,7 @@ export async function getUserMarketMovement(
   const data = combine(
     marketMovementResponse.result.data,
     userSharesResponse.result.data,
-    (marketMovementEntry, userSharesEntry, mi, ui) => {
-      const userSharesEntryNext = userSharesResponse.result.data[ui + 1];
-      return userSharesEntryNext !== undefined
-        ? userSharesEntry.blockNumber <= marketMovementEntry.blockNumber &&
-            marketMovementEntry.blockNumber < userSharesEntryNext.blockNumber
-        : true;
-    },
+    matchWithUserShares.bind(null, userSharesResponse.result),
     (marketMovementData, userSharesData) => ({
       ...userSharesData, // some of this data can get overriden by the next line
       ...marketMovementData,
