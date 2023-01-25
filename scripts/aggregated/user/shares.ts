@@ -107,7 +107,7 @@ export async function getUserShares(
           }
         }
       `,
-      { userAddress }
+      { userAddress: userAddress.toLowerCase() }
     )
     .toPromise();
 
@@ -224,8 +224,8 @@ export async function getUserShares(
     cacheTimestamp: totalSharesData.cacheTimestamp,
     result: {
       data,
-      userJuniorVaultShares: data[data.length - 1].userJuniorVaultShares,
-      userSeniorVaultShares: data[data.length - 1].userSeniorVaultShares,
+      userJuniorVaultShares: data[data.length - 1]?.userJuniorVaultShares ?? 0,
+      userSeniorVaultShares: data[data.length - 1]?.userSeniorVaultShares ?? 0,
     },
   };
 }
