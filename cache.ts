@@ -48,6 +48,10 @@ async function generateResponse(
       return { result, cacheTimestamp: currentTimestamp(), cacheSeconds };
     }
   } catch (error: any) {
+    if (error instanceof TypeError) {
+      console.error("caught in generateResponse", error);
+    }
+
     // cache the error resp (to prevent DoS, hitting with an input which reverts in middle
     if (error.status && error.status < 500) {
       // cache normal errors for 15 seconds

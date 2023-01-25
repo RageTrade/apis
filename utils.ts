@@ -124,6 +124,9 @@ export function handleRuntimeErrors(
       }
       res.status(status).json(response);
     } catch (e: any) {
+      if (e instanceof TypeError) {
+        console.error("caught in handleRuntimeErrors", e);
+      }
       next(createError(e.status ?? 500, removeApiKeysFromString(e.message)));
     }
   };
