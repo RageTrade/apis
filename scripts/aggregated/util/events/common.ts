@@ -1,0 +1,1 @@
+export const GET_LOGS_BLOCK_INTERVAL = 200_000;

@@ -1,39 +1,39 @@
+import { ethers } from "ethers";
+
 import { deltaNeutralGmxVaults, NetworkName } from "@ragetrade/sdk";
 import { GlpSwappedEvent } from "@ragetrade/sdk/dist/typechain/delta-neutral-gmx-vaults/contracts/vaults/DnGmxJuniorVault";
-import { ethers } from "ethers";
-import { SimpleEventCache } from "../../../../../indexer/simple-event-cache";
+
+import { ErrorWithStatusCode } from "../../../../../utils";
+import { getLogsInLoop } from "../../helpers";
+import { GET_LOGS_BLOCK_INTERVAL } from "../common";
 
 export async function glpSwapped(
   networkName: NetworkName,
-  provider: ethers.providers.Provider
-) {
-  // if using a network that has indexer on for these logs, use the indexer
-  // if (networkName === "arbmain") {
-  //   const allEvents = (await glpSwapped_cached(networkName)).sort(
-  //     (a, b) => a.blockNumber - b.blockNumber
-  //   );
-  //   return allEvents;
-  // }
-
+  provider: ethers.providers.Provider,
+  startBlock?: number
+): Promise<GlpSwappedEvent[]> {
   const { dnGmxJuniorVault } = deltaNeutralGmxVaults.getContractsSync(
     networkName,
     provider
   );
-  const allEvents = await dnGmxJuniorVault.queryFilter(
-    dnGmxJuniorVault.filters.GlpSwapped()
+
+  const { DnGmxJuniorVaultDeployment } =
+    deltaNeutralGmxVaults.getDeployments(networkName);
+
+  if (!startBlock) startBlock = DnGmxJuniorVaultDeployment.receipt?.blockNumber;
+  const endBlock = await provider.getBlockNumber();
+
+  if (!startBlock) {
+    throw new ErrorWithStatusCode("Start block is not defined", 500);
+  }
+
+  const logs = await getLogsInLoop(
+    dnGmxJuniorVault,
+    dnGmxJuniorVault.filters.GlpSwapped(),
+    startBlock,
+    endBlock,
+    GET_LOGS_BLOCK_INTERVAL
   );
-  return allEvents;
-}
 
-async function glpSwapped_cached(networkName: NetworkName) {
-  const { dnGmxJuniorVault } =
-    deltaNeutralGmxVaults.getContractsSync(networkName);
-  const filter = dnGmxJuniorVault.filters.GlpSwapped();
-
-  // @ts-ignore
-  const runningEvent = dnGmxJuniorVault._getRunningEvent(filter);
-  const logs = await new SimpleEventCache(networkName, filter).getEvents();
-  return logs.map((log) =>
-    dnGmxJuniorVault._wrapEvent(runningEvent, log, null as any)
-  ) as GlpSwappedEvent[];
+  return logs as GlpSwappedEvent[];
 }
