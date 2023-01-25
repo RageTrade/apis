@@ -1,21 +1,21 @@
-import { ethers } from "ethers";
+import { BigNumber, ethers } from "ethers";
 import { fetchJson, formatEther, parseEther } from "ethers/lib/utils";
+import { gql } from "urql";
 
 import {
   deltaNeutralGmxVaults,
-  formatUsdc,
   NetworkName,
   ResultWithMetadata,
 } from "@ragetrade/sdk";
 
 import { getProviderAggregate } from "../../../providers";
-import { ErrorWithStatusCode, safeDivNumer } from "../../../utils";
+import { getSubgraph } from "../../../subgraphs";
+import { ErrorWithStatusCode } from "../../../utils";
 import { GlobalTotalSharesResult } from "../total-shares";
-import { intersection } from "../util/combine";
-import { parallelize } from "../util/parallelize";
+import { combine } from "../util/combine";
 import { Entry } from "../util/types";
-
 import whitelist from "./whitelist";
+import { matchWithNonOverlappingEntries } from "./common";
 
 export type UserSharesEntry = Entry<{
   timestamp: number;
@@ -27,7 +27,11 @@ export type UserSharesEntry = Entry<{
 
 export interface UserSharesResult {
   data: UserSharesEntry[];
+  userJuniorVaultShares: number;
+  userSeniorVaultShares: number;
 }
+
+type Action = "send" | "receive" | "deposit" | "withdraw";
 
 export async function getUserShares(
   networkName: NetworkName,
@@ -71,93 +75,157 @@ export async function getUserShares(
       timeout: 1_000_000_000, // huge number
     });
 
-  const data1 = await parallelize(
-    {
-      networkName,
-      provider,
-      getEvents: () =>
-        // use all events from total shares
-        totalSharesData.result.data.map(
-          (entry) =>
-            ({
-              blockNumber: entry.blockNumber,
-              transactionHash: entry.transactionHash,
-              logIndex: entry.logIndex,
-            } as ethers.Event)
-        ),
-      ignoreMoreEventsInSameBlock: true, // to prevent reprocessing same data
-      startBlockNumber: 45412307,
-    },
-    async (_i, blockNumber, event) => {
-      const userSeniorVaultShares = Number(
-        formatUsdc(
-          await dnGmxSeniorVault.balanceOf(userAddress, {
-            blockTag: blockNumber,
-          })
-        )
-      );
+  const graphqlClient = getSubgraph(networkName);
 
-      const userDeposits = await dnGmxBatchingManager.userDeposits(
-        userAddress,
-        { blockTag: blockNumber }
-      );
-      const userRound = userDeposits.round.toNumber();
-      const userUnclaimedShares = Number(
-        formatEther(
-          await dnGmxBatchingManager.unclaimedShares(userAddress, {
-            blockTag: blockNumber,
-          })
-        )
-      );
-      const userClaimedShares = Number(
-        formatEther(
-          await dnGmxJuniorVault.balanceOf(userAddress, {
-            blockTag: blockNumber,
-          })
-        )
-      );
-      const userUsdc = Number(
-        formatUsdc(
-          await dnGmxBatchingManager.usdcBalance(userAddress, {
-            blockTag: blockNumber,
-          })
-        )
-      );
+  const resp = await graphqlClient
+    .query(
+      gql`
+        query getTransfers($userAddress: ID!) {
+          owner(id: $userAddress) {
+            id
+            vaultTransferEntries {
+              timestamp
+              blockNumber
+              party {
+                id
+              }
+              value
+              action
+              vault {
+                id
+              }
+            }
+            vaultDepositWithdrawEntries {
+              timestamp
+              blockNumber
+              sharesTokenAmount
+              action
+              vault {
+                id
+              }
+            }
+          }
+        }
+      `,
+      { userAddress }
+    )
+    .toPromise();
 
-      return {
-        blockNumber,
-        transactionHash: event.transactionHash,
-        userSeniorVaultShares,
-        userRound,
-        userUnclaimedShares,
-        userClaimedShares,
-        userUsdc,
-      };
+  function truncateDecimals(str: string, decimals = 18) {
+    const split = str.split(".");
+    if (split.length === 1) {
+      return split[0];
+    } else if (split.length !== 2) {
+      throw new Error("truncateDecimals: Invalid input: " + str);
     }
-  );
+    return split[0] + "." + split[1].slice(0, decimals);
+  }
 
-  const data: UserSharesEntry[] = intersection(
+  const transfers = ((resp.data.owner?.vaultTransferEntries ?? []) as any[])
+    .map((t: any) => ({
+      timestamp: Number(t.timestamp),
+      blockNumber: Number(t.blockNumber),
+      value: BigNumber.from(t.value),
+      action: t.action as Action,
+      vault: t.vault.id as string,
+      party: t.party.id as string | undefined,
+    }))
+    .filter(
+      (t) =>
+        // the entry if party is any of these addresses
+        ![
+          ethers.constants.AddressZero,
+          dnGmxBatchingManager.address,
+          dnGmxJuniorVault.address,
+          dnGmxSeniorVault.address,
+        ]
+          .map((s) => s.toLowerCase())
+          .includes(t.party?.toLowerCase() ?? "")
+    )
+    .concat(
+      ((resp.data.owner?.vaultDepositWithdrawEntries ?? []) as any[]).map(
+        (t: any) => ({
+          timestamp: Number(t.timestamp),
+          blockNumber: Number(t.blockNumber),
+          value: parseEther(truncateDecimals(t.sharesTokenAmount)),
+          action: t.action as Action,
+          vault: t.vault.id as string,
+          party: undefined,
+        })
+      )
+    )
+    .sort((a, b) => a.blockNumber - b.blockNumber);
+
+  const balances: {
+    blockNumber: number;
+    timestamp: number;
+    userJuniorVaultShares: BigNumber;
+    userSeniorVaultShares: BigNumber;
+  }[] = [
+    {
+      blockNumber: 0,
+      timestamp: 0,
+      userJuniorVaultShares: ethers.constants.Zero,
+      userSeniorVaultShares: ethers.constants.Zero,
+    },
+  ];
+
+  for (const transfer of transfers) {
+    const lastBalance = balances[balances.length - 1];
+    const newBalance = {
+      // blockNumber: transfer.blockNumber,
+      ...transfer,
+      userJuniorVaultShares: lastBalance.userJuniorVaultShares,
+      userSeniorVaultShares: lastBalance.userSeniorVaultShares,
+    };
+    let balanceIncrease: BigNumber;
+    if (transfer.action === "send" || transfer.action === "withdraw") {
+      balanceIncrease = transfer.value.mul(-1);
+    } else if (transfer.action === "receive" || transfer.action === "deposit") {
+      balanceIncrease = transfer.value.abs();
+    } else {
+      throw new Error("getUserShares: Unknown action: " + transfer.action);
+    }
+
+    if (
+      transfer.vault.toLowerCase() === dnGmxJuniorVault.address.toLowerCase()
+    ) {
+      newBalance.userJuniorVaultShares =
+        newBalance.userJuniorVaultShares.add(balanceIncrease);
+    } else if (
+      transfer.vault.toLowerCase() === dnGmxSeniorVault.address.toLowerCase()
+    ) {
+      newBalance.userSeniorVaultShares =
+        newBalance.userSeniorVaultShares.add(balanceIncrease);
+    } else {
+      throw new Error("getUserShares: Unknown vault: " + transfer.vault);
+    }
+
+    balances.push(newBalance);
+  }
+
+  const data = combine(
+    balances,
     totalSharesData.result.data,
-    data1,
-    (global, user) => {
+    matchWithNonOverlappingEntries.bind(null, totalSharesData.result.data),
+    (b, t) => {
       return {
-        ...global,
-        ...user,
-        userJuniorVaultShares:
-          user.userUnclaimedShares +
-          user.userClaimedShares +
-          (global.roundUsdcBalance > 0 && user.userRound === global.currentRound
-            ? safeDivNumer(
-                user.userUsdc * global.roundSharesMinted,
-                global.roundUsdcBalance
-              )
-            : 0),
+        blockNumber: b.blockNumber,
+        timestamp: b.timestamp,
+        userJuniorVaultShares: Number(formatEther(b.userJuniorVaultShares)),
+        userSeniorVaultShares: Number(formatEther(b.userSeniorVaultShares)),
+        totalJuniorVaultShares: t.totalJuniorVaultShares,
+        totalSeniorVaultShares: t.totalSeniorVaultShares,
       };
     }
   );
 
   return {
     cacheTimestamp: totalSharesData.cacheTimestamp,
-    result: { data },
+    result: {
+      data,
+      userJuniorVaultShares: data[data.length - 1].userJuniorVaultShares,
+      userSeniorVaultShares: data[data.length - 1].userSeniorVaultShares,
+    },
   };
 }
