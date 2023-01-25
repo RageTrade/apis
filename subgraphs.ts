@@ -5,7 +5,8 @@ import { createClient, defaultExchanges, Client } from "urql";
 const exchanges = [devtoolsExchange, ...defaultExchanges];
 
 export const arbitrumClient = createClient({
-  url: "https://api.thegraph.com/subgraphs/name/fr0ntenddev/rage-trade-arbitrum-mainnet",
+  // url: "https://api.thegraph.com/subgraphs/name/fr0ntenddev/rage-trade-arbitrum-mainnet",
+  url: "https://api.thegraph.com/subgraphs/name/fr0ntenddev/rage-trade",
   exchanges,
 });
 
