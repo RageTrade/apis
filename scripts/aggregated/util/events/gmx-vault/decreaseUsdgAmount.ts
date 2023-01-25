@@ -3,11 +3,12 @@ import { ethers } from "ethers";
 import { gmxProtocol, NetworkName } from "@ragetrade/sdk";
 
 import { getLogsInLoop } from "../../helpers";
-import { oneInFiftyBlocks, getStartBlock } from "./common";
+import { oneInFiftyBlocks, getStartBlock, GET_LOGS_INTERVAL } from "./common";
 
 export async function decreaseUsdgAmount(
   networkName: NetworkName,
-  provider: ethers.providers.Provider
+  provider: ethers.providers.Provider,
+  startBlockNumberOverride?: number
 ): Promise<ethers.Event[]> {
   const { gmxUnderlyingVault } = gmxProtocol.getContractsSync(
     networkName,
@@ -20,14 +21,22 @@ export async function decreaseUsdgAmount(
     provider
   );
 
+  let startBlock = getStartBlock(networkName);
   const endBlock = await provider.getBlockNumber();
+
+  if (typeof startBlockNumberOverride === "number") {
+    // to make sure cache is hit for various startBlockNumberOverride
+    startBlock +=
+      GET_LOGS_INTERVAL *
+      Math.floor((startBlockNumberOverride - startBlock) / GET_LOGS_INTERVAL);
+  }
 
   const logs = await getLogsInLoop(
     _gmxUnderlyingVault,
     _gmxUnderlyingVault.filters.DecreaseUsdgAmount(),
-    getStartBlock(networkName),
+    startBlock,
     endBlock,
-    2000
+    GET_LOGS_INTERVAL
   );
 
   return logs.filter(oneInFiftyBlocks);

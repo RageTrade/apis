@@ -4,7 +4,8 @@ import { NetworkName } from "@ragetrade/sdk";
 
 export type EventFn<Event> = (
   networkName: NetworkName,
-  provider: ethers.providers.Provider
+  provider: ethers.providers.Provider,
+  startBlockNumber?: number
 ) => Event[] | Promise<Event[]>;
 
 export async function parallelize<Data, Event extends ethers.Event>(
@@ -54,11 +55,13 @@ export async function parallelize<Data, Event extends ethers.Event>(
   let allEvents: Event[] = [];
 
   if (Array.isArray(getEvents)) {
-    for (const fn of getEvents) {
-      allEvents = allEvents.concat(await fn(networkName, provider));
+    for (const _getEvents of getEvents) {
+      allEvents = allEvents.concat(
+        await _getEvents(networkName, provider, startBlockNumber)
+      );
     }
   } else {
-    allEvents = await getEvents(networkName, provider);
+    allEvents = await getEvents(networkName, provider, startBlockNumber);
   }
 
   allEvents = allEvents.sort((a, b) => a.blockNumber - b.blockNumber);
@@ -162,3 +165,12 @@ export async function parallelize<Data, Event extends ethers.Event>(
   clearInterval(intr);
   return data;
 }
+
+// async function parallelizeRequest<T>(
+//   arr: () => Promise<T>,
+//   maxInflight: number
+// ) {
+//   for (let i = 0; i < arr.length; i++) {
+//     arr[i]()
+//   }
+// }
