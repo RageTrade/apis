@@ -11,7 +11,7 @@ import { getProviderAggregate } from "../../providers";
 import { intersection } from "./util/combine";
 import { parallelize } from "./util/parallelize";
 import { Entry } from "./util/types";
-import { juniorVault } from "./util/events";
+import { gmxVault, juniorVault } from "./util/events";
 import { GlobalTotalSharesResult } from "./total-shares";
 import { timestampRoundDown, days } from "../../utils";
 
@@ -59,6 +59,8 @@ export async function getGlpPnl(
         juniorVault.deposit,
         juniorVault.withdraw,
         juniorVault.rebalanced,
+        gmxVault.increaseUsdgAmount,
+        gmxVault.decreaseUsdgAmount,
       ],
       ignoreMoreEventsInSameBlock: true, // to prevent reprocessing same data
       startBlockNumber: 45412307,

@@ -11,8 +11,8 @@ import { formatEther, formatUnits, parseEther } from "ethers/lib/utils";
 import { getProviderAggregate } from "../../providers";
 import { days, mins, timestampRoundDown } from "../../utils";
 import { intersection } from "./util/combine";
-import { juniorVault } from "./util/events";
-import { getLogsInLoop, price } from "./util/helpers";
+import { gmxVault, juniorVault } from "./util/events";
+import { price } from "./util/helpers";
 import { parallelize } from "./util/parallelize";
 import { Entry } from "./util/types";
 
@@ -79,20 +79,10 @@ export async function getMarketMovement(
     networkName,
     provider
   );
-  const allWhitelistedTokensLength = (
-    await gmxUnderlyingVault.allWhitelistedTokensLength()
-  ).toNumber();
-  const allWhitelistedTokens: string[] = [];
-  for (let i = 0; i < allWhitelistedTokensLength; i++) {
-    allWhitelistedTokens.push(await gmxUnderlyingVault.allWhitelistedTokens(i));
-  }
   const { weth, wbtc, fsGLP, glp } = tokens.getContractsSync(
     networkName,
     provider
   );
-  const link = wbtc.attach("0xf97f4df75117a78c1A5a0DBb814Af92458539FB4");
-  const uni = wbtc.attach("0xFa7F8980b0f1E64A2062791cc3b0871572f1F7f0");
-
   const { ethUsdAggregator } = chainlink.getContractsSync(
     networkName,
     provider
@@ -101,6 +91,8 @@ export async function getMarketMovement(
   // LINK / USD: https://arbiscan.io/address/0x86E53CF1B870786351Da77A57575e79CB55812CB
   // UNI / USD: https://arbiscan.io/address/0x9C917083fDb403ab5ADbEC26Ee294f6EcAda2720
 
+  const link = wbtc.attach("0xf97f4df75117a78c1A5a0DBb814Af92458539FB4");
+  const uni = wbtc.attach("0xFa7F8980b0f1E64A2062791cc3b0871572f1F7f0");
   const linkUsdAggregator = ethUsdAggregator.attach(
     "0x86E53CF1B870786351Da77A57575e79CB55812CB"
   );
@@ -108,43 +100,24 @@ export async function getMarketMovement(
     "0x9C917083fDb403ab5ADbEC26Ee294f6EcAda2720"
   );
 
-  const startBlock = 44570369;
-  const endBlock = await provider.getBlockNumber();
-
-  const _vault = new ethers.Contract(
-    gmxUnderlyingVault.address,
-    [
-      "event IncreaseUsdgAmount(address token, uint256 amount)",
-      "event DecreaseUsdgAmount(address token, uint256 amount)",
-    ],
-    provider
-  );
+  const allWhitelistedTokensLength = (
+    await gmxUnderlyingVault.allWhitelistedTokensLength()
+  ).toNumber();
+  const allWhitelistedTokens: string[] = [];
+  for (let i = 0; i < allWhitelistedTokensLength; i++) {
+    allWhitelistedTokens.push(await gmxUnderlyingVault.allWhitelistedTokens(i));
+  }
 
   const data = await parallelize(
     {
       networkName,
       provider,
       getEvents: [
-        async () => {
-          const logs = await getLogsInLoop(
-            _vault,
-            _vault.filters.IncreaseUsdgAmount(null, null),
-            startBlock,
-            endBlock,
-            2000
-          );
-          return logs.filter((l) => [0].includes(l.blockNumber % 50));
-        },
-        async () => {
-          const logs = await getLogsInLoop(
-            _vault,
-            _vault.filters.DecreaseUsdgAmount(null, null),
-            startBlock,
-            endBlock,
-            2000
-          );
-          return logs.filter((l) => [0].includes(l.blockNumber % 50));
-        },
+        juniorVault.deposit,
+        juniorVault.withdraw,
+        juniorVault.rebalanced,
+        gmxVault.increaseUsdgAmount,
+        gmxVault.decreaseUsdgAmount,
       ],
       ignoreMoreEventsInSameBlock: true,
       startBlockNumber: 45412307,

@@ -12,7 +12,7 @@ import { getProviderAggregate } from "../../providers";
 import { days, timestampRoundDown } from "../../utils";
 import { GlobalTotalSharesResult } from "./total-shares";
 import { intersection } from "./util/combine";
-import { juniorVault } from "./util/events";
+import { gmxVault, juniorVault } from "./util/events";
 import { price } from "./util/helpers";
 import { parallelize } from "./util/parallelize";
 import { Entry } from "./util/types";
@@ -72,6 +72,8 @@ export async function getAaveBorrows(
         juniorVault.deposit,
         juniorVault.withdraw,
         juniorVault.rebalanced,
+        gmxVault.increaseUsdgAmount,
+        gmxVault.decreaseUsdgAmount,
       ],
       ignoreMoreEventsInSameBlock: true, // to prevent reprocessing same data
       startBlockNumber: 45412307,

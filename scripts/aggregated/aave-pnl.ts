@@ -13,7 +13,7 @@ import { intersection } from "./util/combine";
 import { parallelize } from "./util/parallelize";
 import { Entry } from "./util/types";
 import { price } from "./util/helpers";
-import { juniorVault } from "./util/events";
+import { gmxVault, juniorVault } from "./util/events";
 import { GlobalTotalSharesResult } from "./total-shares";
 import { timestampRoundDown, days } from "../../utils";
 import { GlobalAaveBorrowsResult } from "./aave-borrows";
@@ -66,6 +66,8 @@ export async function getAavePnl(
         juniorVault.deposit,
         juniorVault.withdraw,
         juniorVault.rebalanced,
+        gmxVault.increaseUsdgAmount,
+        gmxVault.decreaseUsdgAmount,
       ],
       ignoreMoreEventsInSameBlock: true, // to prevent reprocessing same data
       startBlockNumber: 45412307,
