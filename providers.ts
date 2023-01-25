@@ -1,10 +1,7 @@
-import { chainIds, NetworkName, sdk } from "@ragetrade/sdk";
-import { config } from "dotenv";
+import { chainIds, NetworkName } from "@ragetrade/sdk";
 import { ethers } from "ethers";
 import { ArchiveCacheProvider } from "./archive-cache-provider";
 import { RetryProvider } from "./retry-provider";
-
-config();
 
 export const arbmain = new RetryProvider(
   // "https://arb1.arbitrum.io/rpc"

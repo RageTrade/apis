@@ -6,6 +6,10 @@ interface Options {
   tags?: string[];
 }
 
+const LOCAL_CACHE_SECONDS_OVERRIDE = process.env.LOCAL_CACHE_SECONDS_OVERRIDE
+  ? parseInt(process.env.LOCAL_CACHE_SECONDS_OVERRIDE)
+  : undefined;
+
 // const cache = new MemoryStore<any>("cache");
 const cache = new RedisStore<any>({
   client: (global as any).redisClient,
@@ -19,7 +23,12 @@ export function cacheFunctionResult<F extends (...args: any[]) => any>(
   tags = tags || [];
   return cache.getOrSet(
     fn.name + args.map((a) => String(a)).join("-") + tags,
-    generateResponse.bind(null, fn, args, cacheSeconds ?? 0),
+    generateResponse.bind(
+      null,
+      fn,
+      args,
+      LOCAL_CACHE_SECONDS_OVERRIDE ?? cacheSeconds ?? 0
+    ),
     cacheSeconds
   );
 }

@@ -1,3 +1,6 @@
+import { config } from "dotenv";
+config();
+
 import "./fetch-polyfill";
 import { app } from "./app";
 import Debugger from "debug";
