@@ -23,13 +23,13 @@ export async function perInterval2(networkName: NetworkName) {
     networkName,
     provider
   );
-  const allWhitelistedTokensLength = (
-    await gmxUnderlyingVault.allWhitelistedTokensLength()
-  ).toNumber();
-  const allWhitelistedTokens: string[] = [];
-  for (let i = 0; i < allWhitelistedTokensLength; i++) {
-    allWhitelistedTokens.push(await gmxUnderlyingVault.allWhitelistedTokens(i));
-  }
+  // const allWhitelistedTokensLength = (
+  //   await gmxUnderlyingVault.allWhitelistedTokensLength()
+  // ).toNumber();
+  // const allWhitelistedTokens: string[] = [];
+  // for (let i = 0; i < allWhitelistedTokensLength; i++) {
+  //   allWhitelistedTokens.push(await gmxUnderlyingVault.allWhitelistedTokens(i));
+  // }
   const { weth, wbtc, fsGLP } = tokens.getContractsSync(networkName, provider);
 
   const { wbtcVariableDebtTokenAddress, wethVariableDebtTokenAddress } =
@@ -58,8 +58,13 @@ export async function perInterval2(networkName: NetworkName) {
   // // const endBlock = 52419731; // await provider.getBlockNumber();
   // const interval = 3000; // 497; // Math.floor(((endBlock - startBlock) * 3 * mins) / days);
 
-  const startBlock = 50084140; // Oct 1
-  const endBlock = 53574140;
+  // const startBlock = 50084140; // Oct 1
+  // const endBlock = 53574140;
+
+  const startBlock = 4221448; // Jan 1 2 AM UTC 2022
+  const endBlock = 50083448;
+  // const startBlock = 50084140;
+  // const endBlock = 53574140;
   const interval = 2000; // 497; // Math.floor(((endBlock - startBlock) * 3 * mins) / days);
 
   const _vault = new ethers.Contract(
@@ -87,92 +92,40 @@ export async function perInterval2(networkName: NetworkName) {
       ignoreMoreEventsInSameBlock: true,
     },
     async (_i, blockNumber) => {
-      // const usdgAmounts = await Promise.all(
-      //   allWhitelistedTokens.map((token) =>
-      //     gmxUnderlyingVault.usdgAmounts(token, { blockTag: blockNumber })
+      const block = await provider.getBlock(blockNumber);
+      // const fsGlp_totalSuply = Number(
+      //   formatEther(
+      //     await fsGLP.totalSupply({
+      //       blockTag: blockNumber,
+      //     })
       //   )
-      // ); // 18 or 30
-      // const block = await provider.getBlock(blockNumber);
-      // const vdWbtc_balanceOf_dnGmxJuniorVault = await vdWbtc.balanceOf(
-      //   dnGmxJuniorVault.address,
-      //   { blockTag: blockNumber }
-      // );
-      // const vdWeth_balanceOf_dnGmxJuniorVault = await vdWeth.balanceOf(
-      //   dnGmxJuniorVault.address,
-      //   { blockTag: blockNumber }
       // );
 
-      // const wethPrice = await price(weth.address, blockNumber, networkName);
-      // const wbtcPrice = await price(wbtc.address, blockNumber, networkName);
-      // const glpPrice = Number(
-      //   formatEther(
-      //     await dnGmxJuniorVault.getPrice(false, {
-      //       blockTag: blockNumber,
-      //     })
-      //   )
-      // );
-      // const linkPrice = Number(
-      //   formatUnits(
-      //     (
-      //       await linkUsdAggregator.latestRoundData({
-      //         blockTag: blockNumber,
-      //       })
-      //     ).answer,
-      //     8
-      //   )
-      // );
-      // const uniPrice = Number(
-      //   formatUnits(
-      //     (
-      //       await uniUsdAggregator.latestRoundData({
-      //         blockTag: blockNumber,
-      //       })
-      //     ).answer,
-      //     8
-      //   )
-      // );
-      // const fsGlp_balanceOf_juniorVault = Number(
-      //   formatEther(
-      //     await fsGLP.balanceOf(dnGmxJuniorVault.address, {
-      //       blockTag: blockNumber,
-      //     })
-      //   )
-      // );
-      // const fsGlp_balanceOf_batchingManager = Number(
-      //   formatEther(
-      //     await dnGmxBatchingManager.dnGmxJuniorVaultGlpBalance({
-      //       blockTag: blockNumber,
-      //     })
-      //   )
-      // );
-      const fsGlp_totalSuply = Number(
-        formatEther(
-          await fsGLP.totalSupply({
+      const wethGuaranteedUsd = Number(
+        formatUnits(
+          await gmxUnderlyingVault.guaranteedUsd(weth.address, {
             blockTag: blockNumber,
-          })
+          }),
+          30
+        )
+      );
+      const wbtcGuaranteedUsd = Number(
+        formatUnits(
+          await gmxUnderlyingVault.guaranteedUsd(wbtc.address, {
+            blockTag: blockNumber,
+          }),
+          30
         )
       );
 
       // result
       const res: { [key: string]: string | number } = {
         blockNumber: blockNumber.toString(),
-        // timestamp: block.timestamp.toString(),
-        // vdWbtc_balanceOf_dnGmxJuniorVault: formatUnits(
-        //   vdWbtc_balanceOf_dnGmxJuniorVault,
-        //   8
-        // ),
-        // vdWeth_balanceOf_dnGmxJuniorVault: formatUnits(
-        //   vdWeth_balanceOf_dnGmxJuniorVault,
-        //   18
-        // ),
-        // wethPrice,
-        // wbtcPrice,
-        // glpPrice,
-        // linkPrice,
-        // uniPrice,
-        // fsGlp_balanceOf_juniorVault,
-        // fsGlp_balanceOf_batchingManager,
-        fsGlp_totalSuply,
+        timestamp: block.timestamp,
+
+        // fsGlp_totalSuply,
+        wethGuaranteedUsd,
+        wbtcGuaranteedUsd,
       };
 
       // for (let i = 0; i < allWhitelistedTokens.length; i++) {
