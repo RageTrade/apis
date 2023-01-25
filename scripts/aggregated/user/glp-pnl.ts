@@ -7,7 +7,7 @@ import { GlobalGlpPnlResult } from "../glp-pnl";
 import { Entry } from "../util/types";
 import { UserSharesResult } from "./shares";
 import { timestampRoundDown, days, safeDivNumer } from "../../../utils";
-import { matchWithUserShares } from "./common";
+import { matchWithNonOverlappingEntries } from "./common";
 
 export type UserGlpPnlEntry = Entry<{
   timestamp: number;
@@ -45,7 +45,7 @@ export async function getUserGlpPnl(
   const data = combine(
     glpPnlResponse.result.data,
     userSharesResponse.result.data,
-    matchWithUserShares.bind(null, userSharesResponse.result),
+    matchWithNonOverlappingEntries.bind(null, userSharesResponse.result.data),
     (glpPnlData, userSharesData) => ({
       ...glpPnlData,
       ...userSharesData,

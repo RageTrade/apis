@@ -7,7 +7,7 @@ import { GlobalMarketMovementResult } from "../market-movement";
 import { Entry } from "../util/types";
 import { UserSharesResult } from "./shares";
 import { timestampRoundDown, days, safeDivNumer } from "../../../utils";
-import { matchWithUserShares } from "./common";
+import { matchWithNonOverlappingEntries } from "./common";
 
 export type UserMarketMovementEntry = Entry<{
   timestamp: number;
@@ -59,7 +59,7 @@ export async function getUserMarketMovement(
   const data = combine(
     marketMovementResponse.result.data,
     userSharesResponse.result.data,
-    matchWithUserShares.bind(null, userSharesResponse.result),
+    matchWithNonOverlappingEntries.bind(null, userSharesResponse.result.data),
     (marketMovementData, userSharesData) => ({
       ...userSharesData, // some of this data can get overriden by the next line
       ...marketMovementData,

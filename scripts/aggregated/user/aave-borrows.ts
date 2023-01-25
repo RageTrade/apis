@@ -7,7 +7,7 @@ import { GlobalAaveBorrowsResult } from "../aave-borrows";
 import { Entry } from "../util/types";
 import { UserSharesResult } from "./shares";
 import { days, safeDivNumer, timestampRoundDown } from "../../../utils";
-import { matchWithUserShares } from "./common";
+import { matchWithNonOverlappingEntries } from "./common";
 
 export type UserAaveBorrowsEntry = Entry<{
   timestamp: number;
@@ -54,7 +54,7 @@ export async function getUserAaveBorrows(
   const data = combine(
     aaveBorrowsResponse.result.data,
     userSharesResponse.result.data,
-    matchWithUserShares.bind(null, userSharesResponse.result),
+    matchWithNonOverlappingEntries.bind(null, userSharesResponse.result.data),
     (aaveBorrowsData, userSharesData) => ({
       ...aaveBorrowsData,
       ...userSharesData,

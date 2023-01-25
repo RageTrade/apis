@@ -7,7 +7,7 @@ import { GlobalAavePnlResult } from "../aave-pnl";
 import { Entry } from "../util/types";
 import { UserSharesResult } from "./shares";
 import { days, safeDivNumer, timestampRoundDown } from "../../../utils";
-import { matchWithUserShares } from "./common";
+import { matchWithNonOverlappingEntries } from "./common";
 
 export type UserAavePnlEntry = Entry<{
   timestamp: number;
@@ -45,7 +45,7 @@ export async function getUserAavePnl(
   const data = combine(
     aavePnlResponse.result.data,
     userSharesResponse.result.data,
-    matchWithUserShares.bind(null, userSharesResponse.result),
+    matchWithNonOverlappingEntries.bind(null, userSharesResponse.result.data),
     (aavePnlData, userSharesData) => ({
       ...aavePnlData,
       ...userSharesData,
