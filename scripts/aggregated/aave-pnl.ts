@@ -52,12 +52,6 @@ export async function getAavePnl(
   const vdWbtc = aUsdc.attach(wbtcVariableDebtTokenAddress);
   const vdWeth = aUsdc.attach(wethVariableDebtTokenAddress);
 
-  const totalSharesData: ResultWithMetadata<GlobalTotalSharesResult> =
-    await fetchJson({
-      url: `http://localhost:3000/data/aggregated/get-total-shares?networkName=${networkName}`,
-      timeout: 1_000_000_000, // huge number
-    });
-
   const data = await parallelize(
     {
       networkName,
@@ -73,6 +67,7 @@ export async function getAavePnl(
       startBlockNumber: 45412307,
     },
     async (_i, blockNumber, event) => {
+      const block = await provider.getBlock(blockNumber);
       const btcAmountBefore = Number(
         formatUnits(
           await vdWbtc.balanceOf(dnGmxJuniorVault.address, {
@@ -108,6 +103,8 @@ export async function getAavePnl(
 
       return {
         blockNumber,
+        eventName: event.event ?? "unknown",
+        timestamp: block.timestamp,
         transactionHash: event.transactionHash,
         btcAmountBefore,
         btcAmountAfter,
@@ -119,19 +116,10 @@ export async function getAavePnl(
     }
   );
 
-  const dataWithTimestamp = intersection(
-    data,
-    totalSharesData.result.data,
-    (a, b) => ({
-      ...a,
-      timestamp: b.timestamp,
-    })
-  );
-
   const extraData: Entry<{ aavePnl: number }>[] = [];
 
   let last;
-  for (const current of dataWithTimestamp) {
+  for (const current of data) {
     if (last) {
       let aavePnl = 0;
       aavePnl -=
@@ -157,7 +145,7 @@ export async function getAavePnl(
   }
 
   // combines both information
-  const combinedData1 = intersection(dataWithTimestamp, extraData, (a, b) => ({
+  const combinedData1 = intersection(data, extraData, (a, b) => ({
     ...a,
     ...b,
   }));

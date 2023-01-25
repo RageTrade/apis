@@ -122,7 +122,7 @@ export async function getMarketMovement(
       ignoreMoreEventsInSameBlock: true,
       startBlockNumber: 45412307,
     },
-    async (_i, blockNumber) => {
+    async (_i, blockNumber, event) => {
       const block = await provider.getBlock(blockNumber);
       const usdgAmounts = await Promise.all(
         allWhitelistedTokens.map((token) =>
@@ -235,6 +235,7 @@ export async function getMarketMovement(
 
       return {
         blockNumber: blockNumber,
+        eventName: event.event ?? "unknown",
         timestamp: block.timestamp,
         fsGlp_balanceOf_juniorVault,
         fsGlp_balanceOf_batchingManager,

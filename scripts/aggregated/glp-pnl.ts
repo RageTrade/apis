@@ -45,12 +45,6 @@ export async function getGlpPnl(
   const { dnGmxJuniorVault, dnGmxBatchingManager } =
     deltaNeutralGmxVaults.getContractsSync(networkName, provider);
 
-  const totalSharesData: ResultWithMetadata<GlobalTotalSharesResult> =
-    await fetchJson({
-      url: `http://localhost:3000/data/aggregated/get-total-shares?networkName=${networkName}`,
-      timeout: 1_000_000_000, // huge number
-    });
-
   const data = await parallelize(
     {
       networkName,
@@ -66,6 +60,7 @@ export async function getGlpPnl(
       startBlockNumber: 45412307,
     },
     async (_i, blockNumber, event) => {
+      const block = await provider.getBlock(blockNumber);
       const fsGlp_balanceOf_juniorVault = Number(
         formatEther(
           await fsGLP.balanceOf(dnGmxJuniorVault.address, {
@@ -92,6 +87,8 @@ export async function getGlpPnl(
 
       return {
         blockNumber,
+        eventName: event.event ?? "unknown",
+        timestamp: block.timestamp,
         transactionHash: event.transactionHash,
         fsGlp_balanceOf_juniorVault,
         fsGlp_balanceOf_batchingManager,
@@ -100,15 +97,10 @@ export async function getGlpPnl(
     }
   );
 
-  const data2 = intersection(data, totalSharesData.result.data, (a, b) => ({
-    ...a,
-    timestamp: b.timestamp,
-  }));
-
   const extraData = [];
 
   let last;
-  for (const current of data2) {
+  for (const current of data) {
     if (last) {
       const glpPnl =
         (last.fsGlp_balanceOf_juniorVault +
@@ -139,7 +131,7 @@ export async function getGlpPnl(
   }
 
   // combines all information
-  const combinedData = intersection(data2, extraData, (a, b) => ({
+  const combinedData = intersection(data, extraData, (a, b) => ({
     ...a,
     ...b,
   }));

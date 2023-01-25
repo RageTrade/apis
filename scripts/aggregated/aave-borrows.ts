@@ -58,12 +58,6 @@ export async function getAaveBorrows(
   const vdWbtc = aUsdc.attach(wbtcVariableDebtTokenAddress);
   const vdWeth = aUsdc.attach(wethVariableDebtTokenAddress);
 
-  const totalSharesData: ResultWithMetadata<GlobalTotalSharesResult> =
-    await fetchJson({
-      url: `http://localhost:3000/data/aggregated/get-total-shares?networkName=${networkName}`,
-      timeout: 1_000_000_000, // huge number
-    });
-
   const data = await parallelize(
     {
       networkName,
@@ -79,6 +73,7 @@ export async function getAaveBorrows(
       startBlockNumber: 45412307,
     },
     async (_i, blockNumber, event) => {
+      const block = await provider.getBlock(blockNumber);
       const _btcAmountBefore = await vdWbtc.balanceOf(
         dnGmxJuniorVault.address,
         { blockTag: blockNumber - 1 }
@@ -106,6 +101,8 @@ export async function getAaveBorrows(
 
       return {
         blockNumber,
+        timestamp: block.timestamp,
+        eventName: event.event ?? "unknown",
         transactionHash: event.transactionHash,
         btcAmountBefore,
         btcAmountAfter,
@@ -117,15 +114,6 @@ export async function getAaveBorrows(
     }
   );
 
-  const dataWithTimestamp = intersection(
-    data,
-    totalSharesData.result.data,
-    (a, b) => ({
-      ...a,
-      timestamp: b.timestamp,
-    })
-  );
-
   const extraData: Entry<{
     vdWbtcInterest: number;
     vdWbtcInterestDollars: number;
@@ -134,7 +122,7 @@ export async function getAaveBorrows(
   }>[] = [];
 
   let last;
-  for (const current of dataWithTimestamp) {
+  for (const current of data) {
     if (last) {
       const vdWbtcInterest = current.btcAmountBefore - last.btcAmountAfter;
       const vdWbtcInterestDollars = vdWbtcInterest * last.btcPrice;
@@ -163,7 +151,7 @@ export async function getAaveBorrows(
     last = current;
   }
 
-  const combinedData = intersection(dataWithTimestamp, extraData, (a, b) => ({
+  const combinedData = intersection(data, extraData, (a, b) => ({
     ...a,
     ...b,
   }));
