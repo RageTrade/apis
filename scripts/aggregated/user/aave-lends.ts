@@ -30,8 +30,18 @@ export interface UserAaveLendsResult {
 
 export async function getUserAaveLends(
   networkName: NetworkName,
-  userAddress: string
+  userAddress: string,
+  excludeRawData: boolean
 ): Promise<ResultWithMetadata<UserAaveLendsResult>> {
+  if (excludeRawData) {
+    const resp: any = await fetchJson({
+      url: `http://localhost:3000/data/aggregated/user/get-aave-lends?networkName=${networkName}&userAddress=${userAddress}`,
+      timeout: 1_000_000_000, // huge number
+    });
+    delete resp.result.data;
+    return resp.result;
+  }
+
   const aaveLendsResponse: ResultWithMetadata<GlobalAaveLendsResult> =
     await fetchJson({
       url: `http://localhost:3000/data/aggregated/get-aave-lends?networkName=${networkName}`,

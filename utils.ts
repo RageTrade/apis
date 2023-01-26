@@ -60,6 +60,19 @@ export function getParamAsString(req: Request, paramName: string): string {
   return input;
 }
 
+export function getExcludeRawData(req: Request): boolean {
+  return getOptionalParamAsBoolean(req, "excludeRawData", false);
+}
+
+export function getOptionalParamAsBoolean(
+  req: Request,
+  paramName: string,
+  defaultValue: boolean
+): boolean {
+  const input = getParam(req, paramName, false);
+  return !!(input ?? defaultValue);
+}
+
 export function getParam(
   req: Request,
   paramName: string,

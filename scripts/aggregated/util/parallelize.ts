@@ -146,7 +146,7 @@ export async function parallelize<Data, Event extends ethers.Event>(
   }
 
   let intr = setInterval(() => {
-    console.log(
+    console.warn(
       "inflight",
       inflight,
       "done",

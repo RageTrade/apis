@@ -1,5 +1,5 @@
 import { deltaNeutralGmxVaults, tokens } from "@ragetrade/sdk";
-import { formatEther, formatUnits } from "ethers/lib/utils";
+import { fetchJson, formatEther, formatUnits } from "ethers/lib/utils";
 import { getProviderAggregate } from "../../providers";
 import "../../fetch-polyfill";
 import { days, fetchRetry, timestampRoundDown } from "../../utils";
@@ -28,8 +28,19 @@ export interface GlobalTraderPnlResult {
   traderPnlVaultNet: number;
 }
 
-export async function getTraderPnl(): Promise<GlobalTraderPnlResult> {
-  const START_BLOCK = 45412307;
+export async function getTraderPnl(
+  excludeRawData: boolean
+): Promise<GlobalTraderPnlResult> {
+  if (excludeRawData) {
+    const resp: any = await fetchJson({
+      url: `http://localhost:3000/data/aggregated/get-trader-pnl`,
+      timeout: 1_000_000_000, // huge number
+    });
+    delete resp.result.data;
+    return resp.result;
+  }
+
+  const START_BLOCK = 45412300;
 
   const provider = getProviderAggregate("arbmain");
 

@@ -6,8 +6,8 @@ import {
   NetworkName,
   tokens,
 } from "@ragetrade/sdk";
-import { BigNumber, ethers } from "ethers";
-import { formatEther, formatUnits, parseEther } from "ethers/lib/utils";
+import { BigNumber } from "ethers";
+import { fetchJson, formatEther, formatUnits } from "ethers/lib/utils";
 import { getProviderAggregate } from "../../providers";
 import { days, mins, timestampRoundDown } from "../../utils";
 import { intersection } from "./util/combine";
@@ -69,8 +69,18 @@ export interface GlobalMarketMovementResult {
 }
 
 export async function getMarketMovement(
-  networkName: NetworkName
+  networkName: NetworkName,
+  excludeRawData: boolean
 ): Promise<GlobalMarketMovementResult> {
+  if (excludeRawData) {
+    const resp: any = await fetchJson({
+      url: `http://localhost:3000/data/aggregated/get-market-movement?networkName=${networkName}`,
+      timeout: 1_000_000_000, // huge number
+    });
+    delete resp.result.data;
+    return resp.result;
+  }
+
   const provider = getProviderAggregate(networkName);
 
   const { dnGmxJuniorVault, dnGmxBatchingManager } =

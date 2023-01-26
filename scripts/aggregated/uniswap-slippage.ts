@@ -57,8 +57,18 @@ export interface GlobalUniswapSlippageResult {
 }
 
 export async function getUniswapSlippage(
-  networkName: NetworkName
+  networkName: NetworkName,
+  excludeRawData: boolean
 ): Promise<GlobalUniswapSlippageResult> {
+  if (excludeRawData) {
+    const resp: any = await fetchJson({
+      url: `http://localhost:3000/data/aggregated/get-uniswap-slippage?networkName=${networkName}`,
+      timeout: 1_000_000_000, // huge number
+    });
+    delete resp.result.data;
+    return resp.result;
+  }
+
   const provider = getProviderAggregate(networkName);
 
   const { dnGmxJuniorVault } = deltaNeutralGmxVaults.getContractsSync(

@@ -38,8 +38,18 @@ export interface GlobalGlpRewardsResult {
 }
 
 export async function getGlpRewards(
-  networkName: NetworkName
+  networkName: NetworkName,
+  excludeRawData: boolean
 ): Promise<GlobalGlpRewardsResult> {
+  if (excludeRawData) {
+    const resp: any = await fetchJson({
+      url: `http://localhost:3000/data/aggregated/get-glp-rewards?networkName=${networkName}`,
+      timeout: 1_000_000_000, // huge number
+    });
+    delete resp.result.data;
+    return resp.result;
+  }
+
   const provider = getProviderAggregate(networkName);
 
   const { glpManager } = gmxProtocol.getContractsSync(networkName, provider);
@@ -59,7 +69,7 @@ export async function getGlpRewards(
       startBlockNumber: 45412307,
     },
     async (_i, blockNumber, event) => {
-      const { juniorVaultGlp, seniorVaultAUsdc } = event.args;
+      // const { juniorVaultGlp, seniorVaultAUsdc } = event.args;
 
       const [aumMax, _] = await glpManager.getAums({
         blockTag: blockNumber,
@@ -71,8 +81,10 @@ export async function getGlpRewards(
 
       const glpPrice = Number(formatUnits(aumMax.div(glpTotalSuply), 12));
       const juniorVaultWethReward =
-        Number(formatEther(juniorVaultGlp)) * glpPrice;
-      const seniorVaultWethReward = Number(formatUsdc(seniorVaultAUsdc));
+        Number(formatEther(event.args.juniorVaultGlp)) * glpPrice;
+      const seniorVaultWethReward = Number(
+        formatUsdc(event.args.seniorVaultAUsdc)
+      );
 
       const ethPrice = await price(weth.address, blockNumber, networkName);
 
@@ -83,8 +95,8 @@ export async function getGlpRewards(
         juniorVaultWeth: Number(formatEther(event.args.juniorVaultWeth)),
         seniorVaultWeth: Number(formatEther(event.args.seniorVaultWeth)),
         esGmxStaked: Number(formatEther(event.args.esGmxStaked)),
-        juniorVaultGlp: Number(formatEther(juniorVaultGlp)),
-        seniorVaultAUsdc: Number(formatUsdc(seniorVaultAUsdc)),
+        juniorVaultGlp: Number(formatEther(event.args.juniorVaultGlp)),
+        seniorVaultAUsdc: Number(formatUsdc(event.args.seniorVaultAUsdc)),
         aumMax: Number(formatUnits(aumMax, 30)),
         glpTotalSuply: Number(formatEther(glpTotalSuply)),
         glpPrice,

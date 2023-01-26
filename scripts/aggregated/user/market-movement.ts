@@ -42,8 +42,18 @@ export interface UserMarketMovementResult {
 
 export async function getUserMarketMovement(
   networkName: NetworkName,
-  userAddress: string
+  userAddress: string,
+  excludeRawData: boolean
 ): Promise<ResultWithMetadata<UserMarketMovementResult>> {
+  if (excludeRawData) {
+    const resp: any = await fetchJson({
+      url: `http://localhost:3000/data/aggregated/user/get-market-movement?networkName=${networkName}&userAddress=${userAddress}`,
+      timeout: 1_000_000_000, // huge number
+    });
+    delete resp.result.data;
+    return resp.result;
+  }
+
   const marketMovementResponse: ResultWithMetadata<GlobalMarketMovementResult> =
     await fetchJson({
       url: `http://localhost:3000/data/aggregated/get-market-movement?networkName=${networkName}`,

@@ -28,8 +28,18 @@ export interface UserGlpPnlResult {
 
 export async function getUserGlpPnl(
   networkName: NetworkName,
-  userAddress: string
+  userAddress: string,
+  excludeRawData: boolean
 ): Promise<ResultWithMetadata<UserGlpPnlResult>> {
+  if (excludeRawData) {
+    const resp: any = await fetchJson({
+      url: `http://localhost:3000/data/aggregated/user/get-glp-pnl?networkName=${networkName}&userAddress=${userAddress}`,
+      timeout: 1_000_000_000, // huge number
+    });
+    delete resp.result.data;
+    return resp.result;
+  }
+
   const glpPnlResponse: ResultWithMetadata<GlobalGlpPnlResult> =
     await fetchJson({
       url: `http://localhost:3000/data/aggregated/get-glp-pnl?networkName=${networkName}`,

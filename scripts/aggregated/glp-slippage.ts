@@ -39,8 +39,18 @@ export interface GlobalGlpSlippageResult {
 }
 
 export async function getGlpSlippage(
-  networkName: NetworkName
+  networkName: NetworkName,
+  excludeRawData: boolean
 ): Promise<GlobalGlpSlippageResult> {
+  if (excludeRawData) {
+    const resp: any = await fetchJson({
+      url: `http://localhost:3000/data/aggregated/get-glp-slippage?networkName=${networkName}`,
+      timeout: 1_000_000_000, // huge number
+    });
+    delete resp.result.data;
+    return resp.result;
+  }
+
   const provider = getProviderAggregate(networkName);
 
   const { fsGLP } = tokens.getContractsSync(networkName, provider);
@@ -61,6 +71,7 @@ export async function getGlpSlippage(
       networkName,
       provider,
       getEvents: [
+        // TODO we can just handle GlpSwapped
         juniorVault.deposit,
         juniorVault.withdraw,
         juniorVault.rebalanced,

@@ -27,8 +27,18 @@ export interface UserTraderPnlResult {
 
 export async function getUserTraderPnl(
   networkName: NetworkName,
-  userAddress: string
+  userAddress: string,
+  excludeRawData: boolean
 ): Promise<ResultWithMetadata<UserTraderPnlResult>> {
+  if (excludeRawData) {
+    const resp: any = await fetchJson({
+      url: `http://localhost:3000/data/aggregated/user/get-trader-pnl?networkName=${networkName}&userAddress=${userAddress}`,
+      timeout: 1_000_000_000, // huge number
+    });
+    delete resp.result.data;
+    return resp.result;
+  }
+
   const globalTraderPnlResponse: ResultWithMetadata<GlobalTraderPnlResult> =
     await fetchJson({
       url: `http://localhost:3000/data/aggregated/get-trader-pnl?networkName=${networkName}`,

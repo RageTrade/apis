@@ -30,8 +30,18 @@ export interface UserUniswapSlippageResult {
 
 export async function getUserUniswapSlippage(
   networkName: NetworkName,
-  userAddress: string
+  userAddress: string,
+  excludeRawData: boolean
 ): Promise<ResultWithMetadata<UserUniswapSlippageResult>> {
+  if (excludeRawData) {
+    const resp: any = await fetchJson({
+      url: `http://localhost:3000/data/aggregated/user/get-uniswap-slippage?networkName=${networkName}&userAddress=${userAddress}`,
+      timeout: 1_000_000_000, // huge number
+    });
+    delete resp.result.data;
+    return resp.result;
+  }
+
   const globalUniswapSlippageResponse: ResultWithMetadata<GlobalUniswapSlippageResult> =
     await fetchJson({
       url: `http://localhost:3000/data/aggregated/get-uniswap-slippage?networkName=${networkName}`,

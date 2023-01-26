@@ -27,8 +27,18 @@ export interface UserGlpSlippageResult {
 
 export async function getUserGlpSlippage(
   networkName: NetworkName,
-  userAddress: string
+  userAddress: string,
+  excludeRawData: boolean
 ): Promise<ResultWithMetadata<UserGlpSlippageResult>> {
+  if (excludeRawData) {
+    const resp: any = await fetchJson({
+      url: `http://localhost:3000/data/aggregated/user/get-glp-slippage?networkName=${networkName}&userAddress=${userAddress}`,
+      timeout: 1_000_000_000, // huge number
+    });
+    delete resp.result.data;
+    return resp.result;
+  }
+
   const glpSlippageResponse: ResultWithMetadata<GlobalGlpSlippageResult> =
     await fetchJson({
       url: `http://localhost:3000/data/aggregated/get-glp-slippage?networkName=${networkName}`,

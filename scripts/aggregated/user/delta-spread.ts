@@ -55,8 +55,18 @@ export interface UserDeltaSpreadResult {
 
 export async function getUserDeltaSpread(
   networkName: NetworkName,
-  userAddress: string
+  userAddress: string,
+  excludeRawData: boolean
 ): Promise<ResultWithMetadata<UserDeltaSpreadResult>> {
+  if (excludeRawData) {
+    const resp: any = await fetchJson({
+      url: `http://localhost:3000/data/aggregated/user/get-delta-spread?networkName=${networkName}&userAddress=${userAddress}`,
+      timeout: 1_000_000_000, // huge number
+    });
+    delete resp.result.data;
+    return resp.result;
+  }
+
   const deltaSpreadResponse: ResultWithMetadata<GlobalDeltaSpreadResult> =
     await fetchJson({
       url: `http://localhost:3000/data/aggregated/get-delta-spread?networkName=${networkName}`,

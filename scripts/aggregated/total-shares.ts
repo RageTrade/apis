@@ -28,8 +28,18 @@ export interface GlobalTotalSharesResult {
 }
 
 export async function getTotalShares(
-  networkName: NetworkName
+  networkName: NetworkName,
+  excludeRawData: boolean
 ): Promise<GlobalTotalSharesResult> {
+  if (excludeRawData) {
+    const resp: any = await fetchJson({
+      url: `http://localhost:3000/data/aggregated/get-total-shares?networkName=${networkName}`,
+      timeout: 1_000_000_000, // huge number
+    });
+    delete resp.result.data;
+    return resp.result;
+  }
+
   const provider = getProviderAggregate(networkName);
 
   const { dnGmxJuniorVault, dnGmxSeniorVault, dnGmxBatchingManager } =

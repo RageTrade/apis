@@ -1,5 +1,6 @@
 import express from "express";
 import {
+  getExcludeRawData,
   getNetworkName,
   getParamAsAddress,
   handleRuntimeErrors,
@@ -17,9 +18,10 @@ router.get(
   handleRuntimeErrors(async (req) => {
     const networkName = getNetworkName(req);
     const userAddress = getParamAsAddress(req, "userAddress");
+    const excludeRawData = getExcludeRawData(req);
     return cacheFunctionResult(
       aggregated.user.getUserAaveBorrows,
-      [networkName, userAddress],
+      [networkName, userAddress, excludeRawData],
       { cacheSeconds: 6 * hours }
     );
   })
@@ -30,9 +32,10 @@ router.get(
   handleRuntimeErrors(async (req) => {
     const networkName = getNetworkName(req);
     const userAddress = getParamAsAddress(req, "userAddress");
+    const excludeRawData = getExcludeRawData(req);
     return cacheFunctionResult(
       aggregated.user.getUserAaveLends,
-      [networkName, userAddress],
+      [networkName, userAddress, excludeRawData],
       { cacheSeconds: 6 * hours }
     );
   })
@@ -43,9 +46,10 @@ router.get(
   handleRuntimeErrors(async (req) => {
     const networkName = getNetworkName(req);
     const userAddress = getParamAsAddress(req, "userAddress");
+    const excludeRawData = getExcludeRawData(req);
     return cacheFunctionResult(
       aggregated.user.getUserAavePnl,
-      [networkName, userAddress],
+      [networkName, userAddress, excludeRawData],
       { cacheSeconds: 6 * hours }
     );
   })
@@ -56,9 +60,10 @@ router.get(
   handleRuntimeErrors(async (req) => {
     const networkName = getNetworkName(req);
     const userAddress = getParamAsAddress(req, "userAddress");
+    const excludeRawData = getExcludeRawData(req);
     return cacheFunctionResult(
       aggregated.user.getUserDeltaSpread,
-      [networkName, userAddress],
+      [networkName, userAddress, excludeRawData],
       { cacheSeconds: 6 * hours }
     );
   })
@@ -69,9 +74,10 @@ router.get(
   handleRuntimeErrors(async (req) => {
     const networkName = getNetworkName(req);
     const userAddress = getParamAsAddress(req, "userAddress");
+    const excludeRawData = getExcludeRawData(req);
     return cacheFunctionResult(
       aggregated.user.getUserGlpPnl,
-      [networkName, userAddress],
+      [networkName, userAddress, excludeRawData],
       { cacheSeconds: 6 * hours }
     );
   })
@@ -82,9 +88,10 @@ router.get(
   handleRuntimeErrors(async (req) => {
     const networkName = getNetworkName(req);
     const userAddress = getParamAsAddress(req, "userAddress");
+    const excludeRawData = getExcludeRawData(req);
     return cacheFunctionResult(
       aggregated.user.getUserGlpSlippage,
-      [networkName, userAddress],
+      [networkName, userAddress, excludeRawData],
       { cacheSeconds: 6 * hours }
     );
   })
@@ -95,9 +102,10 @@ router.get(
   handleRuntimeErrors(async (req) => {
     const networkName = getNetworkName(req);
     const userAddress = getParamAsAddress(req, "userAddress");
+    const excludeRawData = getExcludeRawData(req);
     return cacheFunctionResult(
       aggregated.user.getUserGlpRewards,
-      [networkName, userAddress],
+      [networkName, userAddress, excludeRawData],
       { cacheSeconds: 6 * hours }
     );
   })
@@ -108,9 +116,10 @@ router.get(
   handleRuntimeErrors(async (req) => {
     const networkName = getNetworkName(req);
     const userAddress = getParamAsAddress(req, "userAddress");
+    const excludeRawData = getExcludeRawData(req);
     return cacheFunctionResult(
       aggregated.user.getUserShares,
-      [networkName, userAddress],
+      [networkName, userAddress, excludeRawData],
       { cacheSeconds: 24 * hours } // this is very slow, so cache for a long time
     );
   })
@@ -121,9 +130,10 @@ router.get(
   handleRuntimeErrors(async (req) => {
     const networkName = getNetworkName(req);
     const userAddress = getParamAsAddress(req, "userAddress");
+    const excludeRawData = getExcludeRawData(req);
     return cacheFunctionResult(
       aggregated.user.getUserTraderPnl,
-      [networkName, userAddress],
+      [networkName, userAddress, excludeRawData],
       { cacheSeconds: 6 * hours }
     );
   })
@@ -134,9 +144,10 @@ router.get(
   handleRuntimeErrors(async (req) => {
     const networkName = getNetworkName(req);
     const userAddress = getParamAsAddress(req, "userAddress");
+    const excludeRawData = getExcludeRawData(req);
     return cacheFunctionResult(
       aggregated.user.getUserUniswapSlippage,
-      [networkName, userAddress],
+      [networkName, userAddress, excludeRawData],
       { cacheSeconds: 6 * hours }
     );
   })
@@ -147,9 +158,10 @@ router.get(
   handleRuntimeErrors(async (req) => {
     const networkName = getNetworkName(req);
     const userAddress = getParamAsAddress(req, "userAddress");
+    const excludeRawData = getExcludeRawData(req);
     return cacheFunctionResult(
       aggregated.user.getUserMarketMovement,
-      [networkName, userAddress],
+      [networkName, userAddress, excludeRawData],
       { cacheSeconds: 6 * hours }
     );
   })

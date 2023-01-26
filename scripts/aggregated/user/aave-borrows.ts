@@ -37,8 +37,18 @@ export interface UserAaveBorrowsResult {
 
 export async function getUserAaveBorrows(
   networkName: NetworkName,
-  userAddress: string
+  userAddress: string,
+  excludeRawData: boolean
 ): Promise<ResultWithMetadata<UserAaveBorrowsResult>> {
+  if (excludeRawData) {
+    const resp: any = await fetchJson({
+      url: `http://localhost:3000/data/aggregated/user/get-aave-borrows?networkName=${networkName}&userAddress=${userAddress}`,
+      timeout: 1_000_000_000, // huge number
+    });
+    delete resp.result.data;
+    return resp.result;
+  }
+
   const aaveBorrowsResponse: ResultWithMetadata<GlobalAaveBorrowsResult> =
     await fetchJson({
       url: `http://localhost:3000/data/aggregated/get-aave-borrows?networkName=${networkName}`,

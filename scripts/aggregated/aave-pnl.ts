@@ -36,8 +36,18 @@ export interface GlobalAavePnlResult {
 }
 
 export async function getAavePnl(
-  networkName: NetworkName
+  networkName: NetworkName,
+  excludeRawData: boolean
 ): Promise<GlobalAavePnlResult> {
+  if (excludeRawData) {
+    const resp: any = await fetchJson({
+      url: `http://localhost:3000/data/aggregated/get-aave-pnl?networkName=${networkName}`,
+      timeout: 1_000_000_000, // huge number
+    });
+    delete resp.result.data;
+    return resp.result;
+  }
+
   const provider = getProviderAggregate(networkName);
 
   const { weth, wbtc } = tokens.getContractsSync(networkName, provider);
