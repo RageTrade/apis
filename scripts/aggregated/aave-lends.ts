@@ -105,6 +105,7 @@ export async function getAaveLends(
 
       return {
         blockNumber,
+        eventName: event.event ?? "unknown",
         transactionHash: event.transactionHash,
         aUsdcJuniorBefore,
         aUsdcJuniorAfter,

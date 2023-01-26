@@ -244,6 +244,7 @@ export async function getDeltaSpread(
       // TODO export price and then do the "last" kind of loop after this
       return {
         blockNumber,
+        eventName: event.event ?? "unknown",
         transactionHash: event.transactionHash,
         uniswapVolume,
         uniswapSlippage,
