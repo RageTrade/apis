@@ -1,9 +1,6 @@
 import { Redis } from "ioredis";
 import { BaseStore } from "./base-store";
 import Debugger from "debug";
-import redis from "ioredis";
-// @ts-ignore
-global.redisClient = redis.createClient();
 
 const debug = Debugger("apis:redis-store");
 

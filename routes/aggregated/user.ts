@@ -22,7 +22,7 @@ router.get(
     return cacheFunctionResult(
       aggregated.user.getUserAaveBorrows,
       [networkName, userAddress, excludeRawData],
-      { cacheSeconds: 6 * hours }
+      { cacheSeconds: 6 * hours, tags: ["aggregated"] }
     );
   })
 );
@@ -36,7 +36,7 @@ router.get(
     return cacheFunctionResult(
       aggregated.user.getUserAaveLends,
       [networkName, userAddress, excludeRawData],
-      { cacheSeconds: 6 * hours }
+      { cacheSeconds: 6 * hours, tags: ["aggregated"] }
     );
   })
 );
@@ -50,7 +50,7 @@ router.get(
     return cacheFunctionResult(
       aggregated.user.getUserAavePnl,
       [networkName, userAddress, excludeRawData],
-      { cacheSeconds: 6 * hours }
+      { cacheSeconds: 6 * hours, tags: ["aggregated"] }
     );
   })
 );
@@ -64,7 +64,7 @@ router.get(
     return cacheFunctionResult(
       aggregated.user.getUserDeltaSpread,
       [networkName, userAddress, excludeRawData],
-      { cacheSeconds: 6 * hours }
+      { cacheSeconds: 6 * hours, tags: ["aggregated"] }
     );
   })
 );
@@ -78,7 +78,7 @@ router.get(
     return cacheFunctionResult(
       aggregated.user.getUserGlpPnl,
       [networkName, userAddress, excludeRawData],
-      { cacheSeconds: 6 * hours }
+      { cacheSeconds: 6 * hours, tags: ["aggregated"] }
     );
   })
 );
@@ -92,7 +92,7 @@ router.get(
     return cacheFunctionResult(
       aggregated.user.getUserGlpSlippage,
       [networkName, userAddress, excludeRawData],
-      { cacheSeconds: 6 * hours }
+      { cacheSeconds: 6 * hours, tags: ["aggregated"] }
     );
   })
 );
@@ -106,7 +106,7 @@ router.get(
     return cacheFunctionResult(
       aggregated.user.getUserGlpRewards,
       [networkName, userAddress, excludeRawData],
-      { cacheSeconds: 6 * hours }
+      { cacheSeconds: 6 * hours, tags: ["aggregated"] }
     );
   })
 );
@@ -120,7 +120,7 @@ router.get(
     return cacheFunctionResult(
       aggregated.user.getUserShares,
       [networkName, userAddress, excludeRawData],
-      { cacheSeconds: 24 * hours } // this is very slow, so cache for a long time
+      { cacheSeconds: 6 * hours, tags: ["aggregated"] }
     );
   })
 );
@@ -134,7 +134,7 @@ router.get(
     return cacheFunctionResult(
       aggregated.user.getUserTraderPnl,
       [networkName, userAddress, excludeRawData],
-      { cacheSeconds: 6 * hours }
+      { cacheSeconds: 6 * hours, tags: ["aggregated"] }
     );
   })
 );
@@ -148,7 +148,7 @@ router.get(
     return cacheFunctionResult(
       aggregated.user.getUserUniswapSlippage,
       [networkName, userAddress, excludeRawData],
-      { cacheSeconds: 6 * hours }
+      { cacheSeconds: 6 * hours, tags: ["aggregated"] }
     );
   })
 );
@@ -162,7 +162,7 @@ router.get(
     return cacheFunctionResult(
       aggregated.user.getUserMarketMovement,
       [networkName, userAddress, excludeRawData],
-      { cacheSeconds: 6 * hours }
+      { cacheSeconds: 6 * hours, tags: ["aggregated"] }
     );
   })
 );

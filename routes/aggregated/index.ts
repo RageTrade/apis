@@ -22,7 +22,7 @@ router.get(
     return cacheFunctionResult(
       aggregated.getAavePnl,
       [networkName, excludeRawData],
-      { cacheSeconds: 6 * hours }
+      { cacheSeconds: 30 * hours, tags: ["aggregated"] }
     );
   })
 );
@@ -35,7 +35,7 @@ router.get(
     return cacheFunctionResult(
       aggregated.getGlpPnl,
       [networkName, excludeRawData],
-      { cacheSeconds: 6 * hours }
+      { cacheSeconds: 30 * hours, tags: ["aggregated"] }
     );
   })
 );
@@ -48,7 +48,7 @@ router.get(
     return cacheFunctionResult(
       aggregated.getGlpSlippage,
       [networkName, excludeRawData],
-      { cacheSeconds: 6 * hours }
+      { cacheSeconds: 30 * hours, tags: ["aggregated"] }
     );
   })
 );
@@ -61,7 +61,7 @@ router.get(
     return cacheFunctionResult(
       aggregated.getGlpRewards,
       [networkName, excludeRawData],
-      { cacheSeconds: 6 * hours }
+      { cacheSeconds: 30 * hours, tags: ["aggregated"] }
     );
   })
 );
@@ -74,7 +74,7 @@ router.get(
     return cacheFunctionResult(
       aggregated.getTotalShares,
       [networkName, excludeRawData],
-      { cacheSeconds: 9 * hours }
+      { cacheSeconds: 30 * hours, tags: ["aggregated"] }
     );
   })
 );
@@ -87,7 +87,7 @@ router.get(
     return cacheFunctionResult(
       aggregated.getUniswapSlippage,
       [networkName, excludeRawData],
-      { cacheSeconds: 6 * hours }
+      { cacheSeconds: 30 * hours, tags: ["aggregated"] }
     );
   })
 );
@@ -100,7 +100,7 @@ router.get(
     return cacheFunctionResult(
       aggregated.getDeltaSpread,
       [networkName, excludeRawData],
-      { cacheSeconds: 6 * hours }
+      { cacheSeconds: 30 * hours, tags: ["aggregated"] }
     );
   })
 );
@@ -113,7 +113,7 @@ router.get(
     return cacheFunctionResult(
       aggregated.getAaveLends,
       [networkName, excludeRawData],
-      { cacheSeconds: 6 * hours }
+      { cacheSeconds: 30 * hours, tags: ["aggregated"] }
     );
   })
 );
@@ -126,7 +126,7 @@ router.get(
     return cacheFunctionResult(
       aggregated.getAaveBorrows,
       [networkName, excludeRawData],
-      { cacheSeconds: 6 * hours }
+      { cacheSeconds: 30 * hours, tags: ["aggregated"] }
     );
   })
 );
@@ -136,7 +136,8 @@ router.get(
   handleRuntimeErrors(async (req) => {
     const excludeRawData = getExcludeRawData(req);
     return cacheFunctionResult(aggregated.getTraderPnl, [excludeRawData], {
-      cacheSeconds: 6 * hours,
+      cacheSeconds: 30 * hours,
+      tags: ["aggregated"],
     });
   })
 );
@@ -149,7 +150,7 @@ router.get(
     return cacheFunctionResult(
       aggregated.getVaultInfo,
       [networkName, excludeRawData],
-      { cacheSeconds: 6 * hours }
+      { cacheSeconds: 30 * hours, tags: ["aggregated"] }
     );
   })
 );
@@ -162,7 +163,7 @@ router.get(
     return cacheFunctionResult(
       aggregated.getMarketMovement,
       [networkName, excludeRawData],
-      { cacheSeconds: 6 * hours }
+      { cacheSeconds: 30 * hours, tags: ["aggregated"] }
     );
   })
 );
@@ -172,7 +173,8 @@ router.get(
   handleRuntimeErrors(async (req) => {
     const networkName = getNetworkName(req);
     return cacheFunctionResult(aggregated.getRebalanceInfo, [networkName], {
-      cacheSeconds: 6 * hours,
+      cacheSeconds: 30 * hours,
+      tags: ["aggregated"],
     });
   })
 );

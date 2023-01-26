@@ -11,6 +11,7 @@ import { ConnectionInfo, Deferrable, id } from "ethers/lib/utils";
 import { RetryProvider } from "./retry-provider";
 import { FileStore } from "./store/file-store";
 import { RedisStore } from "./store/redis-store";
+import { getRedisClient } from "./redis-utils/get-client";
 
 export class ArchiveCacheProvider extends RetryProvider {
   // store: FileStore<string>;
@@ -27,7 +28,7 @@ export class ArchiveCacheProvider extends RetryProvider {
     //   path.resolve(__dirname, `data/_archive/${network}/`)
     // );
     this.redisStore = new RedisStore({
-      client: (global as any).redisClient,
+      client: getRedisClient(),
       updateCache: false,
     });
   }

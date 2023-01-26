@@ -5,6 +5,7 @@ import "./fetch-polyfill";
 import { app } from "./app";
 import Debugger from "debug";
 import http from "http";
+import "./cron-jobs";
 
 const debug = Debugger("apis:server");
 

@@ -1,3 +1,4 @@
+import { getRedisClient } from "./redis-utils/get-client";
 import { RedisStore } from "./store/redis-store";
 import { currentTimestamp } from "./utils";
 
@@ -12,7 +13,7 @@ const LOCAL_CACHE_SECONDS_OVERRIDE = process.env.LOCAL_CACHE_SECONDS_OVERRIDE
 
 // const cache = new MemoryStore<any>("cache");
 const cache = new RedisStore<any>({
-  client: (global as any).redisClient,
+  client: getRedisClient(),
   updateCache: true,
 });
 export function cacheFunctionResult<F extends (...args: any[]) => any>(
@@ -22,7 +23,7 @@ export function cacheFunctionResult<F extends (...args: any[]) => any>(
 ) {
   tags = tags || [];
   return cache.getOrSet(
-    fn.name + args.map((a) => String(a)).join("-") + tags,
+    [...tags, fn.name, ...args.map((a) => String(a))].join("-"),
     generateResponse.bind(
       null,
       fn,

@@ -1,8 +1,8 @@
 import redis from "ioredis";
+import { getRedisClient } from "./get-client";
 
-const client = redis.createClient();
-
-async function main() {
+export async function clearNonPersistentCache() {
+  const client = getRedisClient();
   let cursor: string | number = 0;
   let keys = [];
   let total = 0;
@@ -21,11 +21,3 @@ async function main() {
   console.log("iteration completed on total keys:", total);
   console.log("deleted keys:", total2);
 }
-
-main()
-  .catch(console.error)
-  .then(async () => {
-    console.log("quitting...");
-    await client.quit();
-    process.exit(0);
-  });
