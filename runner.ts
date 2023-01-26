@@ -1,4 +1,6 @@
 import path from "path";
+import { config } from "dotenv";
+config();
 
 const req = require(path.resolve(process.cwd(), process.argv[2]));
 
