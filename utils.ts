@@ -177,6 +177,7 @@ export async function retryRequest<R>(
     "ECONNRESET",
     "TIMEOUT",
     "ETIMEDOUT",
+    "EADDRNOTAVAIL",
     ...(options.errorKeywords ?? []),
   ];
 
