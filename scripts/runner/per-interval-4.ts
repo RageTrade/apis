@@ -67,15 +67,6 @@ export async function perInterval2(networkName: NetworkName) {
   // const endBlock = 53574140;
   const interval = 2000; // 497; // Math.floor(((endBlock - startBlock) * 3 * mins) / days);
 
-  const _vault = new ethers.Contract(
-    gmxUnderlyingVault.address,
-    [
-      "event IncreaseUsdgAmount(address token, uint256 amount)",
-      "event DecreaseUsdgAmount(address token, uint256 amount)",
-    ],
-    provider
-  );
-
   const data = await parallelize(
     {
       networkName,

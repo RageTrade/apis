@@ -42,13 +42,20 @@ export async function price(
     networkName,
     getProviderAggregate(networkName)
   );
-
+  const link = wbtc.attach("0xf97f4df75117a78c1A5a0DBb814Af92458539FB4");
+  const uni = wbtc.attach("0xFa7F8980b0f1E64A2062791cc3b0871572f1F7f0");
   const { ethUsdAggregator, btcUsdAggregator } = chainlink.getContractsSync(
     networkName,
     getProviderAggregate(networkName)
   );
   const usdcUsdAggregator = ethUsdAggregator.attach(
     "0x50834F3163758fcC1Df9973b6e91f0F0F0434aD3"
+  );
+  const linkUsdAggregator = ethUsdAggregator.attach(
+    "0x86E53CF1B870786351Da77A57575e79CB55812CB"
+  );
+  const uniUsdAggregator = ethUsdAggregator.attach(
+    "0x9C917083fDb403ab5ADbEC26Ee294f6EcAda2720"
   );
 
   switch (addr.toLowerCase()) {
@@ -79,6 +86,29 @@ export async function price(
         formatUnits(
           (
             await usdcUsdAggregator.latestRoundData({
+              blockTag: blockNumber,
+            })
+          ).answer,
+          8
+        )
+      );
+
+    case link.address.toLowerCase():
+      return Number(
+        formatUnits(
+          (
+            await linkUsdAggregator.latestRoundData({
+              blockTag: blockNumber,
+            })
+          ).answer,
+          8
+        )
+      );
+    case uni.address.toLowerCase():
+      return Number(
+        formatUnits(
+          (
+            await uniUsdAggregator.latestRoundData({
               blockTag: blockNumber,
             })
           ).answer,
