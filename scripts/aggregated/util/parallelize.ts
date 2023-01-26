@@ -56,12 +56,11 @@ export async function parallelize<Data, Event extends ethers.Event>(
 
   if (Array.isArray(getEvents)) {
     for (const _getEvents of getEvents) {
-      allEvents = allEvents.concat(
-        await _getEvents(networkName, provider, startBlockNumber)
-      );
+      const events = await _getEvents(networkName, provider);
+      allEvents = allEvents.concat(events);
     }
   } else {
-    allEvents = await getEvents(networkName, provider, startBlockNumber);
+    allEvents = await getEvents(networkName, provider);
   }
 
   allEvents = allEvents.sort((a, b) => a.blockNumber - b.blockNumber);
