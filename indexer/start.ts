@@ -1,3 +1,6 @@
+import { config } from "dotenv";
+config();
+
 import { AccountCreatedIndexer } from "./account-created";
 
 new AccountCreatedIndexer("arbmain").start(17185390, 1000000);
