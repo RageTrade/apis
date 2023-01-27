@@ -2,7 +2,7 @@ import { ethers, EventFilter } from "ethers";
 
 import { NetworkName } from "@ragetrade/sdk";
 
-import { getProvider } from "../providers";
+import { getProviderAggregate } from "../providers";
 import { BaseStore } from "../store/base-store";
 
 /**
@@ -12,25 +12,16 @@ import { BaseStore } from "../store/base-store";
 export class BaseIndexer<DataStoreType> {
   _networkName: NetworkName;
   _provider: ethers.providers.Provider;
-  _syncedBlock: number;
   _store: BaseStore<DataStoreType> | undefined;
+  _keyPrepend: string | undefined;
 
   constructor(networkName: NetworkName) {
-    this._syncedBlock = -1;
     this._networkName = networkName;
-    this._provider = getProvider(networkName);
+    this._provider = getProviderAggregate(networkName);
   }
 
   getStore(): BaseStore<DataStoreType> {
     throw new Error("static BaseIndexer.getStore: method not implemented.");
-  }
-
-  getCachedStoreObject(): BaseStore<DataStoreType> {
-    if (this._store) {
-      return this._store;
-    }
-    this._store = this.getStore();
-    return this._store;
   }
 
   async getFilter(
@@ -43,24 +34,62 @@ export class BaseIndexer<DataStoreType> {
     throw new Error("BaseIndexer.forEachLog: method not implemented.");
   }
 
-  private async ready() {
-    this._syncedBlock = Number(
-      await this.getCachedStoreObject().getOrSet<string>("synced-block", () =>
-        String(this._syncedBlock - 1)
-      )
+  async get(key: "synced-block"): Promise<number>;
+  async get(key: string): Promise<DataStoreType | undefined>;
+  async get(key: string): Promise<any> {
+    const val = await this._getCachedStoreObject().get(this._getKey(key));
+    if (typeof val === "string") {
+      return JSON.parse(val);
+    }
+    return val;
+  }
+
+  async set(key: "synced-block", value: number): Promise<void>;
+  async set(key: string, value: DataStoreType): Promise<void>;
+  async set(key: string, value: any): Promise<void> {
+    await this._getCachedStoreObject().set(
+      this._getKey(key),
+      JSON.stringify(value)
     );
   }
 
-  async start(
-    startBlock: number,
-    blockInterval: number,
-    iterWait?: number,
-    err?: (err: any) => void
-  ) {
-    this._syncedBlock = startBlock - 1;
+  private _getKey(key: string) {
+    return `${this._keyPrepend ?? "base-indexer"}-${key}`;
+  }
+
+  private _getCachedStoreObject(): BaseStore<DataStoreType> {
+    if (this._store) {
+      return this._store;
+    }
+    this._store = this.getStore();
+    return this._store;
+  }
+
+  private async _getOrUpdateSyncBlock(syncedBlock?: number) {
+    const storedSyncedBlock = await this.get("synced-block");
+    if (storedSyncedBlock === undefined) {
+      if (syncedBlock !== undefined) {
+        await this.set("synced-block", syncedBlock);
+      } else {
+        throw new Error("syncedBlock and storedSyncedBlock both are undefined");
+      }
+    } else {
+      if (syncedBlock !== undefined) {
+        await this.set(
+          "synced-block",
+          Math.max(syncedBlock, storedSyncedBlock)
+        );
+      }
+    }
+    return await this.get("synced-block");
+  }
+
+  async start(startBlock: number, iterWait?: number, err?: (err: any) => void) {
+    console.log(this._networkName, "indexer starting");
+    await this._getOrUpdateSyncBlock(startBlock - 1);
     while (1) {
       try {
-        await this.run(blockInterval);
+        await this.run();
       } catch (e) {
         if (err) {
           err(e);
@@ -72,67 +101,69 @@ export class BaseIndexer<DataStoreType> {
     }
   }
 
-  private async run(blockInterval: number) {
-    await this.ready();
-    console.log(this._networkName, "indexer ready");
-
+  private async run() {
     const filter = await this.getFilter(this._provider);
-
     const latestBlock = await this._provider.getBlockNumber();
-    const store = this.getCachedStoreObject();
-    while (this._syncedBlock < latestBlock) {
-      const { logs, fromBlock, toBlock } = await this.getLogs(
+
+    let syncedBlock = await this._getOrUpdateSyncBlock();
+    console.log(this._networkName, "run", { syncedBlock, latestBlock });
+
+    while (syncedBlock < latestBlock) {
+      const logs = await getLogs(
         filter,
+        syncedBlock + 1,
         latestBlock,
-        blockInterval
+        this._provider,
+        this._networkName
       );
 
-      let latestBlockWithLogs = fromBlock;
       for (const log of logs) {
-        latestBlockWithLogs = Math.max(latestBlockWithLogs, log.blockNumber);
         await this.forEachLog(log);
       }
-      this._syncedBlock = toBlock;
-      await store.set<string>(
-        "synced-block",
-        // store the block in which we got logs
-        String(Math.max(this._syncedBlock, latestBlockWithLogs))
-      );
+
+      syncedBlock = latestBlock;
+      await this._getOrUpdateSyncBlock(latestBlock);
+    }
+  }
+}
+
+async function getLogs(
+  filter: EventFilter,
+  fromBlock: number,
+  toBlock: number,
+  provider: ethers.providers.Provider,
+  networkName: NetworkName
+) {
+  let logs: ethers.providers.Log[] | undefined;
+
+  let _fromBlock = fromBlock;
+  let _toBlock = toBlock;
+  let _fetchedBlock = fromBlock - 1;
+
+  while (_fetchedBlock < toBlock) {
+    try {
+      console.log(networkName, "getLogs", _fromBlock, _toBlock);
+      const _logs = await provider.getLogs({
+        ...filter,
+        fromBlock: _fromBlock,
+        toBlock: _toBlock,
+      });
+      logs = logs ? logs.concat(_logs) : _logs;
+      // setting fetched block to the last block of the fetched logs
+      _fetchedBlock = _toBlock;
+      // next getLogs query range
+      _fromBlock = _toBlock + 1;
+      _toBlock = toBlock;
+    } catch {
+      // if query failed, re-try with a shorter block interval
+      _toBlock = _fromBlock + Math.floor((_toBlock - _fromBlock) / 2);
+      console.error(networkName, "getLogs failed");
     }
   }
 
-  private async getLogs(
-    filter: EventFilter,
-    latestBlock: number,
-    blockInterval: number
-  ): Promise<{
-    logs: ethers.providers.Log[];
-    fromBlock: number;
-    toBlock: number;
-  }> {
-    let fromBlock = this._syncedBlock + 1;
-    let toBlock: number = Math.min(
-      this._syncedBlock + blockInterval,
-      latestBlock
-    );
-    let logs: ethers.providers.Log[] | undefined;
-
-    while (logs === undefined) {
-      try {
-        console.log(this._networkName, "getLogs", fromBlock, toBlock);
-        logs = await this._provider.getLogs({
-          ...filter,
-          fromBlock,
-          toBlock,
-        });
-      } catch {
-        // if query failed, re-try with a smaller block interval
-        blockInterval = Math.floor(blockInterval / 2);
-        toBlock = Math.min(this._syncedBlock + blockInterval, latestBlock);
-        console.log("failed, new blockInterval:", blockInterval);
-      }
-    }
-
-    return { logs, fromBlock, toBlock };
+  if (!logs) {
+    throw new Error("logs is undefined in getLogs");
   }
+
+  return logs;
 }

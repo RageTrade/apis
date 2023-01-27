@@ -9,9 +9,9 @@ export async function getAccountIdsByAddress(
   networkName: NetworkName,
   userAddress: string
 ) {
-  const store = new AccountCreatedIndexer(networkName).getStore();
-  const accountIds = (await store.get(userAddress)) ?? [];
-  const syncedBlock = Number(await store.get("synced-block"));
+  const accountsCreatedIndexer = new AccountCreatedIndexer(networkName);
+  const accountIds = (await accountsCreatedIndexer.get(userAddress)) ?? [];
+  const syncedBlock = await accountsCreatedIndexer.get("synced-block");
 
   if (accountIds.length === 0) {
     try {

@@ -6,10 +6,14 @@ import { AccountCreatedEvent } from "@ragetrade/sdk/dist/typechain/core/contract
 import { FileStore } from "../store/file-store";
 import { BaseIndexer } from "./base-indexer";
 
+import { BaseStore } from "../store/base-store";
+
 const iface = ClearingHouse__factory.createInterface();
 
 export class AccountCreatedIndexer extends BaseIndexer<number[]> {
-  getStore(): FileStore<number[]> {
+  _keyPrepend: string = "account-created-indexer";
+
+  getStore(): BaseStore<number[]> {
     return new FileStore<number[]>(
       `data/${this._networkName}/accounts-created`
     );
@@ -25,12 +29,8 @@ export class AccountCreatedIndexer extends BaseIndexer<number[]> {
   async forEachLog(log: ethers.providers.Log) {
     console.log("for each");
     const parsed = iface.parseLog(log) as unknown as AccountCreatedEvent;
-    const store = this.getCachedStoreObject();
-    const accountIds = await store.getOrSet<number[]>(
-      parsed.args.ownerAddress,
-      () => []
-    );
+    let accountIds = (await this.get(parsed.args.ownerAddress)) ?? [];
     accountIds.push(parsed.args.accountId.toNumber());
-    await store.set(parsed.args.ownerAddress, accountIds);
+    await this.set(parsed.args.ownerAddress, accountIds);
   }
 }
