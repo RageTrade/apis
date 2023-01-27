@@ -37,18 +37,8 @@ export interface VaultInfoResult {
 }
 
 export async function getVaultInfo(
-  networkName: NetworkName,
-  excludeRawData: boolean
+  networkName: NetworkName
 ): Promise<VaultInfoResult> {
-  if (excludeRawData) {
-    const resp: any = await fetchJson({
-      url: `http://localhost:3000/data/aggregated/get-vault-info?networkName=${networkName}`,
-      timeout: 1_000_000_000, // huge number
-    });
-    delete resp.result.data;
-    return resp.result;
-  }
-
   const provider = getProviderAggregate(networkName);
 
   const { dnGmxJuniorVault, dnGmxSeniorVault, dnGmxBatchingManager } =

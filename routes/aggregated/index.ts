@@ -146,12 +146,10 @@ router.get(
   "/get-vault-info",
   handleRuntimeErrors(async (req) => {
     const networkName = getNetworkName(req);
-    const excludeRawData = getExcludeRawData(req);
-    return cacheFunctionResult(
-      aggregated.getVaultInfo,
-      [networkName, excludeRawData],
-      { cacheSeconds: 30 * hours, tags: ["aggregated"] }
-    );
+    return cacheFunctionResult(aggregated.getVaultInfo, [networkName], {
+      cacheSeconds: 30 * hours,
+      tags: ["aggregated"],
+    });
   })
 );
 
