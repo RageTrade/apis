@@ -1,15 +1,12 @@
+import { ethers, } from "ethers";
 import {
   BlockTag,
   TransactionRequest,
   Block,
 } from "@ethersproject/abstract-provider";
 import { Networkish } from "@ethersproject/providers";
-import { ethers } from "ethers";
-import path from "path";
-
 import { ConnectionInfo, Deferrable, id } from "ethers/lib/utils";
 import { RetryProvider } from "./retry-provider";
-import { FileStore } from "./store/file-store";
 import { RedisStore } from "./store/redis-store";
 import { getRedisClient } from "./redis-utils/get-client";
 
