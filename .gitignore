@@ -3,3 +3,4 @@ build
 data/**/*.json
 .env
 dump.rdb
+.eslintcache
