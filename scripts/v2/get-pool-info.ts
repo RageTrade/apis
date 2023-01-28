@@ -1,31 +1,24 @@
-import { BigNumber, BigNumberish } from "ethers";
+import type { NetworkName } from '@ragetrade/sdk'
+import { getPoolInfo as getPoolInfoSDK, pools, stringifyBigNumber } from '@ragetrade/sdk'
+import type { BigNumberish } from 'ethers'
+import { BigNumber } from 'ethers'
 
-import {
-  getPoolInfo as getPoolInfoSDK,
-  NetworkName,
-  stringifyBigNumber,
-  pools,
-} from "@ragetrade/sdk";
+import { getProvider } from '../../providers'
+import { ErrorWithStatusCode } from '../../utils'
 
-import { getProvider } from "../../providers";
-import { ErrorWithStatusCode } from "../../utils";
-
-export async function getPoolInfo(
-  networkName: NetworkName,
-  poolId: BigNumberish
-) {
+export async function getPoolInfo(networkName: NetworkName, poolId: BigNumberish) {
   if (pools[networkName] === undefined) {
     throw new ErrorWithStatusCode(
       `NetworkName ${networkName} is not valid or does not contain pools in the sdk.`,
       400
-    );
+    )
   }
 
-  let poolFound = false;
+  let poolFound = false
   for (const pool of pools[networkName]) {
     if (BigNumber.from(pool.poolId).eq(poolId)) {
-      poolFound = true;
-      break;
+      poolFound = true
+      break
     }
   }
 
@@ -35,12 +28,12 @@ export async function getPoolInfo(
         networkName
       ]
         .map((p) => Number(p.poolId))
-        .join(", ")}`,
+        .join(', ')}`,
       400
-    );
+    )
   }
 
-  const provider = getProvider(networkName);
-  const result = await getPoolInfoSDK(provider, poolId);
-  return stringifyBigNumber(result);
+  const provider = getProvider(networkName)
+  const result = await getPoolInfoSDK(provider, poolId)
+  return stringifyBigNumber(result)
 }

@@ -1,53 +1,26 @@
-import {
-  aave,
-  chainlink,
-  deltaNeutralGmxVaults,
-  formatUsdc,
-  gmxProtocol,
-  NetworkName,
-  tokens,
-} from "@ragetrade/sdk";
-import { DnGmxJuniorVaultManager__factory } from "@ragetrade/sdk/dist/typechain/delta-neutral-gmx-vaults";
-import { ethers } from "ethers";
-import { formatEther, formatUnits } from "ethers/lib/utils";
-import { getProviderAggregate } from "../../providers";
-import { days, mins } from "../../utils";
-import { juniorVault } from "../aggregated/util/events";
-import { glpSwapped } from "../aggregated/util/events/junior-vault";
-import { getLogsInLoop, price } from "../aggregated/util/helpers";
-import { parallelize } from "../aggregated/util/parallelize";
+import type { NetworkName } from '@ragetrade/sdk'
+import { deltaNeutralGmxVaults, formatUsdc, gmxProtocol } from '@ragetrade/sdk'
+import { formatEther } from 'ethers/lib/utils'
+
+import { getProviderAggregate } from '../../providers'
+import { glpSwapped } from '../aggregated/util/events/junior-vault'
+import { parallelize } from '../aggregated/util/parallelize'
 
 export async function perInterval(networkName: NetworkName) {
-  const provider = getProviderAggregate(networkName);
+  const provider = getProviderAggregate(networkName)
 
-  const { dnGmxJuniorVault, dnGmxBatchingManager } =
-    deltaNeutralGmxVaults.getContractsSync(networkName, provider);
-  const { gmxUnderlyingVault } = gmxProtocol.getContractsSync(
+  const { dnGmxJuniorVault } = deltaNeutralGmxVaults.getContractsSync(
     networkName,
     provider
-  );
+  )
+  const { gmxUnderlyingVault } = gmxProtocol.getContractsSync(networkName, provider)
   const allWhitelistedTokensLength = (
     await gmxUnderlyingVault.allWhitelistedTokensLength()
-  ).toNumber();
-  const allWhitelistedTokens: string[] = [];
+  ).toNumber()
+  const allWhitelistedTokens: string[] = []
   for (let i = 0; i < allWhitelistedTokensLength; i++) {
-    allWhitelistedTokens.push(await gmxUnderlyingVault.allWhitelistedTokens(i));
+    allWhitelistedTokens.push(await gmxUnderlyingVault.allWhitelistedTokens(i))
   }
-  const { weth, wbtc, fsGLP } = tokens.getContractsSync(networkName, provider);
-
-  const { wbtcVariableDebtTokenAddress, wethVariableDebtTokenAddress } =
-    aave.getAddresses(networkName);
-  const { aUsdc } = aave.getContractsSync(networkName, provider);
-  const vdWbtc = aUsdc.attach(wbtcVariableDebtTokenAddress);
-  const vdWeth = aUsdc.attach(wethVariableDebtTokenAddress);
-
-  const { ethUsdAggregator } = chainlink.getContractsSync(
-    networkName,
-    provider
-  );
-
-  const startBlock = 44570369;
-  const endBlock = await provider.getBlockNumber();
 
   // const startBlock = 52181070;
   // const endBlock = 52419731; // await provider.getBlockNumber();
@@ -58,26 +31,26 @@ export async function perInterval(networkName: NetworkName) {
       networkName,
       provider,
       getEvents: [glpSwapped],
-      ignoreMoreEventsInSameBlock: false,
+      ignoreMoreEventsInSameBlock: false
     },
     async (_i, blockNumber, event) => {
       const glpPrice = Number(
         formatEther(
           await dnGmxJuniorVault.getPrice(false, {
-            blockTag: blockNumber,
+            blockTag: blockNumber
           })
         )
-      );
+      )
       return {
         blockNumber,
         contractAddress: event.address,
         glpQuantity: formatEther(event.args?.glpQuantity),
         usdcQuantity: formatUsdc(event.args?.usdcQuantity),
         fromGlpToUsdc: event.args.fromGlpToUsdc,
-        glpPrice,
-      };
+        glpPrice
+      }
     }
-  );
+  )
 
-  return data;
+  return data
 }

@@ -1,19 +1,15 @@
-import { getProvider } from "../../providers";
+import type { NetworkName } from '@ragetrade/sdk'
 import {
-  NetworkName,
-  stringifyBigNumber,
   getGlpMintBurnConversionIntermediate as getGlpMintBurnConversionIntermediateSDK,
-} from "@ragetrade/sdk";
+  stringifyBigNumber
+} from '@ragetrade/sdk'
 
-export const getGlpMintBurnConversionIntermediate = async (
-  networkName: NetworkName
-) => {
-  const provider = getProvider(networkName);
+import { getProvider } from '../../providers'
 
-  const result = await getGlpMintBurnConversionIntermediateSDK(
-    provider,
-    networkName
-  );
+export const getGlpMintBurnConversionIntermediate = async (networkName: NetworkName) => {
+  const provider = getProvider(networkName)
 
-  return stringifyBigNumber(result);
-};
+  const result = await getGlpMintBurnConversionIntermediateSDK(provider, networkName)
+
+  return stringifyBigNumber(result)
+}

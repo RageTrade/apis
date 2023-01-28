@@ -1,11 +1,11 @@
-import { ethers } from "ethers";
+import type { NetworkName } from '@ragetrade/sdk'
+import { deltaNeutralGmxVaults } from '@ragetrade/sdk'
+import type { GlpSwappedEvent } from '@ragetrade/sdk/dist/typechain/delta-neutral-gmx-vaults/contracts/vaults/DnGmxJuniorVault'
+import type { ethers } from 'ethers'
 
-import { deltaNeutralGmxVaults, NetworkName } from "@ragetrade/sdk";
-import { GlpSwappedEvent } from "@ragetrade/sdk/dist/typechain/delta-neutral-gmx-vaults/contracts/vaults/DnGmxJuniorVault";
-
-import { ErrorWithStatusCode } from "../../../../../utils";
-import { getLogsInLoop } from "../../helpers";
-import { GET_LOGS_BLOCK_INTERVAL } from "../common";
+import { ErrorWithStatusCode } from '../../../../../utils'
+import { getLogsInLoop } from '../../helpers'
+import { GET_LOGS_BLOCK_INTERVAL } from '../common'
 
 export async function glpSwapped(
   networkName: NetworkName,
@@ -15,16 +15,15 @@ export async function glpSwapped(
   const { dnGmxJuniorVault } = deltaNeutralGmxVaults.getContractsSync(
     networkName,
     provider
-  );
+  )
 
-  const { DnGmxJuniorVaultDeployment } =
-    deltaNeutralGmxVaults.getDeployments(networkName);
+  const { DnGmxJuniorVaultDeployment } = deltaNeutralGmxVaults.getDeployments(networkName)
 
-  if (!startBlock) startBlock = DnGmxJuniorVaultDeployment.receipt?.blockNumber;
-  const endBlock = await provider.getBlockNumber();
+  if (!startBlock) startBlock = DnGmxJuniorVaultDeployment.receipt?.blockNumber
+  const endBlock = await provider.getBlockNumber()
 
   if (!startBlock) {
-    throw new ErrorWithStatusCode("Start block is not defined", 500);
+    throw new ErrorWithStatusCode('Start block is not defined', 500)
   }
 
   const logs = await getLogsInLoop(
@@ -33,7 +32,7 @@ export async function glpSwapped(
     startBlock,
     endBlock,
     GET_LOGS_BLOCK_INTERVAL
-  );
+  )
 
-  return logs as GlpSwappedEvent[];
+  return logs as GlpSwappedEvent[]
 }

@@ -1,26 +1,22 @@
-import { getProvider } from "../providers";
-import { getBlockByTimestamp } from "./get-block-by-timestamp";
-import {
-  NetworkName,
-  tricryptoVault,
-  formatUsdc,
-  truncate,
-  core,
-} from "@ragetrade/sdk";
-import { getSubgraph } from "../subgraphs";
-import { gql } from "urql";
+import type { NetworkName } from '@ragetrade/sdk'
+import { core, formatUsdc, tricryptoVault, truncate } from '@ragetrade/sdk'
+import { gql } from 'urql'
+
+import { getProvider } from '../providers'
+import { getSubgraph } from '../subgraphs'
+import { getBlockByTimestamp } from './get-block-by-timestamp'
 
 export type Candle = {
-  id: string;
-  volumeUSDC: string;
-  periodStartUnix: number;
-};
+  id: string
+  volumeUSDC: string
+  periodStartUnix: number
+}
 
 export async function getVaultApyInfo(networkName: NetworkName) {
-  const provider = getProvider(networkName);
-  const { eth_vToken } = await core.getContracts(provider);
-  const { curveYieldStrategy } = await tricryptoVault.getContracts(provider);
-  const graphqlClient = await getSubgraph(networkName);
+  const provider = getProvider(networkName)
+  const { eth_vToken } = await core.getContracts(provider)
+  const { curveYieldStrategy } = await tricryptoVault.getContracts(provider)
+  const graphqlClient = await getSubgraph(networkName)
 
   const candles = await graphqlClient
     .query(
@@ -39,27 +35,23 @@ export async function getVaultApyInfo(networkName: NetworkName) {
       `,
       { poolId: truncate(eth_vToken.address).toLowerCase() }
     )
-    .toPromise();
+    .toPromise()
 
-  const candleResponse = candles?.data?.rageTradePool?.hourData.data;
+  const candleResponse = candles?.data?.rageTradePool?.hourData.data
 
-  let apySum = 0;
+  let apySum = 0
 
   for (const candle of candleResponse) {
-    const blockNumber = await getBlockByTimestamp(
-      networkName,
-      candle.periodStartUnix
-    );
+    const blockNumber = await getBlockByTimestamp(networkName, candle.periodStartUnix)
     const vmv = await curveYieldStrategy.getVaultMarketValue({
-      blockTag: blockNumber,
-    });
-    apySum +=
-      (Number(candle.volumeUSDC) * 24 * 365 * 0.001) / Number(formatUsdc(vmv));
+      blockTag: blockNumber
+    })
+    apySum += (Number(candle.volumeUSDC) * 24 * 365 * 0.001) / Number(formatUsdc(vmv))
   }
 
   // console.log(apySum / 24);
 
   return {
-    curveYieldStrategyApy: (apySum / 24) * 100,
-  };
+    curveYieldStrategyApy: (apySum / 24) * 100
+  }
 }

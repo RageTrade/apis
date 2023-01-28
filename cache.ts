@@ -1,29 +1,29 @@
-import { getRedisClient } from "./redis-utils/get-client";
-import { RedisStore } from "./store/redis-store";
-import { currentTimestamp } from "./utils";
+import { getRedisClient } from './redis-utils/get-client'
+import { RedisStore } from './store/redis-store'
+import { currentTimestamp } from './utils'
 
 interface Options {
-  cacheSeconds: number;
-  tags?: string[];
+  cacheSeconds: number
+  tags?: string[]
 }
 
 const LOCAL_CACHE_SECONDS_OVERRIDE = process.env.LOCAL_CACHE_SECONDS_OVERRIDE
   ? parseInt(process.env.LOCAL_CACHE_SECONDS_OVERRIDE)
-  : undefined;
+  : undefined
 
 // const cache = new MemoryStore<any>("cache");
 const cache = new RedisStore<any>({
   client: getRedisClient(),
-  updateCache: true,
-});
+  updateCache: true
+})
 export function cacheFunctionResult<F extends (...args: any[]) => any>(
   fn: F,
   args: Parameters<F>,
   { cacheSeconds, tags }: Options = { cacheSeconds: 0 }
 ) {
-  tags = tags || [];
+  tags = tags || []
   return cache.getOrSet(
-    [...tags, fn.name, ...args.map((a) => String(a))].join("-"),
+    [...tags, fn.name, ...args.map((a) => String(a))].join('-'),
     generateResponse.bind(
       null,
       fn,
@@ -31,19 +31,15 @@ export function cacheFunctionResult<F extends (...args: any[]) => any>(
       LOCAL_CACHE_SECONDS_OVERRIDE ?? cacheSeconds ?? 0
     ),
     cacheSeconds
-  );
+  )
 }
 
 // includes error in the cache function output,
 // this is needed for preventing someone to abuse
 // an endpoint which does not cache due to revert
-async function generateResponse(
-  fn: Function,
-  args: any[],
-  cacheSeconds: number
-) {
+async function generateResponse(fn: Function, args: any[], cacheSeconds: number) {
   try {
-    const result = await fn(...args);
+    const result = await fn(...args)
     if (result.result) {
       // allows to override `cacheTimestamp`
       return {
@@ -52,14 +48,14 @@ async function generateResponse(
           result.cacheTimestamp ?? Number.MAX_SAFE_INTEGER,
           currentTimestamp()
         ),
-        cacheSeconds,
-      };
+        cacheSeconds
+      }
     } else {
-      return { result, cacheTimestamp: currentTimestamp(), cacheSeconds };
+      return { result, cacheTimestamp: currentTimestamp(), cacheSeconds }
     }
   } catch (error: any) {
     if (error instanceof TypeError) {
-      console.error("caught in generateResponse", error);
+      console.error('caught in generateResponse', error)
     }
 
     // cache the error resp (to prevent DoS, hitting with an input which reverts in middle
@@ -69,19 +65,19 @@ async function generateResponse(
         error: error.message,
         status: error.status,
         cacheTimestamp: currentTimestamp(),
-        cacheSeconds: Math.min(cacheSeconds, 15),
-      };
+        cacheSeconds: Math.min(cacheSeconds, 15)
+      }
     } else {
       // do not cache server errors they might be temporary
       return {
         error: error.message,
         status: error.status,
-        cacheSeconds: 0,
-      };
+        cacheSeconds: 0
+      }
     }
   }
 }
 
 export async function flushall() {
-  await cache.client.flushall();
+  await cache.client.flushall()
 }

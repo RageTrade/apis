@@ -1,5 +1,4 @@
-import { Entry } from "../util/types";
-import { UserSharesEntry, UserSharesResult } from "./shares";
+import type { Entry } from '../util/types'
 
 /**
  * Matches main entry with an other entry that is the closest and comes just before.
@@ -30,13 +29,12 @@ export function matchWithNonOverlappingEntries(
 ) {
   // TODO there is a chance that subgraph could be out of sync with blockchain,
   // so somehow add a way to allow expanding `otherEntries` to account for that?
-  const otherEntryNext =
-    ui < otherEntries.length - 1 ? otherEntries[ui + 1] : undefined;
+  const otherEntryNext = ui < otherEntries.length - 1 ? otherEntries[ui + 1] : undefined
 
   return (
     mainEntry.blockNumber >= otherEntry.blockNumber &&
     (otherEntryNext !== undefined
       ? otherEntryNext.blockNumber < mainEntry.blockNumber
       : true)
-  );
+  )
 }

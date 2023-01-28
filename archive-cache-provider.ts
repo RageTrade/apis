@@ -1,122 +1,97 @@
-import { ethers, } from "ethers";
-import {
-  BlockTag,
-  TransactionRequest,
+import type {
   Block,
-} from "@ethersproject/abstract-provider";
-import { Networkish } from "@ethersproject/providers";
-import { ConnectionInfo, Deferrable, id } from "ethers/lib/utils";
-import { RetryProvider } from "./retry-provider";
-import { RedisStore } from "./store/redis-store";
-import { getRedisClient } from "./redis-utils/get-client";
+  BlockTag,
+  TransactionRequest
+} from '@ethersproject/abstract-provider'
+import type { Networkish } from '@ethersproject/providers'
+import type { ethers } from 'ethers'
+import type { ConnectionInfo, Deferrable } from 'ethers/lib/utils'
+import { id } from 'ethers/lib/utils'
+
+import { getRedisClient } from './redis-utils/get-client'
+import { RetryProvider } from './retry-provider'
+import { RedisStore } from './store/redis-store'
 
 export class ArchiveCacheProvider extends RetryProvider {
   // store: FileStore<string>;
-  redisStore: RedisStore<string>;
+  redisStore: RedisStore<string>
 
   constructor(url?: ConnectionInfo | string, network?: Networkish) {
-    super(url, network);
-    if (typeof network !== "number") {
-      throw new Error(
-        "Second arg of ArchiveCacheProvider must be a chainId number"
-      );
+    super(url, network)
+    if (typeof network !== 'number') {
+      throw new Error('Second arg of ArchiveCacheProvider must be a chainId number')
     }
     // this.store = new FileStore(
     //   path.resolve(__dirname, `data/_archive/${network}/`)
     // );
     this.redisStore = new RedisStore({
       client: getRedisClient(),
-      updateCache: false,
-    });
+      updateCache: false
+    })
   }
 
   async call(
     transaction: Deferrable<TransactionRequest>,
     blockTag?: BlockTag | Promise<BlockTag>
   ): Promise<string> {
-    if (typeof blockTag === "number") {
+    if (typeof blockTag === 'number') {
       const key = getKey([
         this.network.name,
-        "call",
+        'call',
         String(blockTag),
-        (await transaction.to) ?? "no-to",
-        id([transaction.to ?? "", transaction.data ?? "", blockTag].join("-")),
-      ]);
-      return await this.redisStore.getOrSet(
+        (await transaction.to) ?? 'no-to',
+        id([transaction.to ?? '', transaction.data ?? '', blockTag].join('-'))
+      ])
+      return this.redisStore.getOrSet(
         key,
-        async () => {
-          return await super.call(transaction, blockTag);
-        },
+        async () => super.call(transaction, blockTag),
         -1
-      );
+      )
     } else {
-      return await super.call(transaction, blockTag);
+      return super.call(transaction, blockTag)
     }
   }
 
   async getBlock(
     blockHashOrBlockTag: BlockTag | string | Promise<BlockTag | string>
   ): Promise<Block> {
-    if (typeof blockHashOrBlockTag === "number") {
-      const key = getKey([
-        this.network.name,
-        "getBlock",
-        String(blockHashOrBlockTag),
-      ]);
-      return await this.redisStore.getOrSet(
+    if (typeof blockHashOrBlockTag === 'number') {
+      const key = getKey([this.network.name, 'getBlock', String(blockHashOrBlockTag)])
+      return this.redisStore.getOrSet(
         key,
-        async () => {
-          return await super.getBlock(blockHashOrBlockTag);
-        },
+        async () => super.getBlock(blockHashOrBlockTag),
         -1
-      );
+      )
     } else {
-      return await super.getBlock(blockHashOrBlockTag);
+      return super.getBlock(blockHashOrBlockTag)
     }
   }
 
-  async getLogs(
-    filter: ethers.providers.Filter
-  ): Promise<Array<ethers.providers.Log>> {
-    if (
-      typeof filter.toBlock === "number" &&
-      typeof filter.fromBlock === "number"
-    ) {
+  async getLogs(filter: ethers.providers.Filter): Promise<Array<ethers.providers.Log>> {
+    if (typeof filter.toBlock === 'number' && typeof filter.fromBlock === 'number') {
       const key = getKey([
         this.network.name,
-        "getLogs",
+        'getLogs',
         String(filter.fromBlock),
         String(filter.toBlock),
-        filter.topics?.join("-") ?? "no-topics",
-      ]);
-      return await this.redisStore.getOrSet(
-        key,
-        async () => {
-          return await super.getLogs(filter);
-        },
-        -1
-      );
+        filter.topics?.join('-') ?? 'no-topics'
+      ])
+      return this.redisStore.getOrSet(key, async () => super.getLogs(filter), -1)
     } else {
-      return await super.getLogs(filter);
+      return super.getLogs(filter)
     }
   }
 
   async send(method: string, params: any): Promise<any> {
-    if (method === "eth_getTransactionReceipt") {
-      const key = getKey([this.network.name, "send", method, ...params]);
-      return await this.redisStore.getOrSet(
-        key,
-        async () => {
-          return await super.send(method, params);
-        },
-        -1
-      );
+    if (method === 'eth_getTransactionReceipt') {
+      const key = getKey([this.network.name, 'send', method, ...params])
+      return this.redisStore.getOrSet(key, async () => super.send(method, params), -1)
     } else {
-      return await super.send(method, params);
+      return super.send(method, params)
     }
   }
 }
 
 function getKey(items: string[]) {
-  return "archive-cache-provider-" + items.join("-");
+  return 'archive-cache-provider-' + items.join('-')
 }

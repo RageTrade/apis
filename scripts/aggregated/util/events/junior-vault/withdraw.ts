@@ -1,11 +1,11 @@
-import { ethers } from "ethers";
+import type { NetworkName } from '@ragetrade/sdk'
+import { deltaNeutralGmxVaults } from '@ragetrade/sdk'
+import type { WithdrawEvent } from '@ragetrade/sdk/dist/typechain/delta-neutral-gmx-vaults/contracts/vaults/DnGmxJuniorVault'
+import type { ethers } from 'ethers'
 
-import { deltaNeutralGmxVaults, NetworkName } from "@ragetrade/sdk";
-import { WithdrawEvent } from "@ragetrade/sdk/dist/typechain/delta-neutral-gmx-vaults/contracts/vaults/DnGmxJuniorVault";
-
-import { ErrorWithStatusCode } from "../../../../../utils";
-import { getLogsInLoop } from "../../helpers";
-import { GET_LOGS_BLOCK_INTERVAL } from "../common";
+import { ErrorWithStatusCode } from '../../../../../utils'
+import { getLogsInLoop } from '../../helpers'
+import { GET_LOGS_BLOCK_INTERVAL } from '../common'
 
 export async function withdraw(
   networkName: NetworkName,
@@ -15,16 +15,15 @@ export async function withdraw(
   const { dnGmxJuniorVault } = deltaNeutralGmxVaults.getContractsSync(
     networkName,
     provider
-  );
+  )
 
-  const { DnGmxJuniorVaultDeployment } =
-    deltaNeutralGmxVaults.getDeployments(networkName);
+  const { DnGmxJuniorVaultDeployment } = deltaNeutralGmxVaults.getDeployments(networkName)
 
-  if (!startBlock) startBlock = DnGmxJuniorVaultDeployment.receipt?.blockNumber;
-  const endBlock = await provider.getBlockNumber();
+  if (!startBlock) startBlock = DnGmxJuniorVaultDeployment.receipt?.blockNumber
+  const endBlock = await provider.getBlockNumber()
 
   if (!startBlock) {
-    throw new ErrorWithStatusCode("Start block is not defined", 500);
+    throw new ErrorWithStatusCode('Start block is not defined', 500)
   }
 
   const logs = await getLogsInLoop(
@@ -33,7 +32,7 @@ export async function withdraw(
     startBlock,
     endBlock,
     GET_LOGS_BLOCK_INTERVAL
-  );
+  )
 
-  return logs as WithdrawEvent[];
+  return logs as WithdrawEvent[]
 }

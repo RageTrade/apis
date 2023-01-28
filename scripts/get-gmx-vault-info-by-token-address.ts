@@ -1,28 +1,27 @@
-import { NetworkName, gmxProtocol, tokens } from "@ragetrade/sdk";
-import { getProvider } from "../providers";
-import { ErrorWithStatusCode } from "../utils";
+import type { NetworkName } from '@ragetrade/sdk'
+import { gmxProtocol, tokens } from '@ragetrade/sdk'
+
+import { getProvider } from '../providers'
+import { ErrorWithStatusCode } from '../utils'
 
 export async function getGmxVaultInfoByTokenAddress(
   networkName: NetworkName,
   tokenAddress: string
 ) {
-  const provider = getProvider(networkName);
-  const { usdc, usdt, weth, wbtc } = await tokens.getContracts(provider);
+  const provider = getProvider(networkName)
+  const { usdc, usdt, weth, wbtc } = await tokens.getContracts(provider)
   if (
     ![usdc, usdt, weth, wbtc]
       .map((c) => c.address.toLowerCase())
       .includes(tokenAddress.toLowerCase())
   ) {
-    throw new ErrorWithStatusCode(
-      `TokenAddress ${tokenAddress} is not allowed`,
-      400
-    );
+    throw new ErrorWithStatusCode(`TokenAddress ${tokenAddress} is not allowed`, 400)
   }
 
-  const { gmxUnderlyingVault } = await gmxProtocol.getContracts(provider);
+  const { gmxUnderlyingVault } = await gmxProtocol.getContracts(provider)
 
-  const price = await gmxUnderlyingVault.getMinPrice(tokenAddress);
+  const price = await gmxUnderlyingVault.getMinPrice(tokenAddress)
   return {
-    underlyingVaultMinPrice: price.toString(),
-  };
+    underlyingVaultMinPrice: price.toString()
+  }
 }

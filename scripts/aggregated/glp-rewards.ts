@@ -1,40 +1,34 @@
-import { fetchJson, formatEther, formatUnits } from "ethers/lib/utils";
+import type { NetworkName, ResultWithMetadata } from '@ragetrade/sdk'
+import { formatUsdc, gmxProtocol, tokens } from '@ragetrade/sdk'
+import { fetchJson, formatEther, formatUnits } from 'ethers/lib/utils'
 
-import {
-  formatUsdc,
-  gmxProtocol,
-  NetworkName,
-  ResultWithMetadata,
-  tokens,
-} from "@ragetrade/sdk";
-
-import { getProviderAggregate } from "../../providers";
-import { days, timestampRoundDown } from "../../utils";
-import { GlobalTotalSharesResult } from "./total-shares";
-import { intersection } from "./util/combine";
-import { juniorVault } from "./util/events";
-import { parallelize } from "./util/parallelize";
-import { Entry } from "./util/types";
-import { price } from "./util/helpers";
+import { getProviderAggregate } from '../../providers'
+import { days, timestampRoundDown } from '../../utils'
+import type { GlobalTotalSharesResult } from './total-shares'
+import { intersection } from './util/combine'
+import { juniorVault } from './util/events'
+import { price } from './util/helpers'
+import { parallelize } from './util/parallelize'
+import type { Entry } from './util/types'
 
 export type GlobalGlpRewardsEntry = Entry<{
-  timestamp: number;
-  juniorVaultWethReward: number;
-  seniorVaultWethReward: number;
-}>;
+  timestamp: number
+  juniorVaultWethReward: number
+  seniorVaultWethReward: number
+}>
 
 export interface GlobalGlpRewardsDailyEntry {
-  startTimestamp: number;
-  endTimestamp: number;
-  juniorVaultWethRewardNet: number;
-  seniorVaultWethRewardNet: number;
+  startTimestamp: number
+  endTimestamp: number
+  juniorVaultWethRewardNet: number
+  seniorVaultWethRewardNet: number
 }
 
 export interface GlobalGlpRewardsResult {
-  data: GlobalGlpRewardsEntry[];
-  dailyData: GlobalGlpRewardsDailyEntry[];
-  totalJuniorVaultWethReward: number;
-  totalSeniorVaultWethReward: number;
+  data: GlobalGlpRewardsEntry[]
+  dailyData: GlobalGlpRewardsDailyEntry[]
+  totalJuniorVaultWethReward: number
+  totalSeniorVaultWethReward: number
 }
 
 export async function getGlpRewards(
@@ -44,49 +38,46 @@ export async function getGlpRewards(
   if (excludeRawData) {
     const resp: any = await fetchJson({
       url: `http://localhost:3000/data/aggregated/get-glp-rewards?networkName=${networkName}`,
-      timeout: 1_000_000_000, // huge number
-    });
-    delete resp.result.data;
-    return resp.result;
+      timeout: 1_000_000_000 // huge number
+    })
+    delete resp.result.data
+    return resp.result
   }
 
-  const provider = getProviderAggregate(networkName);
+  const provider = getProviderAggregate(networkName)
 
-  const { glpManager } = gmxProtocol.getContractsSync(networkName, provider);
-  const { fsGLP, weth } = tokens.getContractsSync(networkName, provider);
+  const { glpManager } = gmxProtocol.getContractsSync(networkName, provider)
+  const { fsGLP, weth } = tokens.getContractsSync(networkName, provider)
 
-  const totalSharesData: ResultWithMetadata<GlobalTotalSharesResult> =
-    await fetchJson({
-      url: `http://localhost:3000/data/aggregated/get-total-shares?networkName=${networkName}`,
-      timeout: 1_000_000_000, // huge number
-    });
+  const totalSharesData: ResultWithMetadata<GlobalTotalSharesResult> = await fetchJson({
+    url: `http://localhost:3000/data/aggregated/get-total-shares?networkName=${networkName}`,
+    timeout: 1_000_000_000 // huge number
+  })
 
   const data = await parallelize(
     {
       networkName,
       provider,
       getEvents: [juniorVault.rewardsHarvested],
-      startBlockNumber: 45412307,
+      startBlockNumber: 45412307
     },
     async (_i, blockNumber, event) => {
       // const { juniorVaultGlp, seniorVaultAUsdc } = event.args;
 
       const [aumMax, _] = await glpManager.getAums({
-        blockTag: blockNumber,
-      });
+        blockTag: blockNumber
+      })
 
       const glpTotalSuply = await fsGLP.totalSupply({
-        blockTag: blockNumber,
-      });
+        blockTag: blockNumber
+      })
 
-      const glpPrice = Number(formatUnits(aumMax.div(glpTotalSuply), 12));
+      const glpPrice = Number(formatUnits(aumMax.div(glpTotalSuply), 12))
       const juniorVaultWethReward =
-        Number(formatEther(event.args.juniorVaultGlp)) * glpPrice;
-      const seniorVaultWethReward = Number(
-        formatUsdc(event.args.seniorVaultAUsdc)
-      );
+        Number(formatEther(event.args.juniorVaultGlp)) * glpPrice
+      const seniorVaultWethReward = Number(formatUsdc(event.args.seniorVaultAUsdc))
 
-      const ethPrice = await price(weth.address, blockNumber, networkName);
+      const ethPrice = await price(weth.address, blockNumber, networkName)
 
       return {
         blockNumber,
@@ -102,50 +93,45 @@ export async function getGlpRewards(
         glpPrice,
         ethPrice,
         juniorVaultWethReward,
-        seniorVaultWethReward,
-      };
+        seniorVaultWethReward
+      }
     }
-  );
+  )
 
-  const combinedData = intersection(
-    data,
-    totalSharesData.result.data,
-    (a, b) => ({
-      ...a,
-      timestamp: b.timestamp,
-    })
-  );
+  const combinedData = intersection(data, totalSharesData.result.data, (a, b) => ({
+    ...a,
+    timestamp: b.timestamp
+  }))
 
   return {
     data: combinedData,
     dailyData: combinedData.reduce(
       (acc: GlobalGlpRewardsDailyEntry[], cur: GlobalGlpRewardsEntry) => {
-        let lastEntry = acc[acc.length - 1];
+        let lastEntry = acc[acc.length - 1]
         if (lastEntry && cur.timestamp <= lastEntry.endTimestamp) {
-          lastEntry.juniorVaultWethRewardNet += cur.juniorVaultWethReward;
-          lastEntry.seniorVaultWethRewardNet += cur.seniorVaultWethReward;
+          lastEntry.juniorVaultWethRewardNet += cur.juniorVaultWethReward
+          lastEntry.seniorVaultWethRewardNet += cur.seniorVaultWethReward
         } else {
           while (
             lastEntry &&
-            lastEntry.startTimestamp + 1 * days <
-              timestampRoundDown(cur.timestamp)
+            lastEntry.startTimestamp + 1 * days < timestampRoundDown(cur.timestamp)
           ) {
             acc.push({
               startTimestamp: lastEntry.startTimestamp + 1 * days,
               endTimestamp: lastEntry.startTimestamp + 2 * days - 1,
               juniorVaultWethRewardNet: 0,
-              seniorVaultWethRewardNet: 0,
-            });
-            lastEntry = acc[acc.length - 1];
+              seniorVaultWethRewardNet: 0
+            })
+            lastEntry = acc[acc.length - 1]
           }
           acc.push({
             startTimestamp: timestampRoundDown(cur.timestamp),
             endTimestamp: timestampRoundDown(cur.timestamp) + 1 * days - 1,
             juniorVaultWethRewardNet: cur.juniorVaultWethReward,
-            seniorVaultWethRewardNet: cur.seniorVaultWethReward,
-          });
+            seniorVaultWethRewardNet: cur.seniorVaultWethReward
+          })
         }
-        return acc;
+        return acc
       },
       []
     ),
@@ -156,6 +142,6 @@ export async function getGlpRewards(
     totalSeniorVaultWethReward: combinedData.reduce(
       (acc, cur) => acc + cur.seniorVaultWethReward,
       0
-    ),
-  };
+    )
+  }
 }
