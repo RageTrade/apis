@@ -1,6 +1,8 @@
 import type { NetworkName } from '@ragetrade/sdk'
 import type { ethers } from 'ethers'
 
+import { ENV } from '../../../env'
+
 export type EventFn<Event> = (
   networkName: NetworkName,
   provider: ethers.providers.Provider,
@@ -97,7 +99,7 @@ export async function parallelize<Data, Event extends ethers.Event>(
         while (1) {
           // add random delay to avoid lot of requests being shot at same time
           await new Promise((r) => setTimeout(r, Math.floor(Math.random() * 10_000)))
-          if (inflight >= (process.env.MAX_INFLIGHT_LOOPS ?? 100)) continue
+          if (inflight >= (ENV.MAX_INFLIGHT_LOOPS ?? 100)) continue
           try {
             inflight++
             data[_i] = await onEachEvent(_i, blockNumber, event)

@@ -8,10 +8,12 @@ import Debugger from 'debug'
 import http from 'http'
 
 import { app } from './app'
+import { ENV } from './env'
 
 const debug = Debugger('apis:server')
 
-const port = normalizePort(process.env.PORT || '3000')
+const port = ENV.PORT || 3000
+
 app.set('port', port)
 
 const server = http.createServer(app)
@@ -19,18 +21,6 @@ const server = http.createServer(app)
 server.listen(port)
 server.on('error', onError)
 server.on('listening', onListening)
-
-function normalizePort(val: string) {
-  const port = parseInt(val, 10)
-
-  // named pipe
-  if (isNaN(port)) return val
-
-  // port number
-  if (port >= 0) return port
-
-  return false
-}
 
 function onError(error: any) {
   if (error.syscall !== 'listen') {

@@ -2,6 +2,7 @@ import type { NetworkName } from '@ragetrade/sdk'
 import { findBlockByTimestamp } from '@ragetrade/sdk'
 import Debugger from 'debug'
 
+import { ENV } from '../env'
 import { getProvider } from '../providers'
 import { fetchJsonRetry, fetchRetry } from '../utils'
 
@@ -38,7 +39,7 @@ export async function getBlockByTimestamp(
       : 'https://api-testnet.arbiscan.io'
 
   while (1) {
-    const request = `${baseUrl}/api?module=block&action=getblocknobytime&timestamp=${timestamp}&closest=before&apikey=${process.env.ARBISCAN_KEY}`
+    const request = `${baseUrl}/api?module=block&action=getblocknobytime&timestamp=${timestamp}&closest=before&apikey=${ENV.ARBISCAN_KEY}`
     const resp = await fetchJsonRetry(request)
     if (resp.status === '1') {
       const result = parseInt(resp.result)

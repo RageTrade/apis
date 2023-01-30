@@ -12,6 +12,8 @@ import type express from 'express'
 import type { Request } from 'express'
 import createError from 'http-errors'
 
+import { ENV } from './env'
+
 export const secs = 1
 export const mins = 60
 export const hours = 60 * mins
@@ -218,12 +220,8 @@ export async function fetchJsonRetry(input: string) {
 
 export function removeApiKeysFromString(msg: string): string {
   if (!msg) return msg
-  const apiKeys = [
-    process.env.ALCHEMY_KEY,
-    process.env.ALCHEMY_KEY_AGGREGATE,
-    process.env.INFURA_KEY,
-    process.env.ARBISCAN_KEY
-  ].filter((v) => !!v) as string[]
+  const apiKeys = [ENV.ALCHEMY_KEY, ENV.ALCHEMY_KEY_AGGREGATE, ENV.ARBISCAN_KEY]
+
   let prevLength = msg.length
 
   for (const apiKey of apiKeys) {
