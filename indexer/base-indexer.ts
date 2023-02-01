@@ -72,7 +72,7 @@ export class BaseIndexer<DataStoreType> {
         await this.set('synced-block', Math.max(syncedBlock, storedSyncedBlock))
       }
     }
-    return await this.get('synced-block')
+    return this.get('synced-block')
   }
 
   async start(startBlock: number, iterWait?: number, err?: (err: any) => void) {

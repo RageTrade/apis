@@ -4,8 +4,7 @@ import {
   IOracle__factory,
   IUniswapV3Pool__factory,
   priceX128ToPrice,
-  sqrtPriceX96ToPrice,
-  VaultName
+  sqrtPriceX96ToPrice
 } from '@ragetrade/sdk'
 import type { BigNumberish } from 'ethers'
 import { BigNumber, ethers } from 'ethers'
@@ -15,7 +14,7 @@ import { getProvider } from '../providers'
 
 export async function getPrices(networkName: NetworkName, poolId: BigNumberish) {
   const provider = getProvider(networkName)
-  return await _getPrices(provider, poolId)
+  return _getPrices(provider, poolId)
 }
 
 export async function _getPrices(

@@ -41,7 +41,7 @@ export class RedisStore<Value> extends BaseStore<Value> {
       return read
     } else if (valuePromise) {
       debug('RedisStore.getOrSet: value being queried already, waiting for it')
-      return await valuePromise
+      return valuePromise
     } else {
       debug('RedisStore.getOrSet: value not present in storage, fetching it')
       valuePromise = valueFn()

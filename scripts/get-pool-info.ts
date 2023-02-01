@@ -21,7 +21,7 @@ import { getBlockByTimestamp } from './get-block-by-timestamp'
 
 export async function getPoolInfo(networkName: NetworkName, poolId: BigNumberish) {
   const provider = getProvider(networkName)
-  return await _getPoolInfo(provider, poolId)
+  return _getPoolInfo(provider, poolId)
 }
 
 export async function _getPoolInfo(
