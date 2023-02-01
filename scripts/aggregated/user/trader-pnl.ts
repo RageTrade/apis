@@ -1,28 +1,27 @@
-import { fetchJson } from "ethers/lib/utils";
+import type { NetworkName, ResultWithMetadata } from '@ragetrade/sdk'
+import { fetchJson } from 'ethers/lib/utils'
 
-import { NetworkName, ResultWithMetadata } from "@ragetrade/sdk";
-
-import { intersection } from "../util/combine";
-import { UserSharesResult } from "./shares";
-import { GlobalTraderPnlResult } from "../trader-pnl";
-import { Entry } from "../util/types";
-import { timestampRoundDown, days, safeDivNumer } from "../../../utils";
+import { days, safeDivNumer, timestampRoundDown } from '../../../utils'
+import type { GlobalTraderPnlResult } from '../trader-pnl'
+import { intersection } from '../util/combine'
+import type { Entry } from '../util/types'
+import type { UserSharesResult } from './shares'
 
 export type UserTraderPnlEntry = Entry<{
-  timestamp: number;
-  userTraderPnl: number;
-}>;
+  timestamp: number
+  userTraderPnl: number
+}>
 
 export interface UserTraderPnlDailyEntry {
-  startTimestamp: number;
-  endTimestamp: number;
-  userTraderPnlNet: number;
+  startTimestamp: number
+  endTimestamp: number
+  userTraderPnlNet: number
 }
 
 export interface UserTraderPnlResult {
-  data: UserTraderPnlEntry[];
-  dailyData: UserTraderPnlDailyEntry[];
-  userTotalTraderPnlNet: number;
+  data: UserTraderPnlEntry[]
+  dailyData: UserTraderPnlDailyEntry[]
+  userTotalTraderPnlNet: number
 }
 
 export async function getUserTraderPnl(
@@ -33,23 +32,22 @@ export async function getUserTraderPnl(
   if (excludeRawData) {
     const resp: any = await fetchJson({
       url: `http://localhost:3000/data/aggregated/user/get-trader-pnl?networkName=${networkName}&userAddress=${userAddress}`,
-      timeout: 1_000_000_000, // huge number
-    });
-    delete resp.result.data;
-    return resp.result;
+      timeout: 1_000_000_000 // huge number
+    })
+    delete resp.result.data
+    return resp.result
   }
 
   const globalTraderPnlResponse: ResultWithMetadata<GlobalTraderPnlResult> =
     await fetchJson({
       url: `http://localhost:3000/data/aggregated/get-trader-pnl?networkName=${networkName}`,
-      timeout: 1_000_000_000, // huge number
-    });
+      timeout: 1_000_000_000 // huge number
+    })
 
-  const userSharesResponse: ResultWithMetadata<UserSharesResult> =
-    await fetchJson({
-      url: `http://localhost:3000/data/aggregated/user/get-shares?networkName=${networkName}&userAddress=${userAddress}`,
-      timeout: 1_000_000_000, // huge number
-    });
+  const userSharesResponse: ResultWithMetadata<UserSharesResult> = await fetchJson({
+    url: `http://localhost:3000/data/aggregated/user/get-shares?networkName=${networkName}&userAddress=${userAddress}`,
+    timeout: 1_000_000_000 // huge number
+  })
 
   const data = intersection(
     globalTraderPnlResponse.result.data,
@@ -58,17 +56,15 @@ export async function getUserTraderPnl(
       ...globalTraderPnlEntry,
       ...userSharesEntry,
       userTraderPnl: safeDivNumer(
-        globalTraderPnlEntry.traderPnlVault *
-          userSharesEntry.userJuniorVaultShares,
+        globalTraderPnlEntry.traderPnlVault * userSharesEntry.userJuniorVaultShares,
         userSharesEntry.totalJuniorVaultShares
-      ),
+      )
     })
-  );
+  )
 
   return {
     cacheTimestamp:
-      globalTraderPnlResponse.cacheTimestamp &&
-      userSharesResponse.cacheTimestamp
+      globalTraderPnlResponse.cacheTimestamp && userSharesResponse.cacheTimestamp
         ? Math.min(
             globalTraderPnlResponse.cacheTimestamp,
             userSharesResponse.cacheTimestamp
@@ -78,36 +74,35 @@ export async function getUserTraderPnl(
       data,
       dailyData: data.reduce(
         (acc: UserTraderPnlDailyEntry[], cur: UserTraderPnlEntry) => {
-          let lastEntry = acc[acc.length - 1];
+          let lastEntry = acc[acc.length - 1]
           if (lastEntry && cur.timestamp <= lastEntry.endTimestamp) {
-            lastEntry.userTraderPnlNet += cur.userTraderPnl;
+            lastEntry.userTraderPnlNet += cur.userTraderPnl
           } else {
             while (
               lastEntry &&
-              lastEntry.startTimestamp + 1 * days <
-                timestampRoundDown(cur.timestamp)
+              lastEntry.startTimestamp + 1 * days < timestampRoundDown(cur.timestamp)
             ) {
               acc.push({
                 startTimestamp: lastEntry.startTimestamp + 1 * days,
                 endTimestamp: lastEntry.startTimestamp + 2 * days - 1,
-                userTraderPnlNet: 0,
-              });
-              lastEntry = acc[acc.length - 1];
+                userTraderPnlNet: 0
+              })
+              lastEntry = acc[acc.length - 1]
             }
             acc.push({
               startTimestamp: timestampRoundDown(cur.timestamp),
               endTimestamp: timestampRoundDown(cur.timestamp) + 1 * days - 1,
-              userTraderPnlNet: cur.userTraderPnl,
-            });
+              userTraderPnlNet: cur.userTraderPnl
+            })
           }
-          return acc;
+          return acc
         },
         []
       ),
       userTotalTraderPnlNet: data.reduce(
         (acc: number, cur: UserTraderPnlEntry) => acc + cur.userTraderPnl,
         0
-      ),
-    },
-  };
+      )
+    }
+  }
 }

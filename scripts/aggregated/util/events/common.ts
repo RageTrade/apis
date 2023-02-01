@@ -1,1 +1,1 @@
-export const GET_LOGS_BLOCK_INTERVAL = 200_000;
+export const GET_LOGS_BLOCK_INTERVAL = 200_000

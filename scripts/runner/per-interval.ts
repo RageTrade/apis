@@ -1,73 +1,67 @@
+import type { NetworkName } from '@ragetrade/sdk'
 import {
   aave,
   chainlink,
   deltaNeutralGmxVaults,
   gmxProtocol,
-  NetworkName,
-  tokens,
-} from "@ragetrade/sdk";
-import { ethers } from "ethers";
-import { formatEther, formatUnits } from "ethers/lib/utils";
-import { getProviderAggregate } from "../../providers";
-import { days, mins } from "../../utils";
-import { juniorVault } from "../aggregated/util/events";
-import { getLogsInLoop, price } from "../aggregated/util/helpers";
-import { parallelize } from "../aggregated/util/parallelize";
+  tokens
+} from '@ragetrade/sdk'
+import { ethers } from 'ethers'
+import { formatEther, formatUnits } from 'ethers/lib/utils'
+
+import { getProviderAggregate } from '../../providers'
+import { juniorVault } from '../aggregated/util/events'
+import { getLogsInLoop, price } from '../aggregated/util/helpers'
+import { parallelize } from '../aggregated/util/parallelize'
 // import { juniorVault } from "./aggregated/util/events";
 // import { getLogsInLoop, price } from "./util/helpers";
 // import { parallelize } from "./util/parallelize";
 
 export async function perInterval(networkName: NetworkName) {
-  const provider = getProviderAggregate(networkName);
+  const provider = getProviderAggregate(networkName)
 
   const { dnGmxJuniorVault, dnGmxBatchingManager } =
-    deltaNeutralGmxVaults.getContractsSync(networkName, provider);
-  const { gmxUnderlyingVault } = gmxProtocol.getContractsSync(
-    networkName,
-    provider
-  );
+    deltaNeutralGmxVaults.getContractsSync(networkName, provider)
+  const { gmxUnderlyingVault } = gmxProtocol.getContractsSync(networkName, provider)
   const allWhitelistedTokensLength = (
     await gmxUnderlyingVault.allWhitelistedTokensLength()
-  ).toNumber();
-  const allWhitelistedTokens: string[] = [];
+  ).toNumber()
+  const allWhitelistedTokens: string[] = []
   for (let i = 0; i < allWhitelistedTokensLength; i++) {
-    allWhitelistedTokens.push(await gmxUnderlyingVault.allWhitelistedTokens(i));
+    allWhitelistedTokens.push(await gmxUnderlyingVault.allWhitelistedTokens(i))
   }
-  const { weth, wbtc, fsGLP } = tokens.getContractsSync(networkName, provider);
+  const { weth, wbtc, fsGLP } = tokens.getContractsSync(networkName, provider)
 
   const { wbtcVariableDebtTokenAddress, wethVariableDebtTokenAddress } =
-    aave.getAddresses(networkName);
-  const { aUsdc } = aave.getContractsSync(networkName, provider);
-  const vdWbtc = aUsdc.attach(wbtcVariableDebtTokenAddress);
-  const vdWeth = aUsdc.attach(wethVariableDebtTokenAddress);
+    aave.getAddresses(networkName)
+  const { aUsdc } = aave.getContractsSync(networkName, provider)
+  const vdWbtc = aUsdc.attach(wbtcVariableDebtTokenAddress)
+  const vdWeth = aUsdc.attach(wethVariableDebtTokenAddress)
 
-  const { ethUsdAggregator } = chainlink.getContractsSync(
-    networkName,
-    provider
-  );
+  const { ethUsdAggregator } = chainlink.getContractsSync(networkName, provider)
 
   // LINK / USD: https://arbiscan.io/address/0x86E53CF1B870786351Da77A57575e79CB55812CB
   // UNI / USD: https://arbiscan.io/address/0x9C917083fDb403ab5ADbEC26Ee294f6EcAda2720
 
   const linkUsdAggregator = ethUsdAggregator.attach(
-    "0x86E53CF1B870786351Da77A57575e79CB55812CB"
-  );
+    '0x86E53CF1B870786351Da77A57575e79CB55812CB'
+  )
   const uniUsdAggregator = ethUsdAggregator.attach(
-    "0x9C917083fDb403ab5ADbEC26Ee294f6EcAda2720"
-  );
+    '0x9C917083fDb403ab5ADbEC26Ee294f6EcAda2720'
+  )
 
-  const startBlock = 52181070;
-  const endBlock = 52419731; // await provider.getBlockNumber();
-  const interval = 497; // Math.floor(((endBlock - startBlock) * 3 * mins) / days);
+  const startBlock = 52181070
+  const endBlock = 52419731 // await provider.getBlockNumber();
+  const interval = 497 // Math.floor(((endBlock - startBlock) * 3 * mins) / days);
 
   const _vault = new ethers.Contract(
     gmxUnderlyingVault.address,
     [
-      "event IncreaseUsdgAmount(address token, uint256 amount)",
-      "event DecreaseUsdgAmount(address token, uint256 amount)",
+      'event IncreaseUsdgAmount(address token, uint256 amount)',
+      'event DecreaseUsdgAmount(address token, uint256 amount)'
     ],
     provider
-  );
+  )
 
   const data = await parallelize(
     {
@@ -84,7 +78,7 @@ export async function perInterval(networkName: NetworkName) {
             startBlock,
             endBlock,
             2000
-          );
+          )
         },
         () => {
           return getLogsInLoop(
@@ -93,8 +87,8 @@ export async function perInterval(networkName: NetworkName) {
             startBlock,
             endBlock,
             2000
-          );
-        },
+          )
+        }
       ],
       //   () => {
       //     const events = [];
@@ -105,74 +99,74 @@ export async function perInterval(networkName: NetworkName) {
       //     }
       //     return events as ethers.Event[];
       //   },
-      ignoreMoreEventsInSameBlock: true,
+      ignoreMoreEventsInSameBlock: true
     },
     async (_i, blockNumber) => {
       const usdgAmounts = await Promise.all(
         allWhitelistedTokens.map((token) =>
           gmxUnderlyingVault.usdgAmounts(token, { blockTag: blockNumber })
         )
-      ); // 18 or 30
-      const block = await provider.getBlock(blockNumber);
+      ) // 18 or 30
+      const block = await provider.getBlock(blockNumber)
       const vdWbtc_balanceOf_dnGmxJuniorVault = await vdWbtc.balanceOf(
         dnGmxJuniorVault.address,
         { blockTag: blockNumber }
-      );
+      )
       const vdWeth_balanceOf_dnGmxJuniorVault = await vdWeth.balanceOf(
         dnGmxJuniorVault.address,
         { blockTag: blockNumber }
-      );
+      )
 
-      const wethPrice = await price(weth.address, blockNumber, networkName);
-      const wbtcPrice = await price(wbtc.address, blockNumber, networkName);
+      const wethPrice = await price(weth.address, blockNumber, networkName)
+      const wbtcPrice = await price(wbtc.address, blockNumber, networkName)
       const glpPrice = Number(
         formatEther(
           await dnGmxJuniorVault.getPrice(false, {
-            blockTag: blockNumber,
+            blockTag: blockNumber
           })
         )
-      );
+      )
       const linkPrice = Number(
         formatUnits(
           (
             await linkUsdAggregator.latestRoundData({
-              blockTag: blockNumber,
+              blockTag: blockNumber
             })
           ).answer,
           8
         )
-      );
+      )
       const uniPrice = Number(
         formatUnits(
           (
             await uniUsdAggregator.latestRoundData({
-              blockTag: blockNumber,
+              blockTag: blockNumber
             })
           ).answer,
           8
         )
-      );
+      )
       const fsGlp_balanceOf_juniorVault = Number(
         formatEther(
           await fsGLP.balanceOf(dnGmxJuniorVault.address, {
-            blockTag: blockNumber,
+            blockTag: blockNumber
           })
         )
-      );
+      )
       const fsGlp_balanceOf_batchingManager = Number(
         formatEther(
           await dnGmxBatchingManager.dnGmxJuniorVaultGlpBalance({
-            blockTag: blockNumber,
+            blockTag: blockNumber
           })
         )
-      );
+      )
       const fsGlp_totalSuply = Number(
         formatEther(
           await fsGLP.totalSupply({
-            blockTag: blockNumber,
+            blockTag: blockNumber
           })
         )
-      );
+      )
 
       // result
       const res: { [key: string]: string | number } = {
@@ -193,16 +187,16 @@ export async function perInterval(networkName: NetworkName) {
         uniPrice,
         fsGlp_balanceOf_juniorVault,
         fsGlp_balanceOf_batchingManager,
-        fsGlp_totalSuply,
-      };
-
-      for (let i = 0; i < allWhitelistedTokens.length; i++) {
-        res[allWhitelistedTokens[i]] = formatUnits(usdgAmounts[i], 18);
+        fsGlp_totalSuply
       }
 
-      return res;
-    }
-  );
+      for (let i = 0; i < allWhitelistedTokens.length; i++) {
+        res[allWhitelistedTokens[i]] = formatUnits(usdgAmounts[i], 18)
+      }
 
-  return data;
+      return res
+    }
+  )
+
+  return data
 }

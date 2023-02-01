@@ -1,10 +1,10 @@
-import redis from "ioredis";
+import redis from 'ioredis'
 
-let _redisClient: any;
+let _redisClient: any
 
 export function getRedisClient() {
   if (_redisClient) {
-    return _redisClient;
+    return _redisClient
   }
-  return (_redisClient = redis.createClient());
+  return (_redisClient = redis.createClient())
 }

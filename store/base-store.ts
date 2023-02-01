@@ -1,13 +1,14 @@
-import Debugger from "debug";
-import { currentTimestamp } from "../utils";
-const debug = Debugger("apis:base-store");
+import Debugger from 'debug'
+
+import { currentTimestamp } from '../utils'
+const debug = Debugger('apis:base-store')
 export interface Internal {
-  [key: string]: string;
+  [key: string]: string
 }
 
 export class BaseStore<Value> {
-  _promises = new Map<string, any>();
-  _timestampPrepend = "__timestamp_";
+  _promises = new Map<string, any>()
+  _timestampPrepend = '__timestamp_'
 
   /**
    * Gets the value from storage, or sets it if it doesn't exist.
@@ -20,29 +21,29 @@ export class BaseStore<Value> {
     valueFn: () => V | Promise<V>,
     secondsOld?: number
   ): Promise<V> {
-    const read = await this.get<V>(key, secondsOld);
+    const read = await this.get<V>(key, secondsOld)
 
-    let valuePromise = this._promises.get(key);
+    let valuePromise = this._promises.get(key)
     if (read !== undefined) {
-      debug("getOrSet: returning the value present in storage");
-      return read;
+      debug('getOrSet: returning the value present in storage')
+      return read
     } else if (valuePromise) {
-      debug("getOrSet: value being queried already, waiting for it");
-      return await valuePromise;
+      debug('getOrSet: value being queried already, waiting for it')
+      return valuePromise
     } else {
-      debug("getOrSet: value not present in storage, fetching it");
-      valuePromise = valueFn();
+      debug('getOrSet: value not present in storage, fetching it')
+      valuePromise = valueFn()
       if (valuePromise instanceof Promise) {
-        this._promises.set(key, valuePromise);
+        this._promises.set(key, valuePromise)
       }
       try {
-        const value = await valuePromise;
-        await this.set<V>(key, value);
-        this._promises.set(key, undefined);
-        return value;
+        const value = await valuePromise
+        await this.set<V>(key, value)
+        this._promises.set(key, undefined)
+        return value
       } catch (e) {
-        this._promises.set(key, undefined);
-        throw e;
+        this._promises.set(key, undefined)
+        throw e
       }
     }
   }
@@ -52,31 +53,26 @@ export class BaseStore<Value> {
    * @param _key The key to get.
    * @returns The value, or undefined if it doesn't exist.
    */
-  async get<V = Value>(
-    _key: string,
-    secondsOld?: number
-  ): Promise<V | undefined> {
-    const value = this._get<V>(_key);
+  async get<V = Value>(_key: string, secondsOld?: number): Promise<V | undefined> {
+    const value = this._get<V>(_key)
     // if value not present just return undefined immediately
-    if (value === undefined) return undefined;
+    if (value === undefined) return undefined
     if (value !== undefined && secondsOld !== undefined) {
-      const creationTimestamp = await this._get<number>(
-        this._timestampPrepend + _key
-      );
+      const creationTimestamp = await this._get<number>(this._timestampPrepend + _key)
       if (creationTimestamp === undefined && !!this._timestampPrepend) {
         // if there is no timestamp, set current timestamp
-        await this._set(this._timestampPrepend + _key, currentTimestamp());
+        await this._set(this._timestampPrepend + _key, currentTimestamp())
       } else if (
         creationTimestamp !== undefined &&
         creationTimestamp !== -1 &&
         creationTimestamp + secondsOld < currentTimestamp()
       ) {
         // if the timestamp is older than the secondsOld, delete the value
-        await this._set(_key, undefined);
-        return undefined;
+        await this._set(_key, undefined)
+        return undefined
       }
     }
-    return value;
+    return value
   }
 
   /**
@@ -87,10 +83,10 @@ export class BaseStore<Value> {
    */
   async set<V = Value>(_key: string, _value: V): Promise<void> {
     // set value
-    await this._set(_key, _value);
+    await this._set(_key, _value)
     // set timestamp
     if (this._timestampPrepend) {
-      await this._set(this._timestampPrepend + _key, currentTimestamp());
+      await this._set(this._timestampPrepend + _key, currentTimestamp())
     }
   }
 
@@ -98,13 +94,13 @@ export class BaseStore<Value> {
    * Override this method in a subclass to implement a custom storage backend.
    */
   async _get<V = Value>(_key: string): Promise<V | undefined> {
-    throw new Error("BaseStore._get: method not implemented.");
+    throw new Error('BaseStore._get: method not implemented.')
   }
 
   /**
    * Override this method in a subclass to implement a custom storage backend.
    */
   async _set<V = Value>(_key: string, _value: V): Promise<void> {
-    throw new Error("BaseStore._set: method not implemented.");
+    throw new Error('BaseStore._set: method not implemented.')
   }
 }

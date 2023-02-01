@@ -1,0 +1,13 @@
+node_modules/
+build
+
+log
+.next
+.vscode
+.env
+.now
+out
+.ds_store
+.DS_Store
+
+.eslintcache

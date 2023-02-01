@@ -1,12 +1,13 @@
-import express from "express";
-import logsRouter from "./logs";
-import dataRouter from "./data";
+import express from 'express'
 
-export const router = express.Router();
+import dataRouter from './data'
+import logsRouter from './logs'
 
-router.get("/", function (req, res, next) {
-  res.json({ hello: "world" });
-});
+export const router = express.Router()
 
-router.use("/logs", logsRouter);
-router.use("/data", dataRouter);
+router.get('/', function (req, res, next) {
+  res.json({ hello: 'world' })
+})
+
+router.use('/logs', logsRouter)
+router.use('/data', dataRouter)

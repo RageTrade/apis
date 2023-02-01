@@ -1,10 +1,11 @@
-import { deltaNeutralGmxVaults, NetworkName, tokens } from "@ragetrade/sdk";
-import { RewardsHarvestedEvent } from "@ragetrade/sdk/dist/typechain/delta-neutral-gmx-vaults/contracts/vaults/DnGmxJuniorVault";
-import { ethers } from "ethers";
-import { SimpleEventCache } from "../../../../../indexer/simple-event-cache";
-import { ErrorWithStatusCode } from "../../../../../utils";
-import { getLogsInLoop } from "../../helpers";
-import { GET_LOGS_BLOCK_INTERVAL } from "../common";
+import type { NetworkName } from '@ragetrade/sdk'
+import { deltaNeutralGmxVaults } from '@ragetrade/sdk'
+import type { RewardsHarvestedEvent } from '@ragetrade/sdk/dist/typechain/delta-neutral-gmx-vaults/contracts/vaults/DnGmxJuniorVault'
+import type { ethers } from 'ethers'
+
+import { ErrorWithStatusCode } from '../../../../../utils'
+import { getLogsInLoop } from '../../helpers'
+import { GET_LOGS_BLOCK_INTERVAL } from '../common'
 
 export async function rewardsHarvested(
   networkName: NetworkName,
@@ -14,16 +15,15 @@ export async function rewardsHarvested(
   const { dnGmxJuniorVault } = deltaNeutralGmxVaults.getContractsSync(
     networkName,
     provider
-  );
+  )
 
-  const { DnGmxJuniorVaultDeployment } =
-    deltaNeutralGmxVaults.getDeployments(networkName);
+  const { DnGmxJuniorVaultDeployment } = deltaNeutralGmxVaults.getDeployments(networkName)
 
-  if (!startBlock) startBlock = DnGmxJuniorVaultDeployment.receipt?.blockNumber;
-  const endBlock = await provider.getBlockNumber();
+  if (!startBlock) startBlock = DnGmxJuniorVaultDeployment.receipt?.blockNumber
+  const endBlock = await provider.getBlockNumber()
 
   if (!startBlock) {
-    throw new ErrorWithStatusCode("Start block is not defined", 500);
+    throw new ErrorWithStatusCode('Start block is not defined', 500)
   }
 
   const logs = await getLogsInLoop(
@@ -32,7 +32,7 @@ export async function rewardsHarvested(
     startBlock,
     endBlock,
     GET_LOGS_BLOCK_INTERVAL
-  );
+  )
 
-  return logs as RewardsHarvestedEvent[];
+  return logs as RewardsHarvestedEvent[]
 }

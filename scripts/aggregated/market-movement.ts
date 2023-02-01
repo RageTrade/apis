@@ -1,71 +1,66 @@
-import {
-  aave,
-  chainlink,
-  deltaNeutralGmxVaults,
-  gmxProtocol,
-  NetworkName,
-  tokens,
-} from "@ragetrade/sdk";
-import { BigNumber } from "ethers";
-import { fetchJson, formatEther, formatUnits } from "ethers/lib/utils";
-import { getProviderAggregate } from "../../providers";
-import { days, mins, timestampRoundDown } from "../../utils";
-import { intersection } from "./util/combine";
-import { gmxVault, juniorVault } from "./util/events";
-import { price } from "./util/helpers";
-import { parallelize } from "./util/parallelize";
-import { Entry } from "./util/types";
+import type { NetworkName } from '@ragetrade/sdk'
+import { chainlink, deltaNeutralGmxVaults, gmxProtocol, tokens } from '@ragetrade/sdk'
+import { BigNumber } from 'ethers'
+import { fetchJson, formatEther, formatUnits } from 'ethers/lib/utils'
+
+import { getProviderAggregate } from '../../providers'
+import { days, timestampRoundDown } from '../../utils'
+import { intersection } from './util/combine'
+import { gmxVault, juniorVault } from './util/events'
+import { price } from './util/helpers'
+import { parallelize } from './util/parallelize'
+import type { Entry } from './util/types'
 
 export type GlobalMarketMovementEntry = Entry<{
-  timestamp: number;
+  timestamp: number
 
-  fsGlp_balanceOf_juniorVault: number;
-  fsGlp_balanceOf_batchingManager: number;
-  glp_totalSupply: number;
-  vaultGlp: number;
-  glpPrice: number;
-  wethUsdgAmount: number;
-  wbtcUsdgAmount: number;
-  linkUsdgAmount: number;
-  uniUsdgAmount: number;
-  totalUsdcAmount: number;
-  wethTokenWeight: number;
-  wbtcTokenWeight: number;
-  linkTokenWeight: number;
-  uniTokenWeight: number;
-  wethPrice: number;
-  wbtcPrice: number;
-  linkPrice: number;
-  uniPrice: number;
-  wethCurrentToken: number;
-  wbtcCurrentToken: number;
-  linkCurrentToken: number;
-  uniCurrentToken: number;
+  fsGlp_balanceOf_juniorVault: number
+  fsGlp_balanceOf_batchingManager: number
+  glp_totalSupply: number
+  vaultGlp: number
+  glpPrice: number
+  wethUsdgAmount: number
+  wbtcUsdgAmount: number
+  linkUsdgAmount: number
+  uniUsdgAmount: number
+  totalUsdcAmount: number
+  wethTokenWeight: number
+  wbtcTokenWeight: number
+  linkTokenWeight: number
+  uniTokenWeight: number
+  wethPrice: number
+  wbtcPrice: number
+  linkPrice: number
+  uniPrice: number
+  wethCurrentToken: number
+  wbtcCurrentToken: number
+  linkCurrentToken: number
+  uniCurrentToken: number
 
-  ethPnl: number;
-  btcPnl: number;
-  linkPnl: number;
-  uniPnl: number;
-  pnl: number;
-}>;
+  ethPnl: number
+  btcPnl: number
+  linkPnl: number
+  uniPnl: number
+  pnl: number
+}>
 
 export interface GlobalMarketMovementDailyEntry {
-  startTimestamp: number;
-  endTimestamp: number;
-  ethPnlNet: number;
-  btcPnlNet: number;
-  linkPnlNet: number;
-  uniPnlNet: number;
-  pnlNet: number;
+  startTimestamp: number
+  endTimestamp: number
+  ethPnlNet: number
+  btcPnlNet: number
+  linkPnlNet: number
+  uniPnlNet: number
+  pnlNet: number
 }
 export interface GlobalMarketMovementResult {
-  data: GlobalMarketMovementEntry[];
-  dailyData: GlobalMarketMovementDailyEntry[];
-  totalEthPnl: number;
-  totalBtcPnl: number;
-  totalLinkPnl: number;
-  totalUniPnl: number;
-  totalPnl: number;
+  data: GlobalMarketMovementEntry[]
+  dailyData: GlobalMarketMovementDailyEntry[]
+  totalEthPnl: number
+  totalBtcPnl: number
+  totalLinkPnl: number
+  totalUniPnl: number
+  totalPnl: number
 }
 
 export async function getMarketMovement(
@@ -75,47 +70,38 @@ export async function getMarketMovement(
   if (excludeRawData) {
     const resp: any = await fetchJson({
       url: `http://localhost:3000/data/aggregated/get-market-movement?networkName=${networkName}`,
-      timeout: 1_000_000_000, // huge number
-    });
-    delete resp.result.data;
-    return resp.result;
+      timeout: 1_000_000_000 // huge number
+    })
+    delete resp.result.data
+    return resp.result
   }
 
-  const provider = getProviderAggregate(networkName);
+  const provider = getProviderAggregate(networkName)
 
   const { dnGmxJuniorVault, dnGmxBatchingManager } =
-    deltaNeutralGmxVaults.getContractsSync(networkName, provider);
-  const { gmxUnderlyingVault } = gmxProtocol.getContractsSync(
-    networkName,
-    provider
-  );
-  const { weth, wbtc, fsGLP, glp } = tokens.getContractsSync(
-    networkName,
-    provider
-  );
-  const { ethUsdAggregator } = chainlink.getContractsSync(
-    networkName,
-    provider
-  );
+    deltaNeutralGmxVaults.getContractsSync(networkName, provider)
+  const { gmxUnderlyingVault } = gmxProtocol.getContractsSync(networkName, provider)
+  const { weth, wbtc, fsGLP, glp } = tokens.getContractsSync(networkName, provider)
+  const { ethUsdAggregator } = chainlink.getContractsSync(networkName, provider)
 
   // LINK / USD: https://arbiscan.io/address/0x86E53CF1B870786351Da77A57575e79CB55812CB
   // UNI / USD: https://arbiscan.io/address/0x9C917083fDb403ab5ADbEC26Ee294f6EcAda2720
 
-  const link = wbtc.attach("0xf97f4df75117a78c1A5a0DBb814Af92458539FB4");
-  const uni = wbtc.attach("0xFa7F8980b0f1E64A2062791cc3b0871572f1F7f0");
+  const link = wbtc.attach('0xf97f4df75117a78c1A5a0DBb814Af92458539FB4')
+  const uni = wbtc.attach('0xFa7F8980b0f1E64A2062791cc3b0871572f1F7f0')
   const linkUsdAggregator = ethUsdAggregator.attach(
-    "0x86E53CF1B870786351Da77A57575e79CB55812CB"
-  );
+    '0x86E53CF1B870786351Da77A57575e79CB55812CB'
+  )
   const uniUsdAggregator = ethUsdAggregator.attach(
-    "0x9C917083fDb403ab5ADbEC26Ee294f6EcAda2720"
-  );
+    '0x9C917083fDb403ab5ADbEC26Ee294f6EcAda2720'
+  )
 
   const allWhitelistedTokensLength = (
     await gmxUnderlyingVault.allWhitelistedTokensLength()
-  ).toNumber();
-  const allWhitelistedTokens: string[] = [];
+  ).toNumber()
+  const allWhitelistedTokens: string[] = []
   for (let i = 0; i < allWhitelistedTokensLength; i++) {
-    allWhitelistedTokens.push(await gmxUnderlyingVault.allWhitelistedTokens(i));
+    allWhitelistedTokens.push(await gmxUnderlyingVault.allWhitelistedTokens(i))
   }
 
   const data = await parallelize(
@@ -127,125 +113,121 @@ export async function getMarketMovement(
         juniorVault.withdraw,
         juniorVault.rebalanced,
         gmxVault.increaseUsdgAmount,
-        gmxVault.decreaseUsdgAmount,
+        gmxVault.decreaseUsdgAmount
       ],
       ignoreMoreEventsInSameBlock: true,
-      startBlockNumber: 45412307,
+      startBlockNumber: 45412307
     },
     async (_i, blockNumber, event) => {
-      const block = await provider.getBlock(blockNumber);
+      const block = await provider.getBlock(blockNumber)
       const usdgAmounts = await Promise.all(
         allWhitelistedTokens.map((token) =>
           gmxUnderlyingVault.usdgAmounts(token, { blockTag: blockNumber })
         )
-      );
+      )
 
       const wethUsdgAmount = Number(
         formatEther(
           await gmxUnderlyingVault.usdgAmounts(weth.address, {
-            blockTag: blockNumber,
+            blockTag: blockNumber
           })
         )
-      );
+      )
       const wbtcUsdgAmount = Number(
         formatEther(
           await gmxUnderlyingVault.usdgAmounts(wbtc.address, {
-            blockTag: blockNumber,
+            blockTag: blockNumber
           })
         )
-      );
+      )
       const linkUsdgAmount = Number(
         formatEther(
           await gmxUnderlyingVault.usdgAmounts(link.address, {
-            blockTag: blockNumber,
+            blockTag: blockNumber
           })
         )
-      );
+      )
       const uniUsdgAmount = Number(
         formatEther(
           await gmxUnderlyingVault.usdgAmounts(uni.address, {
-            blockTag: blockNumber,
+            blockTag: blockNumber
           })
         )
-      );
+      )
 
       const totalUsdcAmount = Number(
         formatEther(usdgAmounts.reduce((a, b) => a.add(b), BigNumber.from(0)))
-      );
+      )
 
-      const wethTokenWeight = wethUsdgAmount / totalUsdcAmount;
-      const wbtcTokenWeight = wbtcUsdgAmount / totalUsdcAmount;
-      const linkTokenWeight = linkUsdgAmount / totalUsdcAmount;
-      const uniTokenWeight = uniUsdgAmount / totalUsdcAmount;
+      const wethTokenWeight = wethUsdgAmount / totalUsdcAmount
+      const wbtcTokenWeight = wbtcUsdgAmount / totalUsdcAmount
+      const linkTokenWeight = linkUsdgAmount / totalUsdcAmount
+      const uniTokenWeight = uniUsdgAmount / totalUsdcAmount
 
       const glpPrice = Number(
         formatEther(
           await dnGmxJuniorVault.getPrice(false, {
-            blockTag: blockNumber,
+            blockTag: blockNumber
           })
         )
-      );
+      )
 
-      const wethPrice = await price(weth.address, blockNumber, networkName);
-      const wbtcPrice = await price(wbtc.address, blockNumber, networkName);
+      const wethPrice = await price(weth.address, blockNumber, networkName)
+      const wbtcPrice = await price(wbtc.address, blockNumber, networkName)
       const linkPrice = Number(
         formatUnits(
           (
             await linkUsdAggregator.latestRoundData({
-              blockTag: blockNumber,
+              blockTag: blockNumber
             })
           ).answer,
           8
         )
-      );
+      )
       const uniPrice = Number(
         formatUnits(
           (
             await uniUsdAggregator.latestRoundData({
-              blockTag: blockNumber,
+              blockTag: blockNumber
             })
           ).answer,
           8
         )
-      );
+      )
       const fsGlp_balanceOf_juniorVault = Number(
         formatEther(
           await fsGLP.balanceOf(dnGmxJuniorVault.address, {
-            blockTag: blockNumber,
+            blockTag: blockNumber
           })
         )
-      );
+      )
       const fsGlp_balanceOf_batchingManager = Number(
         formatEther(
           await dnGmxBatchingManager.dnGmxJuniorVaultGlpBalance({
-            blockTag: blockNumber,
+            blockTag: blockNumber
           })
         )
-      );
+      )
 
       // this is not used, but here for reference in output data
       const glp_totalSupply = Number(
         formatEther(
           await glp.totalSupply({
-            blockTag: blockNumber,
+            blockTag: blockNumber
           })
         )
-      );
+      )
 
-      const vaultGlp =
-        fsGlp_balanceOf_juniorVault + fsGlp_balanceOf_batchingManager;
+      const vaultGlp = fsGlp_balanceOf_juniorVault + fsGlp_balanceOf_batchingManager
 
-      const wethCurrentToken =
-        (wethTokenWeight * vaultGlp * glpPrice) / wethPrice;
-      const wbtcCurrentToken =
-        (wbtcTokenWeight * vaultGlp * glpPrice) / wbtcPrice;
-      const linkCurrentToken =
-        (linkTokenWeight * vaultGlp * glpPrice) / linkPrice;
-      const uniCurrentToken = (uniTokenWeight * vaultGlp * glpPrice) / uniPrice;
+      const wethCurrentToken = (wethTokenWeight * vaultGlp * glpPrice) / wethPrice
+      const wbtcCurrentToken = (wbtcTokenWeight * vaultGlp * glpPrice) / wbtcPrice
+      const linkCurrentToken = (linkTokenWeight * vaultGlp * glpPrice) / linkPrice
+      const uniCurrentToken = (uniTokenWeight * vaultGlp * glpPrice) / uniPrice
 
       return {
         blockNumber: blockNumber,
-        eventName: event.event ?? "unknown",
+        eventName: event.event ?? 'unknown',
         timestamp: block.timestamp,
         fsGlp_balanceOf_juniorVault,
         fsGlp_balanceOf_batchingManager,
@@ -268,29 +250,26 @@ export async function getMarketMovement(
         wethCurrentToken,
         wbtcCurrentToken,
         linkCurrentToken,
-        uniCurrentToken,
-      };
+        uniCurrentToken
+      }
     }
-  );
+  )
 
   const extraData: Entry<{
-    ethPnl: number;
-    btcPnl: number;
-    uniPnl: number;
-    linkPnl: number;
-    pnl: number;
-  }>[] = [];
+    ethPnl: number
+    btcPnl: number
+    uniPnl: number
+    linkPnl: number
+    pnl: number
+  }>[] = []
 
-  let last;
+  let last
   for (const current of data) {
     if (last) {
-      const ethPnl =
-        last.wethCurrentToken * (current.wethPrice - last.wethPrice);
-      const btcPnl =
-        last.wbtcCurrentToken * (current.wbtcPrice - last.wbtcPrice);
-      const uniPnl = last.uniCurrentToken * (current.uniPrice - last.uniPrice);
-      const linkPnl =
-        last.linkCurrentToken * (current.linkPrice - last.linkPrice);
+      const ethPnl = last.wethCurrentToken * (current.wethPrice - last.wethPrice)
+      const btcPnl = last.wbtcCurrentToken * (current.wbtcPrice - last.wbtcPrice)
+      const uniPnl = last.uniCurrentToken * (current.uniPrice - last.uniPrice)
+      const linkPnl = last.linkCurrentToken * (current.linkPrice - last.linkPrice)
 
       extraData.push({
         blockNumber: current.blockNumber,
@@ -298,8 +277,8 @@ export async function getMarketMovement(
         btcPnl,
         uniPnl,
         linkPnl,
-        pnl: ethPnl + btcPnl + uniPnl + linkPnl,
-      });
+        pnl: ethPnl + btcPnl + uniPnl + linkPnl
+      })
     } else {
       extraData.push({
         blockNumber: current.blockNumber,
@@ -307,36 +286,32 @@ export async function getMarketMovement(
         btcPnl: 0,
         uniPnl: 0,
         linkPnl: 0,
-        pnl: 0,
-      });
+        pnl: 0
+      })
     }
-    last = current;
+    last = current
   }
 
   const combinedData = intersection(data, extraData, (a, b) => ({
     ...a,
-    ...b,
-  }));
+    ...b
+  }))
 
   return {
     data: combinedData,
     dailyData: combinedData.reduce(
-      (
-        acc: GlobalMarketMovementDailyEntry[],
-        cur: GlobalMarketMovementEntry
-      ) => {
-        let lastEntry = acc[acc.length - 1];
+      (acc: GlobalMarketMovementDailyEntry[], cur: GlobalMarketMovementEntry) => {
+        let lastEntry = acc[acc.length - 1]
         if (lastEntry && cur.timestamp <= lastEntry.endTimestamp) {
-          lastEntry.btcPnlNet += cur.btcPnl;
-          lastEntry.ethPnlNet += cur.ethPnl;
-          lastEntry.uniPnlNet += cur.uniPnl;
-          lastEntry.linkPnlNet += cur.linkPnl;
-          lastEntry.pnlNet += cur.pnl;
+          lastEntry.btcPnlNet += cur.btcPnl
+          lastEntry.ethPnlNet += cur.ethPnl
+          lastEntry.uniPnlNet += cur.uniPnl
+          lastEntry.linkPnlNet += cur.linkPnl
+          lastEntry.pnlNet += cur.pnl
         } else {
           while (
             lastEntry &&
-            lastEntry.startTimestamp + 1 * days <
-              timestampRoundDown(cur.timestamp)
+            lastEntry.startTimestamp + 1 * days < timestampRoundDown(cur.timestamp)
           ) {
             acc.push({
               startTimestamp: lastEntry.startTimestamp + 1 * days,
@@ -345,9 +320,9 @@ export async function getMarketMovement(
               ethPnlNet: 0,
               uniPnlNet: 0,
               linkPnlNet: 0,
-              pnlNet: 0,
-            });
-            lastEntry = acc[acc.length - 1];
+              pnlNet: 0
+            })
+            lastEntry = acc[acc.length - 1]
           }
           acc.push({
             startTimestamp: timestampRoundDown(cur.timestamp),
@@ -356,10 +331,10 @@ export async function getMarketMovement(
             ethPnlNet: cur.ethPnl,
             uniPnlNet: cur.uniPnl,
             linkPnlNet: cur.linkPnl,
-            pnlNet: cur.pnl,
-          });
+            pnlNet: cur.pnl
+          })
         }
-        return acc;
+        return acc
       },
       []
     ),
@@ -367,6 +342,6 @@ export async function getMarketMovement(
     totalEthPnl: combinedData.reduce((acc, cur) => acc + cur.ethPnl, 0),
     totalUniPnl: combinedData.reduce((acc, cur) => acc + cur.uniPnl, 0),
     totalLinkPnl: combinedData.reduce((acc, cur) => acc + cur.linkPnl, 0),
-    totalPnl: combinedData.reduce((acc, cur) => acc + cur.pnl, 0),
-  };
+    totalPnl: combinedData.reduce((acc, cur) => acc + cur.pnl, 0)
+  }
 }

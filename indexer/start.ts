@@ -1,10 +1,10 @@
-import { config } from "dotenv";
-config();
+import { config } from 'dotenv'
+config()
 
-import { AccountCreatedIndexer } from "./account-created";
+import { AccountCreatedIndexer } from './account-created'
 
-new AccountCreatedIndexer("arbmain").start(17185390);
-new AccountCreatedIndexer("arbgoerli").start(408336);
+new AccountCreatedIndexer('arbmain').start(17185390)
+new AccountCreatedIndexer('arbgoerli').start(408336)
 
 // dn vault events
 

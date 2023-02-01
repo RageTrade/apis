@@ -1,54 +1,46 @@
-import { config } from "dotenv";
-config();
+import { config } from 'dotenv'
+config()
 
-import "./fetch-polyfill";
-import { app } from "./app";
-import Debugger from "debug";
-import http from "http";
-import "./cron-jobs";
+import './fetch-polyfill'
+import './cron-jobs'
 
-const debug = Debugger("apis:server");
+import Debugger from 'debug'
+import http from 'http'
 
-const port = normalizePort(process.env.PORT || "3000");
-app.set("port", port);
+import { app } from './app'
+import { ENV } from './env'
 
-const server = http.createServer(app);
+const debug = Debugger('apis:server')
 
-server.listen(port);
-server.on("error", onError);
-server.on("listening", onListening);
+const port = ENV.PORT || 3000
 
-function normalizePort(val: string) {
-  const port = parseInt(val, 10);
+app.set('port', port)
 
-  // named pipe
-  if (isNaN(port)) return val;
+const server = http.createServer(app)
 
-  // port number
-  if (port >= 0) return port;
-
-  return false;
-}
+server.listen(port)
+server.on('error', onError)
+server.on('listening', onListening)
 
 function onError(error: any) {
-  if (error.syscall !== "listen") {
-    throw error;
+  if (error.syscall !== 'listen') {
+    throw error
   }
 
-  const bind = typeof port === "string" ? "Pipe " + port : "Port " + port;
+  const bind = typeof port === 'string' ? 'Pipe ' + port : 'Port ' + port
 
   // handle specific listen errors with friendly messages
   switch (error.code) {
-    case "EACCES":
-      console.error(bind + " requires elevated privileges");
-      process.exit(1);
-      break;
-    case "EADDRINUSE":
-      console.error(bind + " is already in use");
-      process.exit(1);
-      break;
+    case 'EACCES':
+      console.error(bind + ' requires elevated privileges')
+      process.exit(1)
+      break
+    case 'EADDRINUSE':
+      console.error(bind + ' is already in use')
+      process.exit(1)
+      break
     default:
-      throw error;
+      throw error
   }
 }
 
@@ -57,13 +49,13 @@ function onError(error: any) {
  */
 
 function onListening() {
-  const addr = server.address();
+  const addr = server.address()
   const bind =
     addr !== null
-      ? typeof addr === "string"
-        ? "pipe " + addr
-        : "port " + addr.port
-      : "address is null";
-  debug("Listening on " + bind);
-  console.log("Listening on " + bind);
+      ? typeof addr === 'string'
+        ? 'pipe ' + addr
+        : 'port ' + addr.port
+      : 'address is null'
+  debug('Listening on ' + bind)
+  console.log('Listening on ' + bind)
 }

@@ -1,4 +1,4 @@
-import { EntryBase } from "./types";
+import type { EntryBase } from './types'
 
 /**
  * Gives intersection of two data arrays through blockNumber & logIndex, mixes
@@ -16,18 +16,18 @@ export function combine<
   matcher: (a: A, b: B, aIndex: number, bIndex: number) => boolean,
   combiner: Combiner
 ): ReturnType<Combiner>[] {
-  const combined: ReturnType<Combiner>[] = [];
+  const combined: ReturnType<Combiner>[] = []
 
   for (let aIndex = 0; aIndex < a.length; aIndex++) {
     for (let bIndex = 0; bIndex < b.length; bIndex++) {
       if (matcher(a[aIndex], b[bIndex], aIndex, bIndex)) {
-        combined.push(combiner(a[aIndex], b[bIndex], aIndex, bIndex));
-        break;
+        combined.push(combiner(a[aIndex], b[bIndex], aIndex, bIndex))
+        break
       }
     }
   }
 
-  return combined;
+  return combined
 }
 
 export function intersection<
@@ -42,9 +42,7 @@ export function intersection<
     (aItem, bItem) =>
       aItem.blockNumber === bItem.blockNumber &&
       // if log index exists then check that as well
-      (!!aItem.logIndex && !!bItem.logIndex
-        ? aItem.logIndex === bItem.logIndex
-        : true),
+      (!!aItem.logIndex && !!bItem.logIndex ? aItem.logIndex === bItem.logIndex : true),
     combiner
-  );
+  )
 }

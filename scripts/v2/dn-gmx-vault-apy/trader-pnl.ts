@@ -1,13 +1,13 @@
-import "isomorphic-unfetch";
-import { fetchRetry } from "../../../utils";
+import 'isomorphic-unfetch'
 
-const gmxSubgraphUrl =
-  "https://api.thegraph.com/subgraphs/name/gmx-io/gmx-stats";
+import { fetchRetry } from '../../../utils'
+
+const gmxSubgraphUrl = 'https://api.thegraph.com/subgraphs/name/gmx-io/gmx-stats'
 
 const queryTraderData = async (from_ts: string, to_ts: string) => {
   const results = await fetchRetry(gmxSubgraphUrl, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       query: `
         query gmxTraderStats {
@@ -27,17 +27,17 @@ const queryTraderData = async (from_ts: string, to_ts: string) => {
             shortOpenInterest
           }
         }
-      `,
-    }),
-  });
+      `
+    })
+  })
 
-  return (await results.json()).data;
-};
+  return (await results.json()).data
+}
 
 const queryFeesData = async (from_ts: string, to_ts: string) => {
   const results = await fetchRetry(gmxSubgraphUrl, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       query: `
         query gmxFeeStats {
@@ -56,17 +56,17 @@ const queryFeesData = async (from_ts: string, to_ts: string) => {
             burn
           }
         }
-      `,
-    }),
-  });
+      `
+    })
+  })
 
-  return (await results.json()).data;
-};
+  return (await results.json()).data
+}
 
 const queryGlpData = async (from_ts: string, to_ts: string) => {
   const results = await fetchRetry(gmxSubgraphUrl, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       query: `
         query gmxGlpStats {
@@ -88,45 +88,43 @@ const queryGlpData = async (from_ts: string, to_ts: string) => {
             distributedEth
           }
         }
-      `,
-    }),
-  });
+      `
+    })
+  })
 
-  return (await results.json()).data;
-};
+  return (await results.json()).data
+}
 
 export const getTraderPnl = async () => {
-  const currentDate = new Date();
+  const currentDate = new Date()
 
   // const threeMonthsOldDate = new Date();
   // threeMonthsOldDate.setMonth(currentDate.getMonth() - 3);
 
-  const twoWeeksOldDate = new Date();
-  twoWeeksOldDate.setDate(twoWeeksOldDate.getDate() - 28);
+  const twoWeeksOldDate = new Date()
+  twoWeeksOldDate.setDate(twoWeeksOldDate.getDate() - 28)
 
-  const to_ts = Math.floor(currentDate.getTime() / 1000).toString();
-  const from_ts = Math.floor(twoWeeksOldDate.getTime() / 1000).toString();
+  const to_ts = Math.floor(currentDate.getTime() / 1000).toString()
+  const from_ts = Math.floor(twoWeeksOldDate.getTime() / 1000).toString()
 
-  let aum = 0;
-  let traderPnl = 0;
+  let aum = 0
+  let traderPnl = 0
 
   const [glpData, traderData] = await Promise.all([
     queryGlpData(from_ts, to_ts),
-    queryTraderData(from_ts, to_ts),
-  ]);
+    queryTraderData(from_ts, to_ts)
+  ])
 
   for (const each of glpData.glpStats) {
-    aum += each.aumInUsdg / 1e18;
+    aum += each.aumInUsdg / 1e18
   }
 
   for (const each of traderData.tradingStats) {
-    const loss = each.loss / 1e30;
-    const profit = each.profit / 1e30;
+    const loss = each.loss / 1e30
+    const profit = each.profit / 1e30
 
-    traderPnl += profit - loss;
+    traderPnl += profit - loss
   }
 
-  return aum > 0
-    ? (traderPnl / aum) * glpData.glpStats.length * 13 * 100 * -1
-    : 0;
-};
+  return aum > 0 ? (traderPnl / aum) * glpData.glpStats.length * 13 * 100 * -1 : 0
+}
