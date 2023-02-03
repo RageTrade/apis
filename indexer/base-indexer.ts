@@ -3,6 +3,7 @@ import type { ethers, EventFilter } from 'ethers'
 
 import { getProviderAggregate } from '../providers'
 import type { BaseStore } from '../store/base-store'
+import { getLogs } from '../utils'
 
 /**
  * @description BaseIndexer is a base class for indexers.
@@ -116,45 +117,4 @@ export class BaseIndexer<DataStoreType> {
       await this._getOrUpdateSyncBlock(latestBlock)
     }
   }
-}
-
-async function getLogs(
-  filter: EventFilter,
-  fromBlock: number,
-  toBlock: number,
-  provider: ethers.providers.Provider,
-  networkName: NetworkName
-) {
-  let logs: ethers.providers.Log[] | undefined
-
-  let _fromBlock = fromBlock
-  let _toBlock = toBlock
-  let _fetchedBlock = fromBlock - 1
-
-  while (_fetchedBlock < toBlock) {
-    try {
-      console.log(networkName, 'getLogs', _fromBlock, _toBlock)
-      const _logs = await provider.getLogs({
-        ...filter,
-        fromBlock: _fromBlock,
-        toBlock: _toBlock
-      })
-      logs = logs ? logs.concat(_logs) : _logs
-      // setting fetched block to the last block of the fetched logs
-      _fetchedBlock = _toBlock
-      // next getLogs query range
-      _fromBlock = _toBlock + 1
-      _toBlock = toBlock
-    } catch {
-      // if query failed, re-try with a shorter block interval
-      _toBlock = _fromBlock + Math.floor((_toBlock - _fromBlock) / 2)
-      console.error(networkName, 'getLogs failed')
-    }
-  }
-
-  if (!logs) {
-    throw new Error('logs is undefined in getLogs')
-  }
-
-  return logs
 }
