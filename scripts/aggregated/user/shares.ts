@@ -23,6 +23,7 @@ export type UserSharesEntry = Entry<{
 
 export interface UserSharesResult {
   data: UserSharesEntry[]
+  dataLength: number
   userJuniorVaultShares: number
   userSeniorVaultShares: number
 }
@@ -217,6 +218,7 @@ export async function getUserShares(
     cacheTimestamp: totalSharesData.cacheTimestamp,
     result: {
       data,
+      dataLength: data.length,
       userJuniorVaultShares: data[data.length - 1]?.userJuniorVaultShares ?? 0,
       userSeniorVaultShares: data[data.length - 1]?.userSeniorVaultShares ?? 0
     }

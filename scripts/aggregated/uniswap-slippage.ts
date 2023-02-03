@@ -38,6 +38,8 @@ export interface GlobalUniswapSlippageResult {
   data: GlobalUniswapSlippageEntry[]
   dailyData: GlobalUniswapSlippageDailyEntry[]
 
+  dataLength: number
+
   totalUniswapVolume: number
   totalUniswapSlippage: number
 
@@ -197,6 +199,7 @@ export async function getUniswapSlippage(
       },
       []
     ),
+    dataLength: data.length,
     totalUniswapVolume: data.reduce((acc, cur) => acc + cur.uniswapVolume, 0),
     totalUniswapSlippage: data.reduce((acc, cur) => acc + cur.uniswapSlippage, 0),
     totalBtcBought: data.reduce((acc, cur) => acc + cur.btcBought, 0),

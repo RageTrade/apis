@@ -38,6 +38,7 @@ export interface UserDeltaSpreadResult {
   data: UserDeltaSpreadEntry[]
   dailyData: UserDeltaSpreadDailyEntry[]
 
+  dataLength: number
   userTotalUniswapVolume: number
   userTotalUniswapSlippage: number
   userTotalBtcBought: number
@@ -177,6 +178,7 @@ export async function getUserDeltaSpread(
         },
         []
       ),
+      dataLength: data.length,
       userTotalUniswapVolume: data.reduce((acc, cur) => acc + cur.userUniswapVolume, 0),
       userTotalUniswapSlippage: data.reduce(
         (acc, cur) => acc + cur.userUniswapSlippage,

@@ -22,6 +22,7 @@ export interface UserGlpPnlDailyEntry {
 export interface UserGlpPnlResult {
   data: UserGlpPnlEntry[]
   dailyData: UserGlpPnlDailyEntry[]
+  dataLength: number
   userTotalGlpPnl: number
 }
 
@@ -94,6 +95,7 @@ export async function getUserGlpPnl(
         }
         return acc
       }, []),
+      dataLength: data.length,
       userTotalGlpPnl: data.reduce((acc, cur) => acc + cur.userGlpPnl, 0)
     }
   }

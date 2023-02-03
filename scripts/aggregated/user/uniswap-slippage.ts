@@ -23,6 +23,7 @@ export interface UserUniswapSlippageDailyEntry {
 export interface UserUniswapSlippageResult {
   data: UserUniswapSlippageEntry[]
   dailyData: UserUniswapSlippageDailyEntry[]
+  dataLength: number
   userTotalUniswapSlippage: number
   userTotalUniswapVolume: number
 }
@@ -110,6 +111,7 @@ export async function getUserUniswapSlippage(
         },
         []
       ),
+      dataLength: data.length,
       userTotalUniswapSlippage: data.reduce(
         (acc, cur) => acc + cur.userUniswapSlippage,
         0
