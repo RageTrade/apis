@@ -2,12 +2,11 @@ import { fetchJson } from "ethers/lib/utils";
 
 import { NetworkName, ResultWithMetadata } from "@ragetrade/sdk";
 
-import { combine } from "../util/combine";
+import { addNullEntry, combineNonOverlappingEntries } from "../util/combine";
 import { GlobalMarketMovementResult } from "../market-movement";
 import { Entry } from "../util/types";
-import { UserSharesResult } from "./shares";
+import { nullUserSharesEntry, UserSharesResult } from "./shares";
 import { timestampRoundDown, days, safeDivNumer } from "../../../utils";
-import { matchWithNonOverlappingEntries } from "./common";
 
 export type UserMarketMovementEntry = Entry<{
   timestamp: number;
@@ -33,6 +32,7 @@ export interface UserMarketMovementDailyEntry {
 export interface UserMarketMovementResult {
   data: UserMarketMovementEntry[];
   dailyData: UserMarketMovementDailyEntry[];
+  dataLength: number;
   userTotalEthPnl: number;
   userTotalBtcPnl: number;
   userTotalLinkPnl: number;
@@ -66,10 +66,9 @@ export async function getUserMarketMovement(
       timeout: 1_000_000_000, // huge number
     });
 
-  const data = combine(
+  const data = combineNonOverlappingEntries(
     marketMovementResponse.result.data,
-    userSharesResponse.result.data,
-    matchWithNonOverlappingEntries.bind(null, userSharesResponse.result.data),
+    addNullEntry(userSharesResponse.result.data, nullUserSharesEntry),
     (marketMovementData, userSharesData) => ({
       ...userSharesData, // some of this data can get overriden by the next line
       ...marketMovementData,

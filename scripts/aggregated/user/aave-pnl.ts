@@ -2,12 +2,11 @@ import { fetchJson } from "ethers/lib/utils";
 
 import { NetworkName, ResultWithMetadata } from "@ragetrade/sdk";
 
-import { combine } from "../util/combine";
+import { combineNonOverlappingEntries, addNullEntry } from "../util/combine";
 import { GlobalAavePnlResult } from "../aave-pnl";
 import { Entry } from "../util/types";
-import { UserSharesResult } from "./shares";
+import { nullUserSharesEntry, UserSharesResult } from "./shares";
 import { days, safeDivNumer, timestampRoundDown } from "../../../utils";
-import { matchWithNonOverlappingEntries } from "./common";
 
 export type UserAavePnlEntry = Entry<{
   timestamp: number;
@@ -53,19 +52,23 @@ export async function getUserAavePnl(
       timeout: 1_000_000_000, // huge number
     });
 
-  const data = combine(
+  console.log("aavePnlResponse", aavePnlResponse.result.data.length);
+  console.log("userSharesResponse", userSharesResponse.result.data.length);
+
+  const data = combineNonOverlappingEntries(
     aavePnlResponse.result.data,
-    userSharesResponse.result.data,
-    matchWithNonOverlappingEntries.bind(null, userSharesResponse.result.data),
+    addNullEntry(userSharesResponse.result.data, nullUserSharesEntry),
     (aavePnlData, userSharesData) => ({
-      ...aavePnlData,
       ...userSharesData,
+      ...aavePnlData,
       userAavePnl: safeDivNumer(
         aavePnlData.aavePnl * userSharesData.userJuniorVaultShares,
         userSharesData.totalJuniorVaultShares
       ),
     })
   );
+
+  console.log("data", data.length);
 
   return {
     cacheTimestamp:
@@ -79,6 +82,7 @@ export async function getUserAavePnl(
       data,
       dailyData: data.reduce(
         (acc: UserAavePnlDailyEntry[], cur: UserAavePnlEntry) => {
+          if (cur.timestamp === 0) return acc;
           let lastEntry = acc[acc.length - 1];
           if (lastEntry && cur.timestamp <= lastEntry.endTimestamp) {
             lastEntry.userAavePnlNet += cur.userAavePnl;

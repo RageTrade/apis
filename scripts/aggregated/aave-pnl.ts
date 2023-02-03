@@ -181,6 +181,7 @@ export async function getAavePnl(
     dataLength: combinedData.length,
     dailyData: combinedData.reduce(
       (acc: GlobalAavePnlDailyEntry[], cur: GlobalAavePnlEntry) => {
+        if (cur.timestamp === 0) return acc;
         let lastEntry = acc[acc.length - 1];
         if (lastEntry && cur.timestamp <= lastEntry.endTimestamp) {
           lastEntry.aavePnlNet += cur.aavePnl;

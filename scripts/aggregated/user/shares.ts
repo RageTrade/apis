@@ -11,11 +11,13 @@ import {
 import { getProviderAggregate } from "../../../providers";
 import { getSubgraph } from "../../../subgraphs";
 import { ErrorWithStatusCode } from "../../../utils";
-import { GlobalTotalSharesResult } from "../total-shares";
-import { combine } from "../util/combine";
+import {
+  GlobalTotalSharesResult,
+  nullGlobalTotalSharesEntry,
+} from "../total-shares";
+import { combineNonOverlappingEntries, addNullEntry } from "../util/combine";
 import { Entry } from "../util/types";
 import whitelist from "./whitelist";
-import { matchWithNonOverlappingEntries } from "./common";
 
 export type UserSharesEntry = Entry<{
   timestamp: number;
@@ -33,6 +35,15 @@ export interface UserSharesResult {
 }
 
 type Action = "send" | "receive" | "deposit" | "withdraw";
+
+export const nullUserSharesEntry: UserSharesEntry = {
+  blockNumber: 0,
+  timestamp: 0,
+  userJuniorVaultShares: 0,
+  userSeniorVaultShares: 0,
+  totalJuniorVaultShares: 0,
+  totalSeniorVaultShares: 0,
+};
 
 export async function getUserShares(
   networkName: NetworkName,
@@ -215,10 +226,9 @@ export async function getUserShares(
     balances.push(newBalance);
   }
 
-  const data = combine(
+  const data = combineNonOverlappingEntries(
     balances,
-    totalSharesData.result.data,
-    matchWithNonOverlappingEntries.bind(null, totalSharesData.result.data),
+    addNullEntry(totalSharesData.result.data, nullGlobalTotalSharesEntry),
     (b, t) => {
       return {
         blockNumber: b.blockNumber,
@@ -230,6 +240,13 @@ export async function getUserShares(
       };
     }
   );
+
+  console.log("balances.length", balances.length);
+  console.log(
+    "totalSharesData.result.data.length",
+    totalSharesData.result.data.length
+  );
+  console.log("data.length", data.length);
 
   return {
     cacheTimestamp: totalSharesData.cacheTimestamp,

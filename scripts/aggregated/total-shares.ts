@@ -23,6 +23,16 @@ export type GlobalTotalSharesEntry = Entry<{
   roundUsdcBalance: number;
 }>;
 
+export const nullGlobalTotalSharesEntry: GlobalTotalSharesEntry = {
+  blockNumber: 0,
+  timestamp: 0,
+  totalJuniorVaultShares: 0,
+  totalSeniorVaultShares: 0,
+  currentRound: 0,
+  roundSharesMinted: 0,
+  roundUsdcBalance: 0,
+};
+
 export interface GlobalTotalSharesResult {
   data: GlobalTotalSharesEntry[];
   dataLength: number;

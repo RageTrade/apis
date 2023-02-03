@@ -2,12 +2,11 @@ import { fetchJson } from "ethers/lib/utils";
 
 import { NetworkName, ResultWithMetadata } from "@ragetrade/sdk";
 
-import { combine } from "../util/combine";
+import { addNullEntry, combineNonOverlappingEntries } from "../util/combine";
 import { GlobalAaveBorrowsResult } from "../aave-borrows";
 import { Entry } from "../util/types";
-import { UserSharesResult } from "./shares";
+import { nullUserSharesEntry, UserSharesResult } from "./shares";
 import { days, safeDivNumer, timestampRoundDown } from "../../../utils";
-import { matchWithNonOverlappingEntries } from "./common";
 
 export type UserAaveBorrowsEntry = Entry<{
   timestamp: number;
@@ -62,13 +61,12 @@ export async function getUserAaveBorrows(
       timeout: 1_000_000_000, // huge number
     });
 
-  const data = combine(
+  const data = combineNonOverlappingEntries(
     aaveBorrowsResponse.result.data,
-    userSharesResponse.result.data,
-    matchWithNonOverlappingEntries.bind(null, userSharesResponse.result.data),
+    addNullEntry(userSharesResponse.result.data, nullUserSharesEntry),
     (aaveBorrowsData, userSharesData) => ({
-      ...aaveBorrowsData,
       ...userSharesData,
+      ...aaveBorrowsData,
       userVdWbtcInterest: safeDivNumer(
         aaveBorrowsData.vdWbtcInterest * userSharesData.userJuniorVaultShares,
         userSharesData.totalJuniorVaultShares

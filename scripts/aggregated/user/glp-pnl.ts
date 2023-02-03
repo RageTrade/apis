@@ -2,12 +2,11 @@ import { fetchJson } from "ethers/lib/utils";
 
 import { NetworkName, ResultWithMetadata } from "@ragetrade/sdk";
 
-import { combine } from "../util/combine";
+import { addNullEntry, combineNonOverlappingEntries } from "../util/combine";
 import { GlobalGlpPnlResult } from "../glp-pnl";
 import { Entry } from "../util/types";
-import { UserSharesResult } from "./shares";
+import { nullUserSharesEntry, UserSharesResult } from "./shares";
 import { timestampRoundDown, days, safeDivNumer } from "../../../utils";
-import { matchWithNonOverlappingEntries } from "./common";
 
 export type UserGlpPnlEntry = Entry<{
   timestamp: number;
@@ -53,10 +52,9 @@ export async function getUserGlpPnl(
       timeout: 1_000_000_000, // huge number
     });
 
-  const data = combine(
+  const data = combineNonOverlappingEntries(
     glpPnlResponse.result.data,
-    userSharesResponse.result.data,
-    matchWithNonOverlappingEntries.bind(null, userSharesResponse.result.data),
+    addNullEntry(userSharesResponse.result.data, nullUserSharesEntry),
     (glpPnlData, userSharesData) => ({
       ...glpPnlData,
       ...userSharesData,

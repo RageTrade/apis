@@ -120,7 +120,7 @@ router.get(
     return cacheFunctionResult(
       aggregated.user.getUserShares,
       [networkName, userAddress, excludeRawData],
-      { cacheSeconds: 6 * hours, tags: ["aggregated"] }
+      { cacheSeconds: 6 * secs, tags: ["aggregated"] }
     );
   })
 );
