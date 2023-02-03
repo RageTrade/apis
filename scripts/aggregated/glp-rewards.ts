@@ -33,6 +33,7 @@ export interface GlobalGlpRewardsDailyEntry {
 export interface GlobalGlpRewardsResult {
   data: GlobalGlpRewardsEntry[];
   dailyData: GlobalGlpRewardsDailyEntry[];
+  dataLength: number;
   totalJuniorVaultWethReward: number;
   totalSeniorVaultWethReward: number;
 }
@@ -149,6 +150,7 @@ export async function getGlpRewards(
       },
       []
     ),
+    dataLength: data.length,
     totalJuniorVaultWethReward: combinedData.reduce(
       (acc, cur) => acc + cur.juniorVaultWethReward,
       0

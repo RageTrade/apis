@@ -24,6 +24,7 @@ export interface UserGlpRewardsDailyEntry {
 export interface UserGlpRewardsResult {
   data: UserGlpRewardsEntry[];
   dailyData: UserGlpRewardsDailyEntry[];
+  dataLength: number;
   userTotalJuniorVaultWethReward: number;
   userTotalSeniorVaultWethReward: number;
 }
@@ -116,6 +117,7 @@ export async function getUserGlpRewards(
         },
         []
       ),
+      dataLength: data.length,
       userTotalJuniorVaultWethReward: data.reduce(
         (acc, cur) => acc + cur.userJuniorVaultWethReward,
         0

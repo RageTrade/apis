@@ -37,6 +37,7 @@ export interface GlobalAaveBorrowsDailyEntry {
 export interface GlobalAaveBorrowsResult {
   data: GlobalAaveBorrowsEntry[];
   dailyData: GlobalAaveBorrowsDailyEntry[];
+  dataLength: number;
   totalVdWbtcInterest: number;
   totalVdWbtcInterestDollars: number;
   totalVdWethInterest: number;
@@ -204,6 +205,7 @@ export async function getAaveBorrows(
       },
       []
     ),
+    dataLength: data.length,
     totalVdWbtcInterest: combinedData.reduce(
       (acc, cur) => acc + cur.vdWbtcInterest,
       0

@@ -146,6 +146,7 @@ export async function getUserMarketMovement(
         },
         []
       ),
+      dataLength: data.length,
       userTotalEthPnl: data.reduce(
         (acc: number, cur: UserMarketMovementEntry) => acc + cur.userEthPnl,
         0

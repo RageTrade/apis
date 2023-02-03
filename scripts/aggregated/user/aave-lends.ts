@@ -24,6 +24,7 @@ export interface UserAaveLendsDailyEntry {
 export interface UserAaveLendsResult {
   data: UserAaveLendsEntry[];
   dailyData: UserAaveLendsDailyEntry[];
+  dataLength: number;
   userTotalAUsdcInterestJunior: number;
   userTotalAUsdcInterestSenior: number;
 }
@@ -114,6 +115,7 @@ export async function getUserAaveLends(
         },
         []
       ),
+      dataLength: data.length,
       userTotalAUsdcInterestJunior: data.reduce(
         (acc, cur) => acc + cur.userAUsdcInterestJunior,
         0

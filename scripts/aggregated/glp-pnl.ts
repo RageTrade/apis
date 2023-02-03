@@ -32,6 +32,7 @@ export interface GlobalGlpPnlDailyEntry {
 export interface GlobalGlpPnlResult {
   data: GlobalGlpPnlEntry[];
   dailyData: GlobalGlpPnlDailyEntry[];
+  dataLength: number;
   totalGlpPnl: number;
 }
 
@@ -175,6 +176,7 @@ export async function getGlpPnl(
       },
       []
     ),
+    dataLength: data.length,
     totalGlpPnl: combinedData.reduce(
       (acc: number, cur: GlobalGlpPnlEntry) => acc + cur.glpPnl,
       0

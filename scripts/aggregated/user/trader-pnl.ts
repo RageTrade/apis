@@ -22,6 +22,7 @@ export interface UserTraderPnlDailyEntry {
 export interface UserTraderPnlResult {
   data: UserTraderPnlEntry[];
   dailyData: UserTraderPnlDailyEntry[];
+  dataLength: number;
   userTotalTraderPnlNet: number;
 }
 
@@ -104,6 +105,7 @@ export async function getUserTraderPnl(
         },
         []
       ),
+      dataLength: data.length,
       userTotalTraderPnlNet: data.reduce(
         (acc: number, cur: UserTraderPnlEntry) => acc + cur.userTraderPnl,
         0
