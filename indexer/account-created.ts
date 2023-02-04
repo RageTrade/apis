@@ -2,7 +2,6 @@ import { ClearingHouse__factory, core } from '@ragetrade/sdk'
 import type { AccountCreatedEvent } from '@ragetrade/sdk/dist/typechain/core/contracts/interfaces/IClearingHouse'
 import type { ethers } from 'ethers'
 
-import type { BaseStore } from '../store/base-store'
 import { FileStore } from '../store/file-store'
 import { BaseIndexer } from './base-indexer'
 
@@ -11,7 +10,7 @@ const iface = ClearingHouse__factory.createInterface()
 export class AccountCreatedIndexer extends BaseIndexer<number[]> {
   _keyPrepend = 'account-created-indexer'
 
-  getStore(): BaseStore<number[]> {
+  getStore() {
     return new FileStore<number[]>(`data/${this._networkName}/accounts-created`)
   }
 

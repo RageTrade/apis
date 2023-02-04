@@ -10,7 +10,7 @@ interface Options {
   tags?: string[]
 }
 
-const cache = new RedisStore<CacheResponse>({
+const cache = new RedisStore({
   client: getRedisClient(),
   updateCache: true
 })

@@ -6,8 +6,8 @@ export interface Internal {
   [key: string]: string
 }
 
-export class BaseStore<Value> {
-  _promises = new Map<string, Promise<Value>>()
+export class BaseStore {
+  _promises = new Map<string, Promise<any>>()
   _timestampPrepend = '__timestamp_'
 
   /**
@@ -16,12 +16,12 @@ export class BaseStore<Value> {
    * @param _valueFn Function that should return the value for setting if it doesn't exist.
    * @returns The value.
    */
-  async getOrSet(
+  async getOrSet<V>(
     key: string,
-    valueFn: () => Value | Promise<Value>,
+    valueFn: () => V | Promise<V>,
     secondsOld?: number
-  ): Promise<Value> {
-    const read = await this.get(key, secondsOld)
+  ): Promise<V> {
+    const read = await this.get<V>(key, secondsOld)
 
     const valuePromise = this._promises.get(key)
 
@@ -60,8 +60,8 @@ export class BaseStore<Value> {
    * @param key The key to get.
    * @returns The value, or undefined if it doesn't exist.
    */
-  async get(key: string, secondsOld?: number): Promise<Value | undefined> {
-    const value = this._get<Value>(key)
+  async get<V>(key: string, secondsOld?: number): Promise<V | undefined> {
+    const value = this._get<V>(key)
     // if value not present just return undefined immediately
     if (value === undefined) return undefined
     if (value !== undefined && secondsOld !== undefined) {
@@ -88,7 +88,7 @@ export class BaseStore<Value> {
    * @param value The value to set.
    * @returns Promise that resolves when the value is set.
    */
-  async set(key: string, value: Value): Promise<void> {
+  async set<V>(key: string, value: V): Promise<void> {
     // set value
     await this._set(key, value)
     // set timestamp
@@ -100,14 +100,14 @@ export class BaseStore<Value> {
   /**
    * Override this method in a subclass to implement a custom storage backend.
    */
-  async _get<V = Value>(_key: string): Promise<V | undefined> {
+  async _get<V>(key: string): Promise<V | undefined> {
     throw new Error('BaseStore._get: method not implemented.')
   }
 
   /**
    * Override this method in a subclass to implement a custom storage backend.
    */
-  async _set<V = Value>(_key: string, _value: V): Promise<void> {
+  async _set<V>(key: string, _value: V): Promise<void> {
     throw new Error('BaseStore._set: method not implemented.')
   }
 }

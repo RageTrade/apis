@@ -3,7 +3,7 @@ import path from 'path'
 
 import { BaseStore } from './base-store'
 
-export class FileStore<Value> extends BaseStore<Value> {
+export class FileStore<Value> extends BaseStore {
   _dirPath: string
   constructor(dirPath: string) {
     super()

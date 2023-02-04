@@ -21,11 +21,11 @@ const debug = Debugger('apis:redis-store')
  * ```
  */
 
-export class RedisStore<Value extends CacheResponse> extends BaseStore<Value> {
+export class RedisStore extends BaseStore {
   client: Redis
   queries: Array<{
     key: string
-    valueFn: () => Value | Promise<Value>
+    valueFn: () => any | Promise<any>
     expirySeconds: number
   }> = []
   updatingCache = false
@@ -45,14 +45,14 @@ export class RedisStore<Value extends CacheResponse> extends BaseStore<Value> {
    * @param expirySeconds -1 for persistent cache, 0 for no cache, > 0 for expiry in seconds
    * @returns value if present in cache
    */
-  async getOrSet(
+  async getOrSet<V>(
     key: string,
-    valueFn: () => Value | Promise<Value>,
+    valueFn: () => V | Promise<V>,
     expirySeconds: number
-  ): Promise<Value> {
+  ): Promise<V> {
     this.startCacheUpdater({ key, valueFn, expirySeconds })
 
-    const fetchAndStore = async () => {
+    const fetchAndStore = async (): Promise<V> => {
       const result = valueFn()
 
       if (result instanceof Promise) {
@@ -60,9 +60,9 @@ export class RedisStore<Value extends CacheResponse> extends BaseStore<Value> {
       }
 
       try {
-        const value = await result
+        const value = (await result) as Partial<CacheResponse>
         // override expirySeconds if cacheSeconds is provided
-        if (typeof value.cacheSeconds === 'number') {
+        if (typeof value?.cacheSeconds === 'number') {
           expirySeconds = value.cacheSeconds
         }
         // do not write to cache if expiry is 0
@@ -72,7 +72,7 @@ export class RedisStore<Value extends CacheResponse> extends BaseStore<Value> {
 
         this._promises.delete(key)
 
-        return value
+        return value as V
       } catch (err) {
         this._promises.delete(key)
 
@@ -80,14 +80,16 @@ export class RedisStore<Value extends CacheResponse> extends BaseStore<Value> {
       }
     }
     // do not read cache if expiry is 0
-    const cachedValue = expirySeconds !== 0 ? await this.get(key) : undefined
+    const cachedValue = expirySeconds !== 0 ? await this.get<V>(key) : undefined
 
     if (cachedValue) {
       debug('RedisStore.getOrSet: returning the value present in storage')
 
+      const _cachedValue = cachedValue as Partial<CacheResponse>
       // return from cache and initiate cache update
       const isExpired =
-        currentTimestamp() - cachedValue.cacheTimestamp >= cachedValue.cacheSeconds
+        currentTimestamp() - (_cachedValue?.cacheTimestamp || 0) >=
+        (_cachedValue?.cacheSeconds || 0)
       if (isExpired) fetchAndStore()
 
       return cachedValue
@@ -106,14 +108,14 @@ export class RedisStore<Value extends CacheResponse> extends BaseStore<Value> {
     }
   }
 
-  async get(key: string): Promise<Value | undefined> {
+  async get<V>(key: string): Promise<V | undefined> {
     const valueStr = await this.client.get(key)
     if (!valueStr) return
 
-    return JSON.parse(valueStr) as Value
+    return JSON.parse(valueStr) as V
   }
 
-  async set(key: string, value: Value, expirySeconds = -1): Promise<void> {
+  async set<V>(key: string, value: V, expirySeconds = -1): Promise<void> {
     if (expirySeconds === -1) {
       // cache with no expiry (persistent)
       debug(`RedisStore.set: setting key ${key} with no expiry`)
@@ -129,9 +131,9 @@ export class RedisStore<Value extends CacheResponse> extends BaseStore<Value> {
     }
   }
 
-  async startCacheUpdater(newQuery: {
+  async startCacheUpdater<V>(newQuery: {
     key: string
-    valueFn: () => Value | Promise<Value>
+    valueFn: () => V | Promise<V>
     expirySeconds: number
   }) {
     if (newQuery.key.toLowerCase().includes('address')) {

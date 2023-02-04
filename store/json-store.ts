@@ -2,7 +2,7 @@ import { createFileSync, existsSync, readJSON, writeJSONSync } from 'fs-extra'
 
 import { BaseStore } from './base-store'
 
-export class JsonStore<Value> extends BaseStore<Value> {
+export class JsonStore<Value> extends BaseStore {
   _path: string
   _reading: number
   _writing: boolean
