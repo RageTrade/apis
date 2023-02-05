@@ -23,6 +23,7 @@ export type VaultInfoEntry = Entry<{
 
 export interface VaultInfoResult {
   data: VaultInfoEntry[]
+  dataLength: number
 }
 
 export async function getVaultInfo(networkName: NetworkName): Promise<VaultInfoResult> {
@@ -76,7 +77,7 @@ export async function getVaultInfo(networkName: NetworkName): Promise<VaultInfoR
     }
   )
 
-  return { data }
+  return { data, dataLength: data.length }
 
   async function getJuniorVaultInfo(blockNumber: number) {
     const priceD18 = await dnGmxJuniorVault.getPrice(false, {

@@ -1,18 +1,22 @@
 import { ClearingHouse__factory, core } from '@ragetrade/sdk'
-import type { AccountCreatedEvent } from '@ragetrade/sdk/dist/typechain/core/contracts/interfaces/IClearingHouse'
-import type { ethers } from 'ethers'
 
-import type { BaseStore } from '../store/base-store'
-import { FileStore } from '../store/file-store'
+import { getRedisClient } from '../redis-utils/get-client'
+import { RedisStore } from '../store/redis-store'
 import { BaseIndexer } from './base-indexer'
 
+import type { AccountCreatedEvent } from '@ragetrade/sdk/dist/typechain/core/contracts/interfaces/IClearingHouse'
+import type { ethers } from 'ethers'
+import type { BaseStore } from '../store/base-store'
 const iface = ClearingHouse__factory.createInterface()
 
 export class AccountCreatedIndexer extends BaseIndexer<number[]> {
   _keyPrepend = 'account-created-indexer'
 
   getStore(): BaseStore<number[]> {
-    return new FileStore<number[]>(`data/${this._networkName}/accounts-created`)
+    return new RedisStore<number[]>({
+      client: getRedisClient(),
+      updateCache: false
+    })
   }
 
   async getFilter(provider: ethers.providers.Provider): Promise<ethers.EventFilter> {

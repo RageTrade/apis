@@ -20,6 +20,7 @@ export type GlobalTotalSharesEntry = Entry<{
 
 export interface GlobalTotalSharesResult {
   data: GlobalTotalSharesEntry[]
+  dataLength: number
 }
 
 export async function getTotalShares(
@@ -129,5 +130,5 @@ export async function getTotalShares(
     }
   )
 
-  return { data }
+  return { data, dataLength: data.length }
 }

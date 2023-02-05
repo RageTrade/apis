@@ -22,6 +22,7 @@ export interface UserAavePnlDailyEntry {
 export interface UserAavePnlResult {
   data: UserAavePnlEntry[]
   dailyData: UserAavePnlDailyEntry[]
+  dataLength: number
   userTotalAavePnl: number
 }
 
@@ -94,6 +95,7 @@ export async function getUserAavePnl(
         }
         return acc
       }, []),
+      dataLength: data.length,
       userTotalAavePnl: data.reduce((acc, cur) => acc + cur.userAavePnl, 0)
     }
   }

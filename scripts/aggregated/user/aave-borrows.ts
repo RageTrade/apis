@@ -28,6 +28,7 @@ export interface UserAaveBorrowsDailyEntry {
 export interface UserAaveBorrowsResult {
   data: UserAaveBorrowsEntry[]
   dailyData: UserAaveBorrowsDailyEntry[]
+  dataLength: number
   userTotalVdWbtcInterest: number
   userTotalVdWbtcInterestDollars: number
   userTotalVdWethInterest: number
@@ -128,6 +129,7 @@ export async function getUserAaveBorrows(
         },
         []
       ),
+      dataLength: data.length,
       userTotalVdWbtcInterest: data.reduce((acc, cur) => acc + cur.userVdWbtcInterest, 0),
       userTotalVdWbtcInterestDollars: data.reduce(
         (acc, cur) => acc + cur.userVdWbtcInterestDollars,

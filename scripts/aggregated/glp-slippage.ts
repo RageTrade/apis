@@ -28,6 +28,7 @@ export interface GlobalGlpSlippageDailyEntry {
 export interface GlobalGlpSlippageResult {
   data: GlobalGlpSlippageEntry[]
   dailyData: GlobalGlpSlippageDailyEntry[]
+  dataLength: number
   totalGlpSlippage: number
 }
 
@@ -163,6 +164,7 @@ export async function getGlpSlippage(
       },
       []
     ),
+    dataLength: data.length,
     totalGlpSlippage: combinedData.reduce((acc, cur) => acc + cur.glpSlippage, 0)
   }
 }
