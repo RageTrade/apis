@@ -127,7 +127,7 @@ export class RedisStore extends BaseStore {
       // cache with a very long expiry
       debug(`RedisStore.set: setting key ${key} with expiry ${expirySeconds} seconds`)
 
-      await this.client.set(key, JSON.stringify(value), 'EX', years * 10)
+      await this.client.set(key, JSON.stringify(value), 'EX', 10 * years)
     }
   }
 
