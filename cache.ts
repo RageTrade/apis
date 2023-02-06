@@ -79,12 +79,11 @@ async function generateResponse<F extends (...args: any[]) => any>(
         cacheSeconds: Math.min(cacheSeconds, 15)
       }
     } else {
-      // do not cache server errors they might be temporary
       return {
         error: error.message,
         status: error.status,
-        cacheSeconds: 0,
-        cacheTimestamp: 0
+        cacheTimestamp: currentTimestamp(),
+        cacheSeconds: Math.min(cacheSeconds, 15)
       }
     }
   }

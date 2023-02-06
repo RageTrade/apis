@@ -59,25 +59,20 @@ export class RedisStore extends BaseStore {
         this._promises.set(key, result)
       }
 
-      try {
-        const value = (await result) as Partial<CacheResponse>
-        // override expirySeconds if cacheSeconds is provided
-        if (typeof value?.cacheSeconds === 'number') {
-          expirySeconds = value.cacheSeconds
-        }
-        // do not write to cache if expiry is 0
-        if (expirySeconds !== 0) {
-          await this.set(key, value, expirySeconds)
-        }
-
-        this._promises.delete(key)
-
-        return value as V
-      } catch (err) {
-        this._promises.delete(key)
-
-        throw err
+      // we will cache results as well as errors
+      const value = (await result) as Partial<CacheResponse>
+      // override expirySeconds if cacheSeconds is provided
+      if (typeof value?.cacheSeconds === 'number') {
+        expirySeconds = value.cacheSeconds
       }
+      // do not write to cache if expiry is 0
+      if (expirySeconds !== 0) {
+        await this.set(key, value, expirySeconds)
+      }
+
+      this._promises.delete(key)
+
+      return value as V
     }
     // do not read cache if expiry is 0
     const cachedValue = expirySeconds !== 0 ? await this.get<V>(key) : undefined
@@ -86,11 +81,12 @@ export class RedisStore extends BaseStore {
       debug('RedisStore.getOrSet: returning the value present in storage')
 
       const _cachedValue = cachedValue as Partial<CacheResponse>
-      // return from cache and initiate cache update
-      const isExpired =
-        currentTimestamp() - (_cachedValue?.cacheTimestamp || 0) >=
-        (_cachedValue?.cacheSeconds || 0)
-      if (isExpired) fetchAndStore()
+      if (_cachedValue?.cacheTimestamp && _cachedValue?.cacheSeconds) {
+        // return from cache and initiate cache update
+        const isExpired =
+          currentTimestamp() - _cachedValue.cacheTimestamp >= _cachedValue.cacheSeconds
+        if (isExpired) fetchAndStore()
+      }
 
       return cachedValue
     }
