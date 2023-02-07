@@ -85,7 +85,11 @@ export class RedisStore extends BaseStore {
         // return from cache and initiate cache update
         const isExpired =
           currentTimestamp() - _cachedValue.cacheTimestamp >= _cachedValue.cacheSeconds
-        if (isExpired) fetchAndStore()
+        if (isExpired) {
+          debug('RedisStore.getOrSet: cache expired starting refresh procedure')
+
+          fetchAndStore()
+        }
       }
 
       return cachedValue
