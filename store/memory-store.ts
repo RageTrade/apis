@@ -6,7 +6,7 @@ declare global {
 
 globalThis['__memory_store'] = globalThis['__memory_store'] || {}
 
-export class MemoryStore<Value> extends BaseStore<Value> {
+export class MemoryStore<Value> extends BaseStore {
   _state: { [key: string]: Value }
 
   constructor(id: string) {

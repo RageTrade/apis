@@ -14,7 +14,7 @@ import { RedisStore } from './store/redis-store'
 
 export class ArchiveCacheProvider extends RetryProvider {
   // store: FileStore<string>;
-  redisStore: RedisStore<string>
+  redisStore: RedisStore
 
   constructor(url?: ConnectionInfo | string, network?: Networkish) {
     super(url, network)

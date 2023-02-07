@@ -18,6 +18,7 @@ export const secs = 1
 export const mins = 60
 export const hours = 60 * mins
 export const days = 24 * hours
+export const years = 365 * days
 
 export function getParamAsAddress(req: Request, paramName: string): string {
   const input = getParamAsString(req, paramName)
@@ -101,7 +102,7 @@ export function invalidInputError(opts: {
 }) {
   const error = new ErrorWithStatusCode(
     `Invalid ${opts.type ?? 'value'} ${
-      opts.value || true ? `(${String(opts.value)}) ` : ''
+      opts.value ? `(${String(opts.value)}) ` : ''
     }passed for ${opts.paramName}`,
     400
   )

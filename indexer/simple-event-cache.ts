@@ -25,7 +25,7 @@ export class SimpleEventCache extends BaseIndexer<Log[]> {
 
   async getEvents(): Promise<Log[]> {
     return this.getStore()
-      .get(LOGS_KEY)
+      .get<Log[]>(LOGS_KEY)
       .then((events) => events || [])
   }
 

@@ -12,7 +12,7 @@ import { getLogs } from '../utils'
 export class BaseIndexer<DataStoreType> {
   _networkName: NetworkName
   _provider: ethers.providers.Provider
-  _store: BaseStore<DataStoreType> | undefined
+  _store: BaseStore | undefined
   _keyPrepend: string | undefined
 
   constructor(networkName: NetworkName) {
@@ -20,7 +20,7 @@ export class BaseIndexer<DataStoreType> {
     this._provider = getProviderAggregate(networkName)
   }
 
-  getStore(): BaseStore<DataStoreType> {
+  getStore(): BaseStore {
     throw new Error('static BaseIndexer.getStore: method not implemented.')
   }
 
@@ -52,7 +52,7 @@ export class BaseIndexer<DataStoreType> {
     return `${this._keyPrepend ?? 'base-indexer'}-${key}`
   }
 
-  private _getCachedStoreObject(): BaseStore<DataStoreType> {
+  private _getCachedStoreObject(): BaseStore {
     if (this._store) {
       return this._store
     }
