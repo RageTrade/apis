@@ -56,6 +56,7 @@ export interface GlobalMarketMovementDailyEntry {
 export interface GlobalMarketMovementResult {
   data: GlobalMarketMovementEntry[]
   dailyData: GlobalMarketMovementDailyEntry[]
+  dataLength: number
   totalEthPnl: number
   totalBtcPnl: number
   totalLinkPnl: number
@@ -338,6 +339,7 @@ export async function getMarketMovement(
       },
       []
     ),
+    dataLength: data.length,
     totalBtcPnl: combinedData.reduce((acc, cur) => acc + cur.btcPnl, 0),
     totalEthPnl: combinedData.reduce((acc, cur) => acc + cur.ethPnl, 0),
     totalUniPnl: combinedData.reduce((acc, cur) => acc + cur.uniPnl, 0),

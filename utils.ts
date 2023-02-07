@@ -5,7 +5,7 @@ import {
   getNetworkName as getNetworkNameSdk,
   getVaultName as getVaultNameSdk
 } from '@ragetrade/sdk'
-import type { BigNumber } from 'ethers'
+import type { BigNumber, EventFilter } from 'ethers'
 import { ethers } from 'ethers'
 import { fetchJson, getAddress, isAddress } from 'ethers/lib/utils'
 import type express from 'express'
@@ -248,4 +248,45 @@ export function safeDivNumer(numerator: number, denominator: number) {
 
 export function timestampRoundDown(timestampSec: number) {
   return timestampSec - (timestampSec % days)
+}
+
+export async function getLogs(
+  filter: EventFilter,
+  fromBlock: number,
+  toBlock: number,
+  provider: ethers.providers.Provider,
+  networkName: NetworkName
+) {
+  let logs: ethers.providers.Log[] | undefined
+
+  let _fromBlock = fromBlock
+  let _toBlock = toBlock
+  let _fetchedBlock = fromBlock - 1
+
+  while (_fetchedBlock < toBlock) {
+    try {
+      console.log(networkName, 'getLogs', _fromBlock, _toBlock)
+      const _logs = await provider.getLogs({
+        ...filter,
+        fromBlock: _fromBlock,
+        toBlock: _toBlock
+      })
+      logs = logs ? logs.concat(_logs) : _logs
+      // setting fetched block to the last block of the fetched logs
+      _fetchedBlock = _toBlock
+      // next getLogs query range
+      _fromBlock = _toBlock + 1
+      _toBlock = toBlock
+    } catch {
+      // if query failed, re-try with a shorter block interval
+      _toBlock = _fromBlock + Math.floor((_toBlock - _fromBlock) / 2)
+      console.error(networkName, 'getLogs failed')
+    }
+  }
+
+  if (!logs) {
+    throw new Error('logs is undefined in getLogs')
+  }
+
+  return logs
 }

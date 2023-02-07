@@ -26,6 +26,7 @@ export type RebalanceInfoEntry = Entry<{
 
 export interface RebalanceInfoResult {
   data: RebalanceInfoEntry[]
+  dataLength: number
 }
 
 export async function getRebalanceInfo(
@@ -174,5 +175,5 @@ export async function getRebalanceInfo(
     }
   )
 
-  return { data }
+  return { data, dataLength: data.length }
 }

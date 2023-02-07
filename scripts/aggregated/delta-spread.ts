@@ -54,6 +54,8 @@ export interface GlobalDeltaSpreadResult {
   data: GlobalDeltaSpreadEntry[]
   dailyData: GlobalDeltaSpreadDailyEntry[]
 
+  dataLength: number
+
   totalUniswapVolume: number
   totalUniswapSlippage: number
 
@@ -332,7 +334,7 @@ export async function getDeltaSpread(
       },
       []
     ),
-
+    dataLength: data.length,
     totalUniswapVolume: combinedData.reduce((acc, cur) => acc + cur.uniswapVolume, 0),
     totalUniswapSlippage: combinedData.reduce((acc, cur) => acc + cur.uniswapSlippage, 0),
     totalBtcBought: combinedData.reduce((acc, cur) => acc + cur.btcBought, 0),

@@ -26,6 +26,7 @@ export interface GlobalAaveLendsDailyEntry {
 export interface GlobalAaveLendsResult {
   data: GlobalAaveLendsEntry[]
   dailyData: GlobalAaveLendsDailyEntry[]
+  dataLength: number
   totalAUsdcInterestJunior: number
   totalAUsdcInterestSenior: number
 }
@@ -185,6 +186,7 @@ export async function getAaveLends(
       },
       []
     ),
+    dataLength: data.length,
     totalAUsdcInterestJunior: combinedData.reduce(
       (acc, cur) => acc + cur.aUsdcInterestJunior,
       0

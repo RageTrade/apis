@@ -32,6 +32,7 @@ export interface UserMarketMovementDailyEntry {
 export interface UserMarketMovementResult {
   data: UserMarketMovementEntry[]
   dailyData: UserMarketMovementDailyEntry[]
+  dataLength: number
   userTotalEthPnl: number
   userTotalBtcPnl: number
   userTotalLinkPnl: number
@@ -143,6 +144,7 @@ export async function getUserMarketMovement(
         },
         []
       ),
+      dataLength: data.length,
       userTotalEthPnl: data.reduce(
         (acc: number, cur: UserMarketMovementEntry) => acc + cur.userEthPnl,
         0

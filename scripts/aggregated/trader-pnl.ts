@@ -26,6 +26,7 @@ export interface GlobalTraderPnlDailyEntry {
 export interface GlobalTraderPnlResult {
   data: GlobalTraderPnlEntry[]
   dailyData: GlobalTraderPnlDailyEntry[]
+  dataLength: number
   traderPnlNet: number
   traderPnlVaultNet: number
 }
@@ -189,6 +190,7 @@ export async function getTraderPnl(
       },
       []
     ),
+    dataLength: data.length,
     traderPnlNet: data.reduce((acc, cur) => acc + cur.traderPnlVault, 0),
     traderPnlVaultNet: data.reduce((acc, cur) => acc + cur.traderPnlVault, 0)
   }
