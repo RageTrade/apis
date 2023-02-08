@@ -10,23 +10,21 @@ import type {
 import { combineStatsData } from '../../aggregated/util/combineStatsData'
 
 export const getTraderPnl = async () => {
-  const [{ result: glpPnl }, { result: marketMovement }, { result: vaultInfo }] =
-    await Promise.all([
-      fetchJson({
-        url: 'http://localhost:3000/data/aggregated/get-glp-pnl?networkName=arbmain',
-        timeout: 1_000_000_000
-      }) as Promise<{ result: GlobalGlpPnlResult }>,
+  const { result: glpPnl }: { result: GlobalGlpPnlResult } = await fetchJson({
+    url: 'http://localhost:3000/data/aggregated/get-glp-pnl?networkName=arbmain',
+    timeout: 50
+  })
 
-      fetchJson({
-        url: 'http://localhost:3000/data/aggregated/get-market-movement?networkName=arbmain',
-        timeout: 1_000_000_000
-      }) as Promise<{ result: GlobalMarketMovementResult }>,
+  const { result: marketMovement }: { result: GlobalMarketMovementResult } =
+    await fetchJson({
+      url: 'http://localhost:3000/data/aggregated/get-market-movement?networkName=arbmain',
+      timeout: 50
+    })
 
-      fetchJson({
-        url: 'http://localhost:3000/data/aggregated/get-vault-info?networkName=arbmain',
-        timeout: 1_000_000_000
-      }) as Promise<{ result: VaultInfoResult }>
-    ])
+  const { result: vaultInfo }: { result: VaultInfoResult } = await fetchJson({
+    url: 'http://localhost:3000/data/aggregated/get-vault-info?networkName=arbmain',
+    timeout: 50
+  })
 
   const combined = combineStatsData(
     [glpPnl.dailyData || [], marketMovement.dailyData || []],
