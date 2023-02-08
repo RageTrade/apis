@@ -6,7 +6,7 @@ import { gmxProtocol } from '@ragetrade/sdk'
 import { getLogs } from '../../../../../utils'
 import { GET_LOGS_INTERVAL, getStartBlock, oneInFiftyBlocks } from './common'
 
-export async function increaseUsdgAmount(
+export async function increasePoolAmount(
   networkName: NetworkName,
   provider: ethers.providers.Provider,
   startBlockNumberOverride?: number
@@ -15,7 +15,7 @@ export async function increaseUsdgAmount(
 
   const _gmxUnderlyingVault = new ethers.Contract(
     gmxUnderlyingVault.address,
-    ['event IncreaseUsdgAmount(address token, uint256 amount)'], // bcz not currently in interface in dn vault repo
+    ['event IncreasePoolAmount(address token, uint256 amount)'], // bcz not currently in interface in dn vault repo
     provider
   )
 
@@ -30,7 +30,7 @@ export async function increaseUsdgAmount(
   }
 
   const logs = await getLogs(
-    _gmxUnderlyingVault.filters.IncreaseUsdgAmount(),
+    _gmxUnderlyingVault.filters.IncreasePoolAmount(),
     startBlock,
     endBlock,
     _gmxUnderlyingVault
