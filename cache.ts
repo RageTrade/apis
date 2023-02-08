@@ -22,7 +22,12 @@ export function cacheFunctionResult<F extends (...args: any[]) => any>(
 ) {
   const { tags = [], cacheSeconds = 0 } = options || {}
 
-  const key = [...tags, fn.name, ...args.map((a) => String(a))].join('-')
+  const key = [
+    'cacheFunctionResult',
+    ...tags,
+    fn.name,
+    ...args.map((a) => String(a))
+  ].join('-')
 
   return cache.getOrSet(key, () => generateResponse(fn, args, cacheSeconds), cacheSeconds)
 }
