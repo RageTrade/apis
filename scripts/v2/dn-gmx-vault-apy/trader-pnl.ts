@@ -42,11 +42,13 @@ export const getTraderPnl = async () => {
     }
   )
 
-  return vaultInfo.data
+  const data = vaultInfo.data
     .map((entry) => {
       const foundDay = combined.find((d) => d.Day === entry.timestamp)
 
       return (foundDay?.totalTraderPnL || 0) / entry.juniorVaultInfo.vaultMarketValue
     })
     .reduce((acc, curr) => acc + curr, 0)
+
+  return data * 100
 }
