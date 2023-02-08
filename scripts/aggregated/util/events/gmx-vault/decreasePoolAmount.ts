@@ -5,7 +5,7 @@ import { ethers } from 'ethers'
 import { getLogsInLoop } from '../../helpers'
 import { GET_LOGS_INTERVAL, getStartBlock, oneInFiftyBlocks } from './common'
 
-export async function decreaseUsdgAmount(
+export async function decreasePoolAmount(
   networkName: NetworkName,
   provider: ethers.providers.Provider,
   startBlockNumberOverride?: number
@@ -14,7 +14,7 @@ export async function decreaseUsdgAmount(
 
   const _gmxUnderlyingVault = new ethers.Contract(
     gmxUnderlyingVault.address,
-    ['event DecreaseUsdgAmount(address token, uint256 amount)'], // bcz not currently in interface in dn vault repo
+    ['event DecreasePoolAmount(address token, uint256 amount)'], // bcz not currently in interface in dn vault repo
     provider
   )
 
@@ -30,7 +30,7 @@ export async function decreaseUsdgAmount(
 
   const logs = await getLogsInLoop(
     _gmxUnderlyingVault,
-    _gmxUnderlyingVault.filters.DecreaseUsdgAmount(),
+    _gmxUnderlyingVault.filters.DecreasePoolAmount(),
     startBlock,
     endBlock,
     GET_LOGS_INTERVAL
