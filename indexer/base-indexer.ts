@@ -49,7 +49,7 @@ export class BaseIndexer<DataStoreType> {
   }
 
   private _getKey(key: string) {
-    return `${this._keyPrepend ?? 'base-indexer'}-${key}`
+    return `${this._networkName}-${this._keyPrepend ?? 'base-indexer'}-${key}`
   }
 
   private _getCachedStoreObject(): BaseStore {
