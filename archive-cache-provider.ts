@@ -16,6 +16,10 @@ export class ArchiveCacheProvider extends RetryProvider {
   // store: FileStore<string>;
   redisStore: RedisStore
 
+  networkName(_blockNumber: number): string {
+    return this.network.name
+  }
+
   constructor(url?: ConnectionInfo | string, network?: Networkish) {
     super(url, network)
     if (typeof network !== 'number') {
@@ -36,7 +40,7 @@ export class ArchiveCacheProvider extends RetryProvider {
   ): Promise<string> {
     if (typeof blockTag === 'number') {
       const key = getKey([
-        this.network.name,
+        this.networkName(blockTag),
         'call',
         String(blockTag),
         (await transaction.to) ?? 'no-to',
@@ -56,7 +60,11 @@ export class ArchiveCacheProvider extends RetryProvider {
     blockHashOrBlockTag: BlockTag | string | Promise<BlockTag | string>
   ): Promise<Block> {
     if (typeof blockHashOrBlockTag === 'number') {
-      const key = getKey([this.network.name, 'getBlock', String(blockHashOrBlockTag)])
+      const key = getKey([
+        this.networkName(blockHashOrBlockTag),
+        'getBlock',
+        String(blockHashOrBlockTag)
+      ])
       return this.redisStore.getOrSet(
         key,
         async () => super.getBlock(blockHashOrBlockTag),
@@ -70,7 +78,7 @@ export class ArchiveCacheProvider extends RetryProvider {
   async getLogs(filter: ethers.providers.Filter): Promise<Array<ethers.providers.Log>> {
     if (typeof filter.toBlock === 'number' && typeof filter.fromBlock === 'number') {
       const key = getKey([
-        this.network.name,
+        this.networkName(filter.toBlock),
         'getLogs',
         String(filter.fromBlock),
         String(filter.toBlock),

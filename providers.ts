@@ -19,19 +19,34 @@ export const arbtest = new RetryProvider(
 export const arbgoerli = new RetryProvider(
   'https://arb-goerli.g.alchemy.com/v2/' + ENV.ALCHEMY_KEY
 )
+export const mainnetfork = new RetryProvider('https://internal-rpc.rage.trade')
 // sdk.getProvider("arbgoerli");
 
 export function getProvider(networkName: NetworkName): ethers.providers.Provider {
   switch (networkName) {
     case 'arbmain':
       return arbmain
-    case 'arbtest':
-    case 'arbrinkeby':
-      return arbtest
     case 'arbgoerli':
       return arbgoerli
+    case 'mainnetfork':
+      return mainnetfork
     default:
       throw new Error(`Provider not available for the network: ${networkName}`)
+  }
+}
+
+class MainnetForkArchiveCacheProvider extends ArchiveCacheProvider {
+  constructor() {
+    super('https://internal-rpc.rage.trade')
+  }
+
+  networkName(blockNumber: number) {
+    // use arbmain cache for block numbers before mainnet fork block number
+    if (blockNumber <= 56878000) {
+      return 'arbmain'
+    } else {
+      return 'mainnetfork'
+    }
   }
 }
 
@@ -45,6 +60,8 @@ export function getProviderAggregate(
         'https://arb-mainnet.g.alchemy.com/v2/' + ENV.ALCHEMY_KEY_AGGREGATE,
         chainIds.arbmain
       )
+    case 'mainnetfork':
+      return new MainnetForkArchiveCacheProvider()
     case 'arbgoerli':
       return new ArchiveCacheProvider(
         'https://arb-goerli.g.alchemy.com/v2/' + ENV.ALCHEMY_KEY_AGGREGATE,
