@@ -1,6 +1,6 @@
 import 'isomorphic-unfetch'
 
-import type { NetworkName } from '@ragetrade/sdk'
+import { aave, NetworkName } from '@ragetrade/sdk'
 import { deltaNeutralGmxVaults, typechain } from '@ragetrade/sdk'
 import { formatUnits } from 'ethers/lib/utils'
 
@@ -47,16 +47,15 @@ const getETHPrice = async (networkName: NetworkName) => {
 export const getBorrowApy = async (networkName: NetworkName) => {
   const provider = getProvider(networkName)
 
+  const { wbtcVariableDebtTokenAddress, wethVariableDebtTokenAddress } =
+    aave.getAddresses(networkName)
+
   const vdWbtc = typechain.core.ERC20__factory.connect(
-    networkName == 'arbmain'
-      ? '0x92b42c66840C7AD907b4BF74879FF3eF7c529473'
-      : '0x3bf376701600ACAF865EBdf902Ef3b322BB433aE',
+    wbtcVariableDebtTokenAddress,
     provider
   )
   const vdWeth = typechain.core.ERC20__factory.connect(
-    networkName == 'arbmain'
-      ? '0x0c84331e39d6658Cd6e6b9ba04736cC4c4734351'
-      : '0xf69Ff61eE59Cd1Fd191B094C957938C7Dd0F8c3c',
+    wethVariableDebtTokenAddress,
     provider
   )
 
