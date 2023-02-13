@@ -18,8 +18,6 @@ export function getDataSourceByNetworkName(networkName: NetworkName) {
   switch (networkName) {
     case 'arbmain':
       return getDataSource('arbmain')
-    case 'arbrinkeby':
-      return getDataSource('arbrinkeby')
     case 'arbgoerli':
       return getDataSource('arbgoerli')
     default:
