@@ -37,7 +37,7 @@ export function getProvider(networkName: NetworkName): ethers.providers.Provider
 
 class MainnetForkArchiveCacheProvider extends ArchiveCacheProvider {
   constructor() {
-    super('https://internal-rpc.rage.trade')
+    super('https://internal-rpc.rage.trade', 31337)
   }
 
   networkName(blockNumber: number) {
