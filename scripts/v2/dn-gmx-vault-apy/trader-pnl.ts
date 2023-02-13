@@ -8,21 +8,25 @@ import type {
   VaultInfoResult
 } from '../../aggregated'
 import { combineStatsData } from '../../aggregated/util/combineStatsData'
+import { NetworkName } from '@ragetrade/sdk'
 
-export const getTraderPnl = async () => {
+export const getTraderPnl = async (networkName: NetworkName) => {
   const { result: glpPnl }: { result: GlobalGlpPnlResult } = await fetchJson({
-    url: 'http://localhost:3000/data/aggregated/get-glp-pnl?networkName=arbmain',
+    url: 'http://localhost:3000/data/aggregated/get-glp-pnl?networkName=' + networkName,
     timeout: 1000_00_00_00
   })
 
   const { result: marketMovement }: { result: GlobalMarketMovementResult } =
     await fetchJson({
-      url: 'http://localhost:3000/data/aggregated/get-market-movement?networkName=arbmain',
+      url:
+        'http://localhost:3000/data/aggregated/get-market-movement?networkName=' +
+        networkName,
       timeout: 1000_00_00_00
     })
 
   const { result: vaultInfo }: { result: VaultInfoResult } = await fetchJson({
-    url: 'http://localhost:3000/data/aggregated/get-vault-info?networkName=arbmain',
+    url:
+      'http://localhost:3000/data/aggregated/get-vault-info?networkName=' + networkName,
     timeout: 1000_00_00_00
   })
 

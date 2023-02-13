@@ -8,7 +8,7 @@ import { getTraderPnl } from './trader-pnl'
 
 export const getDnGmxApyBreakdown = async (networkName: NetworkName) => {
   const [traderPnl, supplyApy, borrowApy, ethRewards, esGmxRewards] = await Promise.all([
-    getTraderPnl(),
+    getTraderPnl(networkName),
     getSupplyApy(networkName),
     getBorrowApy(networkName),
     getEthRewards(networkName),
