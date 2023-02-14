@@ -35,25 +35,8 @@ export function getProvider(networkName: NetworkName): ethers.providers.Provider
   }
 }
 
-class MainnetForkArchiveCacheProvider extends ArchiveCacheProvider {
-  constructor() {
-    super('https://internal-rpc.rage.trade', 31337)
-  }
-
-  networkName(blockNumber: number) {
-    // use arbmain cache for block numbers before mainnet fork block number
-    if (blockNumber <= 56878000) {
-      return 'arbmain'
-    } else {
-      return 'mainnetfork'
-    }
-  }
-}
-
 // This is separate from the above function because the aggregate apis make a lot of requests
-export function getProviderAggregate(
-  networkName: NetworkName
-): ethers.providers.Provider {
+export function getProviderAggregate(networkName: NetworkName): ArchiveCacheProvider {
   switch (networkName) {
     case 'arbmain':
       return new ArchiveCacheProvider(
@@ -61,7 +44,12 @@ export function getProviderAggregate(
         chainIds.arbmain
       )
     case 'mainnetfork':
-      return new MainnetForkArchiveCacheProvider()
+      return new ArchiveCacheProvider(
+        'https://internal-rpc.rage.trade',
+        31337,
+        56878000,
+        getProviderAggregate('arbmain')
+      )
     case 'arbgoerli':
       return new ArchiveCacheProvider(
         'https://arb-goerli.g.alchemy.com/v2/' + ENV.ALCHEMY_KEY_AGGREGATE,
