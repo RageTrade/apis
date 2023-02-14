@@ -122,7 +122,12 @@ export async function parallelize<Data, Event extends ethers.Event>(
               throw e
             }
             if (thisFailed > 4) {
-              console.error('thisFailed > 4', blockNumber, event.event ?? '', e)
+              console.error(
+                'parallelize: thisFailed > 4',
+                blockNumber,
+                event.event ?? '',
+                e
+              )
             }
           }
         }
