@@ -1,11 +1,10 @@
 import type { NetworkName } from '@ragetrade/sdk'
 import { deltaNeutralGmxVaults } from '@ragetrade/sdk'
+
+import { ErrorWithStatusCode, getLogs } from '../../../../../utils'
+
 import type { RebalancedEvent } from '@ragetrade/sdk/dist/typechain/delta-neutral-gmx-vaults/contracts/interfaces/IDnGmxJuniorVault'
 import type { ethers } from 'ethers'
-
-import { ErrorWithStatusCode } from '../../../../../utils'
-import { getLogsInLoop } from '../../helpers'
-import { GET_LOGS_BLOCK_INTERVAL } from '../common'
 
 export async function rebalanced(
   networkName: NetworkName,
@@ -26,12 +25,11 @@ export async function rebalanced(
     throw new ErrorWithStatusCode('Start block is not defined', 500)
   }
 
-  const logs = await getLogsInLoop(
-    dnGmxJuniorVault,
+  const logs = await getLogs(
     dnGmxJuniorVault.filters.Rebalanced(),
     startBlock,
     endBlock,
-    GET_LOGS_BLOCK_INTERVAL
+    dnGmxJuniorVault
   )
 
   return logs as RebalancedEvent[]

@@ -101,13 +101,7 @@ export class BaseIndexer<DataStoreType> {
     console.log(this._networkName, 'run', { syncedBlock, latestBlock })
 
     while (syncedBlock < latestBlock) {
-      const logs = await getLogs(
-        filter,
-        syncedBlock + 1,
-        latestBlock,
-        this._provider,
-        this._networkName
-      )
+      const logs = await getLogs(filter, syncedBlock + 1, latestBlock, this._provider)
 
       for (const log of logs) {
         await this.forEachLog(log)

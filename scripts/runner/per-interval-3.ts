@@ -4,7 +4,8 @@ import { ethers } from 'ethers'
 import { formatEther } from 'ethers/lib/utils'
 
 import { getProviderAggregate } from '../../providers'
-import { getLogsInLoop } from '../aggregated/util/helpers'
+import { getLogs } from '../../utils'
+
 import { parallelize } from '../aggregated/util/parallelize'
 
 perInterval('arbmain').then((v) => console.log(JSON.stringify(v)))
@@ -55,12 +56,11 @@ export async function perInterval(networkName: NetworkName) {
 
   function _getLogsInLoop(contract: ethers.Contract) {
     return async () => {
-      const logs = await getLogsInLoop(
-        contract,
+      const logs = await getLogs(
         contract.filters.Claim(null, null),
         startBlock,
         endBlock,
-        2000
+        contract
       )
       return logs.filter(
         (log) =>

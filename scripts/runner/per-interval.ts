@@ -10,8 +10,10 @@ import { ethers } from 'ethers'
 import { formatEther, formatUnits } from 'ethers/lib/utils'
 
 import { getProviderAggregate } from '../../providers'
+import { getLogs } from '../../utils'
 import { juniorVault } from '../aggregated/util/events'
-import { getLogsInLoop, price } from '../aggregated/util/helpers'
+import { price } from '../aggregated/util/helpers'
+
 import { parallelize } from '../aggregated/util/parallelize'
 // import { juniorVault } from "./aggregated/util/events";
 // import { getLogsInLoop, price } from "./util/helpers";
@@ -72,21 +74,19 @@ export async function perInterval(networkName: NetworkName) {
         juniorVault.withdraw,
         juniorVault.rebalanced,
         () => {
-          return getLogsInLoop(
-            _vault,
+          return getLogs(
             _vault.filters.IncreaseUsdgAmount(null, null),
             startBlock,
             endBlock,
-            2000
+            _vault
           )
         },
         () => {
-          return getLogsInLoop(
-            _vault,
+          return getLogs(
             _vault.filters.DecreaseUsdgAmount(null, null),
             startBlock,
             endBlock,
-            2000
+            _vault
           )
         }
       ],

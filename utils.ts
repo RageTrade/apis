@@ -13,6 +13,7 @@ import type { Request } from 'express'
 import createError from 'http-errors'
 
 import { ENV } from './env'
+import { TypedEvent, TypedEventFilter } from '@ragetrade/sdk/dist/typechain/core/common'
 
 export const secs = 1
 export const mins = 60
@@ -254,10 +255,23 @@ export async function getLogs(
   filter: EventFilter,
   fromBlock: number,
   toBlock: number,
-  provider: ethers.providers.Provider,
-  networkName: NetworkName
-) {
-  let logs: ethers.providers.Log[] | undefined
+  providerOrContract: ethers.providers.Provider
+): Promise<ethers.providers.Log[]>
+
+export async function getLogs<T extends TypedEvent>(
+  filter: TypedEventFilter<T>,
+  fromBlock: number,
+  toBlock: number,
+  providerOrContract: ethers.Contract
+): Promise<T[]>
+
+export async function getLogs(
+  filter: EventFilter,
+  fromBlock: number,
+  toBlock: number,
+  providerOrContract: ethers.providers.Provider | ethers.Contract
+): Promise<ethers.Event[] | ethers.providers.Log[]> {
+  let logs: ethers.providers.Log[] = []
 
   let _fromBlock = fromBlock
   let _toBlock = toBlock
@@ -265,22 +279,46 @@ export async function getLogs(
 
   while (_fetchedBlock < toBlock) {
     try {
-      console.log(networkName, 'getLogs', _fromBlock, _toBlock)
-      const _logs = await provider.getLogs({
-        ...filter,
-        fromBlock: _fromBlock,
-        toBlock: _toBlock
-      })
+      console.log('getLogs', _fromBlock, _toBlock, _toBlock - _fromBlock)
+      let _logs
+      if (ethers.providers.Provider.isProvider(providerOrContract)) {
+        _logs = await providerOrContract.getLogs({
+          ...filter,
+          fromBlock: _fromBlock,
+          toBlock: _toBlock
+        })
+      } else {
+        _logs = await providerOrContract.queryFilter(filter, _fromBlock, _toBlock)
+      }
       logs = logs ? logs.concat(_logs) : _logs
       // setting fetched block to the last block of the fetched logs
       _fetchedBlock = _toBlock
       // next getLogs query range
+
+      let newToBlock = Math.min(
+        toBlock,
+        _toBlock + 2 * roundNumber(_toBlock - _fromBlock + 1)
+      )
       _fromBlock = _toBlock + 1
-      _toBlock = toBlock
-    } catch {
+      _toBlock = newToBlock
+    } catch (e: any) {
+      if (typeof e?.message === 'string') {
+        // if error message contains a block range, use that as the new toBlock
+        let [, fromBlockStr, toBlockStr] = e.message.match(
+          /\[(0x[0-9a-fA-F]+), (0x[0-9a-fA-F]+)\]/
+        )
+        console.log('match', fromBlockStr, toBlockStr)
+
+        if (Number(fromBlockStr) === _fromBlock && !isNaN(Number(toBlockStr))) {
+          _toBlock = Number(toBlockStr)
+
+          continue
+        }
+      }
       // if query failed, re-try with a shorter block interval
-      _toBlock = _fromBlock + Math.floor((_toBlock - _fromBlock) / 2)
-      console.error(networkName, 'getLogs failed')
+      _toBlock = _fromBlock + Math.floor(roundNumber((_toBlock - _fromBlock) / 2))
+
+      // console.error('getLogs failed', e)
     }
   }
 
@@ -289,4 +327,15 @@ export async function getLogs(
   }
 
   return logs
+}
+
+/**
+ * Rounds down an integer to the nearest 2 power
+ * @param num Integer
+ * @returns nearest or smallest 2 power
+ */
+function roundNumber(num: number) {
+  num = Math.floor(Math.abs(num))
+  if (num <= 10) return num
+  return Math.pow(2, Math.floor(Math.log2(num)))
 }

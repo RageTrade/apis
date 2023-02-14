@@ -115,22 +115,3 @@ export async function price(addr: string, blockNumber: number, networkName: Netw
       throw new Error('i dont know')
   }
 }
-
-export async function getLogsInLoop(
-  contract: ethers.Contract,
-  event: ethers.EventFilter,
-  fromBlock: number,
-  toBlock: number,
-  intervalBlocks: number
-): Promise<ethers.Event[]> {
-  const logs: ethers.Event[] = []
-  for (let i = fromBlock; i < toBlock; i += intervalBlocks) {
-    const _logs = await contract.queryFilter(
-      event,
-      i,
-      Math.min(toBlock, i + intervalBlocks - 1)
-    )
-    logs.push(..._logs)
-  }
-  return logs
-}
