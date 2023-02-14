@@ -50,13 +50,16 @@ export class RedisStore extends BaseStore {
       }
       try {
         const value = await valuePromise
-        // override expirySeconds if cacheSeconds is provided
-        if (typeof value.cacheSeconds === 'number') {
-          expirySeconds = value.cacheSeconds
-        }
-        // do not write to cache if expiry is 0
-        if (expirySeconds !== 0) {
-          await this.set<V>(key, value, expirySeconds)
+        // only cache non nullish value
+        if (value !== undefined && value !== null) {
+          // override expirySeconds if cacheSeconds is provided
+          if (typeof value.cacheSeconds === 'number') {
+            expirySeconds = value.cacheSeconds
+          }
+          // do not write to cache if expiry is 0
+          if (expirySeconds !== 0) {
+            await this.set<V>(key, value, expirySeconds)
+          }
         }
         this._promises.delete(key)
         return value

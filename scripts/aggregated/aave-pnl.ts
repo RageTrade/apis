@@ -72,6 +72,8 @@ export async function getAavePnl(
     },
     async (_i, blockNumber, event) => {
       const block = await provider.getBlock(blockNumber)
+      if (!block) return null
+
       const btcAmountBefore = Number(
         formatUnits(
           await vdWbtc.balanceOf(dnGmxJuniorVault.address, {

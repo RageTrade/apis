@@ -9,6 +9,12 @@ export type EventFn<Event> = (
   startBlockNumber?: number
 ) => Event[] | Promise<Event[]>
 
+export type OnEachEvent<Data, Event extends ethers.Event> = (
+  _i: number,
+  blockNumber: number,
+  event: Event
+) => Promise<Data | null | undefined>
+
 export async function parallelize<Data, Event extends ethers.Event>(
   options: {
     networkName: NetworkName
@@ -17,7 +23,7 @@ export async function parallelize<Data, Event extends ethers.Event>(
     ignoreMoreEventsInSameBlock?: boolean
     startBlockNumber?: number
   },
-  onEachEvent: (_i: number, blockNumber: number, event: Event) => Promise<Data>
+  onEachEvent: OnEachEvent<Data, Event>
 ): Promise<Data[]>
 
 export async function parallelize<Data>(
@@ -28,7 +34,7 @@ export async function parallelize<Data>(
     ignoreMoreEventsInSameBlock?: boolean
     startBlockNumber?: number
   },
-  onEachEvent: (_i: number, blockNumber: number, event: ethers.Event) => Promise<Data>
+  onEachEvent: OnEachEvent<Data, ethers.Event>
 ): Promise<Data[]>
 
 export async function parallelize<Data, Event extends ethers.Event>(
@@ -39,8 +45,8 @@ export async function parallelize<Data, Event extends ethers.Event>(
     ignoreMoreEventsInSameBlock?: boolean
     startBlockNumber?: number
   },
-  onEachEvent: (_i: number, blockNumber: number, event: Event) => Promise<Data>
-) {
+  onEachEvent: OnEachEvent<Data, Event>
+): Promise<Data[]> {
   const {
     networkName,
     provider,
@@ -73,7 +79,7 @@ export async function parallelize<Data, Event extends ethers.Event>(
     )
   }
 
-  const data: Data[] = []
+  const data: (Data | null | undefined)[] = []
   for (let i = 0; i < allEvents.length; i++) {
     data.push()
   }
@@ -150,7 +156,7 @@ export async function parallelize<Data, Event extends ethers.Event>(
   await Promise.all(promises)
 
   clearInterval(intr)
-  return data
+  return data.filter((d) => !!d) as Data[]
 }
 
 // async function parallelizeRequest<T>(

@@ -66,6 +66,8 @@ export async function getGlpPnl(
     },
     async (_i, blockNumber, event) => {
       const block = await provider.getBlock(blockNumber)
+      if (!block) return null
+
       const fsGlp_balanceOf_juniorVault = Number(
         formatEther(
           await fsGLP.balanceOf(dnGmxJuniorVault.address, {

@@ -66,7 +66,8 @@ export async function getVaultInfo(networkName: NetworkName) {
       ignoreMoreEventsInSameBlock: true // to prevent reprocessing same data
     },
     async (_i, blockNumber, event) => {
-      const { timestamp } = await provider.getBlock(blockNumber)
+      const block = await provider.getBlock(blockNumber)
+      if (!block) return null
 
       const juniorVaultInfo = await getJuniorVaultInfo(blockNumber)
       const seniorVaultInfo = await getSeniorVaultInfo(blockNumber)
@@ -74,7 +75,7 @@ export async function getVaultInfo(networkName: NetworkName) {
       return {
         blockNumber,
         transactionHash: event.transactionHash,
-        timestamp,
+        timestamp: block.timestamp,
         juniorVaultInfo,
         seniorVaultInfo
       }
