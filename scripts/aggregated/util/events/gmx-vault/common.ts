@@ -8,6 +8,8 @@ export const getStartBlock = (networkName: NetworkName) => {
     case 'arbmain':
     case 'mainnetfork':
       return 44570369
+    case 'arbgoerli':
+      return 2333454
     default:
       throw new Error(`Start block not available for the network: ${networkName}`)
   }
