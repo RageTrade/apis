@@ -643,10 +643,10 @@
   dependencies:
     debug "^4.3.1"
 
-"@ragetrade/sdk@^1.1.0-alpha.3":
-  version "1.1.0-alpha.3"
-  resolved "https://registry.yarnpkg.com/@ragetrade/sdk/-/sdk-1.1.0-alpha.3.tgz#97a1d2d31ab146b4f2f9264f07a2373f97447120"
-  integrity sha512-mTu0Wcfj0Eagk3BA5fsou+MLC9GWmcqEJWpVERr6BgZuNNVLwEBhS/zPN7Q086GG2HM9RW0iCb+4w493cqgtRA==
+"@ragetrade/sdk@^1.1.0-alpha.7":
+  version "1.1.0-alpha.7"
+  resolved "https://registry.yarnpkg.com/@ragetrade/sdk/-/sdk-1.1.0-alpha.7.tgz#8d17585997163ac908d3870a555068952f68037a"
+  integrity sha512-abzLHfZ/sWLPnvozBhI1mJobpKmUIsB10zoE9iJZ849/ihIeclAD/WdjFUtia2ydRTQlqVn3dUaBQv8kvptp+A==
   dependencies:
     "@uniswap/v3-sdk" "^3.8.2"
     ethers-repl "^1.0.3"
