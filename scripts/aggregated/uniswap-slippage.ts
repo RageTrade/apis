@@ -84,7 +84,7 @@ export async function getUniswapSlippage(
       provider,
       getEvents: [juniorVault.rebalanced],
       startBlockNumber: 61486296
-  },
+    },
     async (_i, blockNumber, event) => {
       const rc = await provider.getTransactionReceipt(event.transactionHash)
       const filter = dnGmxJuniorVault.filters.TokenSwapped()
