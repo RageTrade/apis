@@ -43,7 +43,7 @@ export async function getTraderPnl(
     return resp.result
   }
 
-  const START_BLOCK = 45412300
+  const START_BLOCK = 61486296
 
   const provider = getProviderAggregate('arbmain')
 

@@ -69,7 +69,7 @@ export async function getGlpSlippage(
         juniorVault.withdraw,
         juniorVault.rebalanced
       ],
-      startBlockNumber: 45412307
+      startBlockNumber: 61486296
     },
     async (_i, blockNumber, event) => {
       const rc = await provider.getTransactionReceipt(event.transactionHash)

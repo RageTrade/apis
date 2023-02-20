@@ -76,7 +76,7 @@ export async function getAaveBorrows(
         gmxVault.decreasePoolAmount
       ],
       ignoreMoreEventsInSameBlock: true, // to prevent reprocessing same data
-      startBlockNumber: 45412307
+      startBlockNumber: 61486296
     },
     async (_i, blockNumber, event) => {
       const block = await provider.getBlock(blockNumber)

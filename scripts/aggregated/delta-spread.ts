@@ -107,7 +107,7 @@ export async function getDeltaSpread(
       networkName,
       provider,
       getEvents: [juniorVault.deposit, juniorVault.withdraw, juniorVault.rebalanced],
-      startBlockNumber: 45412307
+      startBlockNumber: 61486296
     },
     async (_i, blockNumber, event) => {
       const rc = await provider.getTransactionReceipt(event.transactionHash)

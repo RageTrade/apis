@@ -60,7 +60,7 @@ export async function getGlpRewards(
       networkName,
       provider,
       getEvents: [juniorVault.rewardsHarvested],
-      startBlockNumber: 45412307
+      startBlockNumber: 61486296
     },
     async (_i, blockNumber, event) => {
       // const { juniorVaultGlp, seniorVaultAUsdc } = event.args;

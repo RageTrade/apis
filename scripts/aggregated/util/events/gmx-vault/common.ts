@@ -7,7 +7,7 @@ export const getStartBlock = (networkName: NetworkName) => {
   switch (networkName) {
     case 'arbmain':
     case 'mainnetfork':
-      return 44570369
+      return 61486296
     case 'arbgoerli':
       return 2333454
     default:
