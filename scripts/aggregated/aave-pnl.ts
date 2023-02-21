@@ -64,8 +64,8 @@ export async function getAavePnl(
         juniorVault.deposit,
         juniorVault.withdraw,
         juniorVault.rebalanced,
-        gmxVault.increaseUsdgAmount,
-        gmxVault.decreaseUsdgAmount
+        gmxVault.increasePoolAmount,
+        gmxVault.decreasePoolAmount
       ],
       ignoreMoreEventsInSameBlock: true, // to prevent reprocessing same data
       startBlockNumber: 45412307
