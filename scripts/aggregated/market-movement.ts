@@ -202,8 +202,7 @@ export async function getMarketMovement(
         .dnGmxJuniorVaultGlpBalance({ blockTag: blockNumber })
         .then((res) => formatAsNum(res, 18))
 
-      // this is not used, but here for reference in output data
-      const glp_totalSupply = await glp
+      const totalGLPSupply = await glp
         .totalSupply({ blockTag: blockNumber })
         .then((res) => formatAsNum(res, 18))
 
@@ -211,20 +210,21 @@ export async function getMarketMovement(
         formatEther(poolAmounts.reduce((a, b) => a.add(b), BigNumber.from(0)))
       )
 
-      const wethTokenWeight =
-        wethPoolAmount - wethReservedAmounts + wethShortSizes / wethShortAveragePrice
-      const wbtcTokenWeight =
-        wbtcPoolAmount - wbtcReservedAmounts + wbtcShortSizes / wbtcShortAveragePrice
-
-      const linkTokenWeight = wethPoolAmount
-      const uniTokenWeight = wbtcPoolAmount
-
       const vaultGlp = fsGlp_balanceOf_juniorVault + fsGlp_balanceOf_batchingManager
 
-      const wethCurrentToken = (wethTokenWeight * vaultGlp * glpPrice) / wethPrice
-      const wbtcCurrentToken = (wbtcTokenWeight * vaultGlp * glpPrice) / wbtcPrice
-      const linkCurrentToken = (linkTokenWeight * vaultGlp * glpPrice) / linkPrice
-      const uniCurrentToken = (uniTokenWeight * vaultGlp * glpPrice) / uniPrice
+      const wethTokenWeight =
+        (wethPoolAmount - wethReservedAmounts) + (wethShortSizes / wethShortAveragePrice);
+
+      const wbtcTokenWeight =
+        (wbtcPoolAmount - wbtcReservedAmounts) + (wbtcShortSizes / wbtcShortAveragePrice);
+
+      const linkTokenWeight = linkPoolAmount
+      const uniTokenWeight = uniPoolAmount
+
+      const wethCurrentToken = (wethTokenWeight * vaultGlp / totalGLPSupply)
+      const wbtcCurrentToken = (wbtcTokenWeight * vaultGlp / totalGLPSupply)
+      const linkCurrentToken = (linkTokenWeight * vaultGlp / totalGLPSupply)
+      const uniCurrentToken = (uniTokenWeight * vaultGlp / totalGLPSupply)
 
       return {
         blockNumber: blockNumber,
@@ -232,7 +232,7 @@ export async function getMarketMovement(
         timestamp: block.timestamp,
         fsGlp_balanceOf_juniorVault,
         fsGlp_balanceOf_batchingManager,
-        glp_totalSupply,
+        glp_totalSupply: totalGLPSupply,
         vaultGlp,
         glpPrice,
         wethPoolAmount,
