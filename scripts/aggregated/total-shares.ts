@@ -79,7 +79,8 @@ export async function getTotalShares(
       startBlockNumber: 45412307
     },
     async (_i, blockNumber, event) => {
-      const { timestamp } = await provider.getBlock(blockNumber)
+      const block = await provider.getBlock(blockNumber)
+      if (!block) return null
 
       const totalJuniorVaultShares = Number(
         formatEther(
@@ -120,7 +121,7 @@ export async function getTotalShares(
       return {
         blockNumber,
         transactionHash: event.transactionHash,
-        timestamp,
+        timestamp: block.timestamp,
         totalJuniorVaultShares,
         totalSeniorVaultShares,
         currentRound,

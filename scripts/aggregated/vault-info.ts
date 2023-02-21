@@ -14,10 +14,12 @@ export type VaultInfoEntry = Entry<{
   juniorVaultInfo: {
     assetPrice: number
     sharePrice: number
+    vaultMarketValue: number
   }
   seniorVaultInfo: {
     assetPrice: number
     sharePrice: number
+    vaultMarketValue: number
   }
 }>
 
@@ -26,11 +28,13 @@ export interface VaultInfoResult {
   dataLength: number
 }
 
-export async function getVaultInfo(networkName: NetworkName): Promise<VaultInfoResult> {
+export async function getVaultInfo(networkName: NetworkName) {
   const provider = getProviderAggregate(networkName)
 
-  const { dnGmxJuniorVault, dnGmxSeniorVault, dnGmxBatchingManager } =
-    deltaNeutralGmxVaults.getContractsSync(networkName, provider)
+  const { dnGmxJuniorVault, dnGmxSeniorVault } = deltaNeutralGmxVaults.getContractsSync(
+    networkName,
+    provider
+  )
 
   // this api contains extra block numbers
   const traderPnlData: ResultWithMetadata<GlobalTraderPnlResult> = await fetchJson({
@@ -62,7 +66,8 @@ export async function getVaultInfo(networkName: NetworkName): Promise<VaultInfoR
       ignoreMoreEventsInSameBlock: true // to prevent reprocessing same data
     },
     async (_i, blockNumber, event) => {
-      const { timestamp } = await provider.getBlock(blockNumber)
+      const block = await provider.getBlock(blockNumber)
+      if (!block) return null
 
       const juniorVaultInfo = await getJuniorVaultInfo(blockNumber)
       const seniorVaultInfo = await getSeniorVaultInfo(blockNumber)
@@ -70,7 +75,7 @@ export async function getVaultInfo(networkName: NetworkName): Promise<VaultInfoR
       return {
         blockNumber,
         transactionHash: event.transactionHash,
-        timestamp,
+        timestamp: block.timestamp,
         juniorVaultInfo,
         seniorVaultInfo
       }

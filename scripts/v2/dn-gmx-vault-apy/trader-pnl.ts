@@ -1,130 +1,56 @@
 import 'isomorphic-unfetch'
 
-import { fetchRetry } from '../../../utils'
+import { fetchJson } from 'ethers/lib/utils'
 
-const gmxSubgraphUrl = 'https://api.thegraph.com/subgraphs/name/gmx-io/gmx-stats'
+import type {
+  GlobalGlpPnlResult,
+  GlobalMarketMovementResult,
+  VaultInfoResult
+} from '../../aggregated'
+import { combineStatsData } from '../../aggregated/util/combineStatsData'
+import { NetworkName } from '@ragetrade/sdk'
 
-const queryTraderData = async (from_ts: string, to_ts: string) => {
-  const results = await fetchRetry(gmxSubgraphUrl, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      query: `
-        query gmxTraderStats {
-          tradingStats(
-            first: 1000
-            orderBy: timestamp
-            orderDirection: desc
-            where: { period: "daily", timestamp_gte: ${from_ts}, timestamp_lte: ${to_ts} }
-            subgraphError: allow
-          ) {
-            timestamp
-            profit
-            loss
-            profitCumulative
-            lossCumulative
-            longOpenInterest
-            shortOpenInterest
-          }
-        }
-      `
-    })
+export const getTraderPnl = async (networkName: NetworkName) => {
+  const { result: glpPnl }: { result: GlobalGlpPnlResult } = await fetchJson({
+    url: 'http://localhost:3000/data/aggregated/get-glp-pnl?networkName=' + networkName,
+    timeout: 1000_00_00_00
   })
 
-  return (await results.json()).data
-}
-
-const queryFeesData = async (from_ts: string, to_ts: string) => {
-  const results = await fetchRetry(gmxSubgraphUrl, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      query: `
-        query gmxFeeStats {
-          feeStats(
-            first: 1000
-            orderBy: id
-            orderDirection: desc
-            where: { period: daily, id_gte: ${from_ts}, id_lte: ${to_ts} }
-            subgraphError: allow
-          ) {
-            id
-            margin
-            marginAndLiquidation
-            swap
-            mint
-            burn
-          }
-        }
-      `
+  const { result: marketMovement }: { result: GlobalMarketMovementResult } =
+    await fetchJson({
+      url:
+        'http://localhost:3000/data/aggregated/get-market-movement?networkName=' +
+        networkName,
+      timeout: 1000_00_00_00
     })
+
+  const { result: vaultInfo }: { result: VaultInfoResult } = await fetchJson({
+    url:
+      'http://localhost:3000/data/aggregated/get-vault-info?networkName=' + networkName,
+    timeout: 1000_00_00_00
   })
 
-  return (await results.json()).data
-}
+  const combined = combineStatsData(
+    [glpPnl.dailyData || [], marketMovement.dailyData || []],
+    'startTimestamp',
+    ([glpPnlObj, mktMoveObj]) => {
+      const Day = (glpPnlObj || mktMoveObj)?.startTimestamp
+      if (!Day) throw new Error('All objects cannot be undefined')
 
-const queryGlpData = async (from_ts: string, to_ts: string) => {
-  const results = await fetchRetry(gmxSubgraphUrl, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      query: `
-        query gmxGlpStats {
-          glpStats(
-            first: 1000
-            orderBy: id
-            orderDirection: desc
-            where: {
-              period: daily
-              id_gte: ${from_ts}
-              id_lte: ${to_ts}
-            }
-            subgraphError: allow
-          ) {
-            id
-            aumInUsdg
-            glpSupply
-            distributedUsd
-            distributedEth
-          }
-        }
-      `
+      return {
+        Day,
+        totalTraderPnL: (glpPnlObj?.glpPnlNet || 0) - (mktMoveObj?.pnlNet || 0)
+      }
+    }
+  )
+
+  const data = vaultInfo.data
+    .map((entry) => {
+      const foundDay = combined.find((d) => d.Day === entry.timestamp)
+
+      return (foundDay?.totalTraderPnL || 0) / entry.juniorVaultInfo.vaultMarketValue
     })
-  })
+    .reduce((acc, curr) => acc + curr, 0)
 
-  return (await results.json()).data
-}
-
-export const getTraderPnl = async () => {
-  const currentDate = new Date()
-
-  // const threeMonthsOldDate = new Date();
-  // threeMonthsOldDate.setMonth(currentDate.getMonth() - 3);
-
-  const twoWeeksOldDate = new Date()
-  twoWeeksOldDate.setDate(twoWeeksOldDate.getDate() - 28)
-
-  const to_ts = Math.floor(currentDate.getTime() / 1000).toString()
-  const from_ts = Math.floor(twoWeeksOldDate.getTime() / 1000).toString()
-
-  let aum = 0
-  let traderPnl = 0
-
-  const [glpData, traderData] = await Promise.all([
-    queryGlpData(from_ts, to_ts),
-    queryTraderData(from_ts, to_ts)
-  ])
-
-  for (const each of glpData.glpStats) {
-    aum += each.aumInUsdg / 1e18
-  }
-
-  for (const each of traderData.tradingStats) {
-    const loss = each.loss / 1e30
-    const profit = each.profit / 1e30
-
-    traderPnl += profit - loss
-  }
-
-  return aum > 0 ? (traderPnl / aum) * glpData.glpStats.length * 13 * 100 * -1 : 0
+  return data * 100
 }

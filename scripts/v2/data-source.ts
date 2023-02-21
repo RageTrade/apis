@@ -17,13 +17,12 @@ import { getBlockByTimestamp } from '../get-block-by-timestamp'
 export function getDataSourceByNetworkName(networkName: NetworkName) {
   switch (networkName) {
     case 'arbmain':
-      return getDataSource('arbmain')
-    case 'arbrinkeby':
-      return getDataSource('arbrinkeby')
     case 'arbgoerli':
-      return getDataSource('arbgoerli')
+      return getDataSource(networkName)
+    case 'mainnetfork':
+      return new EthersProviderDataSource(getProvider(networkName))
     default:
-      throw new Error(`Unknown network name: ${networkName}`)
+      throw new Error(`getDataSourceByNetworkName: Unknown network name: ${networkName}`)
   }
 }
 

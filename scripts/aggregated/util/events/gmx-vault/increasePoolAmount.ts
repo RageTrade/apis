@@ -2,7 +2,7 @@ import type { NetworkName } from '@ragetrade/sdk'
 import { gmxProtocol } from '@ragetrade/sdk'
 import { ethers } from 'ethers'
 
-import { getLogsInLoop } from '../../helpers'
+import { getLogs } from '../../../../../utils'
 import { GET_LOGS_INTERVAL, getStartBlock, oneInFiftyBlocks } from './common'
 
 export async function increasePoolAmount(
@@ -28,12 +28,11 @@ export async function increasePoolAmount(
       Math.floor((startBlockNumberOverride - startBlock) / GET_LOGS_INTERVAL)
   }
 
-  const logs = await getLogsInLoop(
-    _gmxUnderlyingVault,
+  const logs = await getLogs(
     _gmxUnderlyingVault.filters.IncreasePoolAmount(),
     startBlock,
     endBlock,
-    GET_LOGS_INTERVAL
+    _gmxUnderlyingVault
   )
 
   return logs.filter(oneInFiftyBlocks)

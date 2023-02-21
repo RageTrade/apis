@@ -1,3 +1,3 @@
 git pull
-yarn install
-yarn restart2
+pnpm install
+pnpm restart2

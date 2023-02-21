@@ -60,6 +60,8 @@ export async function getRebalanceInfo(
     },
     async (_i, blockNumber, event) => {
       const block = await provider.getBlock(blockNumber)
+      if (!block) return null
+
       const timestamp = block.timestamp
 
       // starting borrow amounts, end borrow amounts

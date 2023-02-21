@@ -129,6 +129,8 @@ export async function getMarketMovement(
     },
     async (_i, blockNumber, event) => {
       const block = await provider.getBlock(blockNumber)
+      if (!block) return null
+
       const poolAmounts = await Promise.all(
         allWhitelistedTokens.map((token) =>
           gmxUnderlyingVault.poolAmounts(token, { blockTag: blockNumber })

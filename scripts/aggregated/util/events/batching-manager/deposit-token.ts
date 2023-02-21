@@ -1,11 +1,10 @@
 import type { NetworkName } from '@ragetrade/sdk'
 import { deltaNeutralGmxVaults, tokens } from '@ragetrade/sdk'
+
+import { ErrorWithStatusCode, getLogs } from '../../../../../utils'
+
 import type { DepositTokenEvent } from '@ragetrade/sdk/dist/typechain/delta-neutral-gmx-vaults/contracts/vaults/DnGmxBatchingManager'
 import type { ethers } from 'ethers'
-
-import { ErrorWithStatusCode } from '../../../../../utils'
-import { getLogsInLoop } from '../../helpers'
-import { GET_LOGS_BLOCK_INTERVAL } from '../common'
 
 export async function depositToken(
   networkName: NetworkName,
@@ -27,12 +26,11 @@ export async function depositToken(
     throw new ErrorWithStatusCode('Start block is not defined', 500)
   }
 
-  const logs = await getLogsInLoop(
-    dnGmxBatchingManager,
+  const logs = await getLogs(
     dnGmxBatchingManager.filters.DepositToken(null, weth.address, null, null, null),
     startBlock,
     endBlock,
-    GET_LOGS_BLOCK_INTERVAL
+    dnGmxBatchingManager
   )
 
   return logs as DepositTokenEvent[]

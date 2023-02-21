@@ -80,6 +80,8 @@ export async function getAaveBorrows(
     },
     async (_i, blockNumber, event) => {
       const block = await provider.getBlock(blockNumber)
+      if (!block) return null
+
       const _btcAmountBefore = await vdWbtc.balanceOf(dnGmxJuniorVault.address, {
         blockTag: blockNumber - 1
       })

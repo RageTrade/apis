@@ -15,8 +15,15 @@ import { RedisStore } from './store/redis-store'
 export class ArchiveCacheProvider extends RetryProvider {
   // store: FileStore<string>;
   redisStore: RedisStore
+  forkBlockNumber: number | undefined
+  originalProvider: ethers.providers.Provider | undefined
 
-  constructor(url?: ConnectionInfo | string, network?: Networkish) {
+  constructor(
+    url?: ConnectionInfo | string,
+    network?: Networkish,
+    forkBlockNumber?: number,
+    originalProvider?: ethers.providers.Provider
+  ) {
     super(url, network)
     if (typeof network !== 'number') {
       throw new Error('Second arg of ArchiveCacheProvider must be a chainId number')
@@ -28,6 +35,8 @@ export class ArchiveCacheProvider extends RetryProvider {
       client: getRedisClient(),
       updateCache: false
     })
+    this.forkBlockNumber = forkBlockNumber
+    this.originalProvider = originalProvider
   }
 
   async call(
@@ -44,7 +53,17 @@ export class ArchiveCacheProvider extends RetryProvider {
       ])
       return this.redisStore.getOrSet(
         key,
-        async () => super.call(transaction, blockTag),
+        async () => {
+          if (
+            this.forkBlockNumber &&
+            this.originalProvider &&
+            blockTag <= this.forkBlockNumber
+          ) {
+            return this.originalProvider.call(transaction, blockTag)
+          } else {
+            return super.call(transaction, blockTag)
+          }
+        },
         -1
       )
     } else {
@@ -59,7 +78,17 @@ export class ArchiveCacheProvider extends RetryProvider {
       const key = getKey([this.network.name, 'getBlock', String(blockHashOrBlockTag)])
       return this.redisStore.getOrSet(
         key,
-        async () => super.getBlock(blockHashOrBlockTag),
+        async () => {
+          if (
+            this.forkBlockNumber &&
+            this.originalProvider &&
+            blockHashOrBlockTag <= this.forkBlockNumber
+          ) {
+            return this.originalProvider.getBlock(blockHashOrBlockTag)
+          } else {
+            return super.getBlock(blockHashOrBlockTag)
+          }
+        },
         -1
       )
     } else {
@@ -76,7 +105,22 @@ export class ArchiveCacheProvider extends RetryProvider {
         String(filter.toBlock),
         filter.topics?.join('-') ?? 'no-topics'
       ])
-      return this.redisStore.getOrSet(key, async () => super.getLogs(filter), -1)
+      return this.redisStore.getOrSet(
+        key,
+        async () => {
+          if (
+            this.forkBlockNumber &&
+            this.originalProvider &&
+            typeof filter.toBlock === 'number' && // for typescript
+            filter.toBlock <= this.forkBlockNumber
+          ) {
+            return this.originalProvider.getLogs(filter)
+          } else {
+            return super.getLogs(filter)
+          }
+        },
+        -1
+      )
     } else {
       return super.getLogs(filter)
     }

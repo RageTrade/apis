@@ -19,31 +19,36 @@ export const arbtest = new RetryProvider(
 export const arbgoerli = new RetryProvider(
   'https://arb-goerli.g.alchemy.com/v2/' + ENV.ALCHEMY_KEY
 )
+export const mainnetfork = new RetryProvider('https://internal-rpc.rage.trade')
 // sdk.getProvider("arbgoerli");
 
 export function getProvider(networkName: NetworkName): ethers.providers.Provider {
   switch (networkName) {
     case 'arbmain':
       return arbmain
-    case 'arbtest':
-    case 'arbrinkeby':
-      return arbtest
     case 'arbgoerli':
       return arbgoerli
+    case 'mainnetfork':
+      return mainnetfork
     default:
       throw new Error(`Provider not available for the network: ${networkName}`)
   }
 }
 
 // This is separate from the above function because the aggregate apis make a lot of requests
-export function getProviderAggregate(
-  networkName: NetworkName
-): ethers.providers.Provider {
+export function getProviderAggregate(networkName: NetworkName): ArchiveCacheProvider {
   switch (networkName) {
     case 'arbmain':
       return new ArchiveCacheProvider(
         'https://arb-mainnet.g.alchemy.com/v2/' + ENV.ALCHEMY_KEY_AGGREGATE,
         chainIds.arbmain
+      )
+    case 'mainnetfork':
+      return new ArchiveCacheProvider(
+        'https://internal-rpc.rage.trade',
+        31337,
+        56878000,
+        getProviderAggregate('arbmain')
       )
     case 'arbgoerli':
       return new ArchiveCacheProvider(
