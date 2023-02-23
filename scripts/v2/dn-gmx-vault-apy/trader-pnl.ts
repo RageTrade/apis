@@ -50,7 +50,10 @@ export const getTraderPnl = async (networkName: NetworkName) => {
 
       return (foundDay?.totalTraderPnL || 0) / entry.juniorVaultInfo.vaultMarketValue
     })
+
+  const dataSum = data
+    .filter((num) => !Number.isNaN(num) && Number.isFinite(num))
     .reduce((acc, curr) => acc + curr, 0)
 
-  return data * 100
+  return dataSum * 100
 }
