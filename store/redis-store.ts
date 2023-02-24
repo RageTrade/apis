@@ -1,7 +1,9 @@
 import Debugger from 'debug'
-import type { Redis } from 'ioredis'
 
+import { isCacheExpired, isCacheResponse, years } from '../utils'
 import { BaseStore } from './base-store'
+
+import type { Redis } from 'ioredis'
 
 const debug = Debugger('apis:redis-store')
 
@@ -34,15 +36,28 @@ export class RedisStore extends BaseStore {
 
     // do not read cache if expiry is 0
     const read = expirySeconds !== 0 ? await this.get<V>(key) : undefined
+    const ttl = await this.client.ttl(key)
 
     let valuePromise = this._promises.get(key)
-    if (read !== undefined) {
-      debug('RedisStore.getOrSet: returning the value present in storage')
+
+    // for persistent cache, return immediately
+    if (read && ttl === -1) {
+      debug('RedisStore.getOrSet: returning the persistent value')
+      return read
+    } else if (isCacheResponse(read) && !isCacheExpired(read)) {
+      // if cache is not expired, return immediately
+      debug('RedisStore.getOrSet: returning the cache value')
+      return read
+    } else if (valuePromise && isCacheResponse(read) && read?.result !== undefined) {
+      // if value is being fetched, try to serve cache response with result
+      debug('RedisStore.getOrSet: value being queried already, but old cache available')
       return read
     } else if (valuePromise) {
+      // otherwise keep user waiting for the promise to resolve
       debug('RedisStore.getOrSet: value being queried already, waiting for it')
       return valuePromise
     } else {
+      // fetch the value in real time
       debug('RedisStore.getOrSet: value not present in storage, fetching it')
       valuePromise = valueFn() as any
       if (valuePromise instanceof Promise) {
@@ -58,7 +73,8 @@ export class RedisStore extends BaseStore {
           }
           // do not write to cache if expiry is 0
           if (expirySeconds !== 0) {
-            await this.set<V>(key, value, expirySeconds)
+            // save for infinite time but with a non zero ttl
+            await this.set<V>(key, value, 1 * years)
           }
         }
         this._promises.delete(key)

@@ -3,7 +3,7 @@
 
 import { getRedisClient } from './redis-utils/get-client'
 import { RedisStore } from './store/redis-store'
-import { currentTimestamp } from './utils'
+import { currentTimestamp, CacheResponse } from './utils'
 
 interface Options {
   cacheSeconds: number
@@ -31,20 +31,6 @@ export function cacheFunctionResult<F extends (...args: any[]) => any>(
 
   return cache.getOrSet(key, () => generateResponse(fn, args, cacheSeconds), cacheSeconds)
 }
-
-type CacheMeta = {
-  cacheTimestamp: number
-  cacheSeconds: number
-}
-
-export type CacheResponse = CacheMeta &
-  (
-    | { result: any }
-    | {
-        error: string
-        status: number
-      }
-  )
 
 // includes error in the cache function output,
 // this is needed for preventing someone to abuse

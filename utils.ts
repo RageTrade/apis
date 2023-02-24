@@ -339,3 +339,29 @@ function roundNumber(num: number) {
   if (num <= 10) return num
   return Math.pow(2, Math.floor(Math.log2(num)))
 }
+
+export type CacheMeta = {
+  cacheTimestamp: number
+  cacheSeconds: number
+}
+
+export type CacheResponse = CacheMeta & {
+  result?: any
+  error?: string
+  status?: number
+}
+
+export function isCacheResponse(val: any): val is CacheResponse {
+  return (
+    typeof val === 'object' &&
+    'cacheSeconds' in val &&
+    typeof val.cacheSeconds === 'number' &&
+    'cacheTimestamp' in val &&
+    typeof val.cacheTimestamp === 'number'
+  )
+}
+
+export function isCacheExpired(cacheMeta: CacheMeta) {
+  const now = currentTimestamp()
+  return now - cacheMeta.cacheTimestamp > cacheMeta.cacheSeconds
+}
