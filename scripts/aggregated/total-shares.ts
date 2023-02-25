@@ -3,6 +3,7 @@ import { deltaNeutralGmxVaults, formatUsdc } from '@ragetrade/sdk'
 import type { ethers } from 'ethers'
 import { fetchJson, formatEther } from 'ethers/lib/utils'
 
+import { ENV } from '../../env'
 import { getProviderAggregate } from '../../providers'
 import type { GlobalTraderPnlResult } from './trader-pnl'
 import { batchingManager, juniorVault, seniorVault } from './util/events'
@@ -76,7 +77,7 @@ export async function getTotalShares(
         }
       ],
       ignoreMoreEventsInSameBlock: true, // to prevent reprocessing same data
-      startBlockNumber: 61486296
+      startBlockNumber: ENV.START_BLOCK_NUMBER
     },
     async (_i, blockNumber, event) => {
       const block = await provider.getBlock(blockNumber)

@@ -3,6 +3,7 @@ import { aave, deltaNeutralGmxVaults, gmxProtocol, tokens } from '@ragetrade/sdk
 import type { TokenSwappedEvent } from '@ragetrade/sdk/dist/typechain/delta-neutral-gmx-vaults/contracts/libraries/DnGmxJuniorVaultManager'
 import { fetchJson, formatEther, formatUnits } from 'ethers/lib/utils'
 
+import { ENV } from '../../env'
 import { getProviderAggregate } from '../../providers'
 import { days, timestampRoundDown } from '../../utils'
 import type { GlobalTotalSharesResult } from './total-shares'
@@ -107,7 +108,7 @@ export async function getDeltaSpread(
       networkName,
       provider,
       getEvents: [juniorVault.deposit, juniorVault.withdraw, juniorVault.rebalanced],
-      startBlockNumber: 61486296
+      startBlockNumber: ENV.START_BLOCK_NUMBER
     },
     async (_i, blockNumber, event) => {
       const rc = await provider.getTransactionReceipt(event.transactionHash)

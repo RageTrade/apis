@@ -8,7 +8,8 @@ const schema = z.object({
   ALCHEMY_KEY_AGGREGATE: z.string(),
   ARBISCAN_KEY: z.string(),
   MAX_INFLIGHT_LOOPS: z.coerce.number(),
-  PORT: z.coerce.number().optional()
+  PORT: z.coerce.number().optional(),
+  START_BLOCK_NUMBER: z.coerce.number()
 })
 
 export const ENV = schema.parse(process.env)

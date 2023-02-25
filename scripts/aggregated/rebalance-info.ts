@@ -3,6 +3,7 @@ import { aave, deltaNeutralGmxVaults, formatUsdc, typechain } from '@ragetrade/s
 import type { TokenSwappedEvent } from '@ragetrade/sdk/dist/typechain/delta-neutral-gmx-vaults/contracts/libraries/DnGmxJuniorVaultManager'
 import { formatEther, formatUnits } from 'ethers/lib/utils'
 
+import { ENV } from '../../env'
 import { getProviderAggregate } from '../../providers'
 import { juniorVault } from './util/events'
 import { decimals, price } from './util/helpers'
@@ -56,7 +57,7 @@ export async function getRebalanceInfo(
       networkName,
       provider,
       getEvents: [juniorVault.rebalanced],
-      startBlockNumber: 61486296
+      startBlockNumber: ENV.START_BLOCK_NUMBER
     },
     async (_i, blockNumber, event) => {
       const block = await provider.getBlock(blockNumber)

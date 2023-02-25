@@ -2,6 +2,7 @@ import type { NetworkName } from '@ragetrade/sdk'
 import { aave, deltaNeutralGmxVaults, tokens } from '@ragetrade/sdk'
 import { fetchJson, formatUnits } from 'ethers/lib/utils'
 
+import { ENV } from '../../env'
 import { getProviderAggregate } from '../../providers'
 import { days, timestampRoundDown } from '../../utils'
 import { intersection } from './util/combine'
@@ -76,7 +77,7 @@ export async function getAaveBorrows(
         gmxVault.decreasePoolAmount
       ],
       ignoreMoreEventsInSameBlock: true, // to prevent reprocessing same data
-      startBlockNumber: 61486296
+      startBlockNumber: ENV.START_BLOCK_NUMBER
     },
     async (_i, blockNumber, event) => {
       const block = await provider.getBlock(blockNumber)

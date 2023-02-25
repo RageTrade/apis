@@ -2,6 +2,7 @@ import type { NetworkName, ResultWithMetadata } from '@ragetrade/sdk'
 import { formatUsdc, gmxProtocol, tokens } from '@ragetrade/sdk'
 import { fetchJson, formatEther, formatUnits } from 'ethers/lib/utils'
 
+import { ENV } from '../../env'
 import { getProviderAggregate } from '../../providers'
 import { days, timestampRoundDown } from '../../utils'
 import type { GlobalTotalSharesResult } from './total-shares'
@@ -60,7 +61,7 @@ export async function getGlpRewards(
       networkName,
       provider,
       getEvents: [juniorVault.rewardsHarvested],
-      startBlockNumber: 61486296
+      startBlockNumber: ENV.START_BLOCK_NUMBER
     },
     async (_i, blockNumber, event) => {
       // const { juniorVaultGlp, seniorVaultAUsdc } = event.args;
