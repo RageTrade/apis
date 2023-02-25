@@ -1,9 +1,8 @@
 import Debugger from 'debug'
+import type { Redis } from 'ioredis'
 
 import { isCacheExpired, isCacheResponse, years } from '../utils'
 import { BaseStore } from './base-store'
-
-import type { Redis } from 'ioredis'
 
 const debug = Debugger('apis:redis-store')
 

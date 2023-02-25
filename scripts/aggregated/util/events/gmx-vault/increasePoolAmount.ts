@@ -1,7 +1,6 @@
 import type { NetworkName } from '@ragetrade/sdk'
-import { ethers } from 'ethers'
-
 import { gmxProtocol } from '@ragetrade/sdk'
+import { ethers } from 'ethers'
 
 import { getLogs } from '../../../../../utils'
 import { GET_LOGS_INTERVAL, getStartBlock, oneInFiftyBlocks } from './common'

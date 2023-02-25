@@ -3,7 +3,8 @@
 
 import { getRedisClient } from './redis-utils/get-client'
 import { RedisStore } from './store/redis-store'
-import { currentTimestamp, CacheResponse } from './utils'
+import type { CacheResponse } from './utils'
+import { currentTimestamp } from './utils'
 
 interface Options {
   cacheSeconds: number

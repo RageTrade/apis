@@ -212,19 +212,20 @@ export async function getMarketMovement(
 
       const vaultGlp = fsGlp_balanceOf_juniorVault + fsGlp_balanceOf_batchingManager
 
+      // (poolAmount - reserveAmount) + (shortSize / averagePrice)
       const wethTokenWeight =
-        (wethPoolAmount - wethReservedAmounts) + (wethShortSizes / wethShortAveragePrice);
+        wethPoolAmount - wethReservedAmounts + wethShortSizes / wethShortAveragePrice
 
       const wbtcTokenWeight =
-        (wbtcPoolAmount - wbtcReservedAmounts) + (wbtcShortSizes / wbtcShortAveragePrice);
+        wbtcPoolAmount - wbtcReservedAmounts + wbtcShortSizes / wbtcShortAveragePrice
 
       const linkTokenWeight = linkPoolAmount
       const uniTokenWeight = uniPoolAmount
 
-      const wethCurrentToken = (wethTokenWeight * vaultGlp / totalGLPSupply)
-      const wbtcCurrentToken = (wbtcTokenWeight * vaultGlp / totalGLPSupply)
-      const linkCurrentToken = (linkTokenWeight * vaultGlp / totalGLPSupply)
-      const uniCurrentToken = (uniTokenWeight * vaultGlp / totalGLPSupply)
+      const wethCurrentToken = (wethTokenWeight * vaultGlp) / totalGLPSupply
+      const wbtcCurrentToken = (wbtcTokenWeight * vaultGlp) / totalGLPSupply
+      const linkCurrentToken = (linkTokenWeight * vaultGlp) / totalGLPSupply
+      const uniCurrentToken = (uniTokenWeight * vaultGlp) / totalGLPSupply
 
       return {
         blockNumber: blockNumber,

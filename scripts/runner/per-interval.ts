@@ -13,7 +13,6 @@ import { getProviderAggregate } from '../../providers'
 import { getLogs } from '../../utils'
 import { juniorVault } from '../aggregated/util/events'
 import { price } from '../aggregated/util/helpers'
-
 import { parallelize } from '../aggregated/util/parallelize'
 // import { juniorVault } from "./aggregated/util/events";
 // import { getLogsInLoop, price } from "./util/helpers";

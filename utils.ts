@@ -5,6 +5,10 @@ import {
   getNetworkName as getNetworkNameSdk,
   getVaultName as getVaultNameSdk
 } from '@ragetrade/sdk'
+import type {
+  TypedEvent,
+  TypedEventFilter
+} from '@ragetrade/sdk/dist/typechain/core/common'
 import type { BigNumber, EventFilter } from 'ethers'
 import { ethers } from 'ethers'
 import { fetchJson, getAddress, isAddress } from 'ethers/lib/utils'
@@ -13,7 +17,6 @@ import type { Request } from 'express'
 import createError from 'http-errors'
 
 import { ENV } from './env'
-import { TypedEvent, TypedEventFilter } from '@ragetrade/sdk/dist/typechain/core/common'
 
 export const secs = 1
 export const mins = 60
@@ -295,7 +298,7 @@ export async function getLogs(
       _fetchedBlock = _toBlock
       // next getLogs query range
 
-      let newToBlock = Math.min(
+      const newToBlock = Math.min(
         toBlock,
         _toBlock + 2 * roundNumber(_toBlock - _fromBlock + 1)
       )
@@ -304,7 +307,7 @@ export async function getLogs(
     } catch (e: any) {
       if (typeof e?.message === 'string') {
         // if error message contains a block range, use that as the new toBlock
-        let [, fromBlockStr, toBlockStr] = e.message.match(
+        const [, fromBlockStr, toBlockStr] = e.message.match(
           /\[(0x[0-9a-fA-F]+), (0x[0-9a-fA-F]+)\]/
         )
         console.log('match', fromBlockStr, toBlockStr)

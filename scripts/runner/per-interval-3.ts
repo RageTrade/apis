@@ -5,7 +5,6 @@ import { formatEther } from 'ethers/lib/utils'
 
 import { getProviderAggregate } from '../../providers'
 import { getLogs } from '../../utils'
-
 import { parallelize } from '../aggregated/util/parallelize'
 
 perInterval('arbmain').then((v) => console.log(JSON.stringify(v)))

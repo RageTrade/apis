@@ -1,5 +1,6 @@
 import 'isomorphic-unfetch'
 
+import type { NetworkName } from '@ragetrade/sdk'
 import { fetchJson } from 'ethers/lib/utils'
 
 import type {
@@ -8,7 +9,6 @@ import type {
   VaultInfoResult
 } from '../../aggregated'
 import { combineStatsData } from '../../aggregated/util/combineStatsData'
-import { NetworkName } from '@ragetrade/sdk'
 
 export const getTraderPnl = async (networkName: NetworkName) => {
   const { result: glpPnl }: { result: GlobalGlpPnlResult } = await fetchJson({
@@ -44,12 +44,11 @@ export const getTraderPnl = async (networkName: NetworkName) => {
     }
   )
 
-  const data = vaultInfo.data
-    .map((entry) => {
-      const foundDay = combined.find((d) => d.Day === entry.timestamp)
+  const data = vaultInfo.data.map((entry) => {
+    const foundDay = combined.find((d) => d.Day === entry.timestamp)
 
-      return (foundDay?.totalTraderPnL || 0) / entry.juniorVaultInfo.vaultMarketValue
-    })
+    return (foundDay?.totalTraderPnL || 0) / entry.juniorVaultInfo.vaultMarketValue
+  })
 
   const dataSum = data
     .filter((num) => !Number.isNaN(num) && Number.isFinite(num))
