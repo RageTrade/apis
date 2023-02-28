@@ -1,3 +1,4 @@
+import { BigNumber, BigNumberish, ethers } from 'ethers'
 import { formatUnits, hexDataSlice } from 'ethers/lib/utils'
 
 import { deltaNeutralGmxVaults, gmxProtocol, NetworkName, tokens } from '@ragetrade/sdk'
@@ -8,7 +9,6 @@ import { juniorVault } from '../util/events'
 import { parallelize } from '../util/parallelize'
 
 import type { Entry } from '../util/types'
-
 export type RebalanceInfoEntry = Entry<{
   blockNumber: number
   timestamp: number
@@ -87,8 +87,13 @@ export async function getRebalanceInfo(
         dnGmxJuniorVault.address,
         slotFor_btcTraderOIHedge_ethTraderOIHedge
       )
-      const btcTraderOIHedgeRage = Number(formatUnits(hexDataSlice(word, 0, 16), 8))
-      const ethTraderOIHedgeRage = Number(formatUnits(hexDataSlice(word, 16, 32), 18))
+
+      const btcTraderOIHedgeRage = Number(
+        formatUnits(parseInt128(hexDataSlice(word, 16, 32)), 8)
+      )
+      const ethTraderOIHedgeRage = Number(
+        formatUnits(parseInt128(hexDataSlice(word, 0, 16)), 18)
+      )
 
       const v: RebalanceInfoEntry = {
         blockNumber,
@@ -106,4 +111,12 @@ export async function getRebalanceInfo(
   )
 
   return { data, dataLength: data.length }
+}
+
+function parseInt128(val: BigNumberish): BigNumber {
+  val = ethers.BigNumber.from(val)
+  if (val.gt(1n << 127n)) {
+    val = BigNumber.from(1).shl(128).sub(val)
+  }
+  return val
 }
