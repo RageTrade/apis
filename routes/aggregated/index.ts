@@ -9,6 +9,7 @@ import {
   hours
 } from '../../utils'
 import UserRouter from './user'
+import V2Router from './v2'
 
 const router = express.Router()
 
@@ -168,5 +169,6 @@ router.get(
 )
 
 router.use('/user', UserRouter)
+router.use('/v2', V2Router)
 
 export default router
