@@ -3,6 +3,7 @@ import '../../fetch-polyfill'
 import { deltaNeutralGmxVaults, tokens } from '@ragetrade/sdk'
 import { fetchJson, formatEther, formatUnits } from 'ethers/lib/utils'
 
+import { ENV } from '../../env'
 import { getProviderAggregate } from '../../providers'
 import { days, fetchRetry, timestampRoundDown } from '../../utils'
 
@@ -43,7 +44,7 @@ export async function getTraderPnl(
     return resp.result
   }
 
-  const START_BLOCK = 45412300
+  const START_BLOCK = ENV.START_BLOCK_NUMBER
 
   const provider = getProviderAggregate('arbmain')
 

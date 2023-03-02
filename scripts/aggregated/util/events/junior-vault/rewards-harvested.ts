@@ -1,10 +1,9 @@
 import type { NetworkName } from '@ragetrade/sdk'
 import { deltaNeutralGmxVaults } from '@ragetrade/sdk'
-
-import { ErrorWithStatusCode, getLogs } from '../../../../../utils'
-
 import type { RewardsHarvestedEvent } from '@ragetrade/sdk/dist/typechain/delta-neutral-gmx-vaults/contracts/vaults/DnGmxJuniorVault'
 import type { ethers } from 'ethers'
+
+import { ErrorWithStatusCode, getLogs } from '../../../../../utils'
 
 export async function rewardsHarvested(
   networkName: NetworkName,

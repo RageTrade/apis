@@ -1,10 +1,9 @@
 import type { NetworkName } from '@ragetrade/sdk'
 import { deltaNeutralGmxVaults, tokens } from '@ragetrade/sdk'
-
-import { ErrorWithStatusCode, getLogs } from '../../../../../utils'
-
 import type { DepositTokenEvent } from '@ragetrade/sdk/dist/typechain/delta-neutral-gmx-vaults/contracts/vaults/DnGmxBatchingManager'
 import type { ethers } from 'ethers'
+
+import { ErrorWithStatusCode, getLogs } from '../../../../../utils'
 
 export async function depositToken(
   networkName: NetworkName,

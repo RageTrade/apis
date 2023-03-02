@@ -3,6 +3,7 @@ import { deltaNeutralGmxVaults, formatUsdc, gmxProtocol, tokens } from '@ragetra
 import type { GlpSwappedEvent } from '@ragetrade/sdk/dist/typechain/delta-neutral-gmx-vaults/contracts/libraries/DnGmxJuniorVaultManager'
 import { fetchJson, formatEther, formatUnits } from 'ethers/lib/utils'
 
+import { ENV } from '../../env'
 import { getProviderAggregate } from '../../providers'
 import { days, timestampRoundDown } from '../../utils'
 import type { GlobalTotalSharesResult } from './total-shares'
@@ -69,7 +70,7 @@ export async function getGlpSlippage(
         juniorVault.withdraw,
         juniorVault.rebalanced
       ],
-      startBlockNumber: 45412307
+      startBlockNumber: ENV.START_BLOCK_NUMBER
     },
     async (_i, blockNumber, event) => {
       const rc = await provider.getTransactionReceipt(event.transactionHash)

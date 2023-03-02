@@ -3,6 +3,7 @@
 
 import { getRedisClient } from './redis-utils/get-client'
 import { RedisStore } from './store/redis-store'
+import type { CacheResponse } from './utils'
 import { currentTimestamp } from './utils'
 
 interface Options {
@@ -31,20 +32,6 @@ export function cacheFunctionResult<F extends (...args: any[]) => any>(
 
   return cache.getOrSet(key, () => generateResponse(fn, args, cacheSeconds), cacheSeconds)
 }
-
-type CacheMeta = {
-  cacheTimestamp: number
-  cacheSeconds: number
-}
-
-export type CacheResponse = CacheMeta &
-  (
-    | { result: any }
-    | {
-        error: string
-        status: number
-      }
-  )
 
 // includes error in the cache function output,
 // this is needed for preventing someone to abuse
@@ -76,19 +63,19 @@ async function generateResponse<F extends (...args: any[]) => any>(
 
     // cache the error resp (to prevent DoS, hitting with an input which reverts in middle
     if (error.status && error.status < 500) {
-      // cache normal errors for 15 seconds
+      // cache normal errors for 5 seconds
       return {
         error: error.message,
         status: error.status,
         cacheTimestamp: currentTimestamp(),
-        cacheSeconds: Math.min(cacheSeconds, 15)
+        cacheSeconds: Math.min(cacheSeconds, 5)
       }
     } else {
       return {
         error: error.message,
         status: error.status,
         cacheTimestamp: currentTimestamp(),
-        cacheSeconds: Math.min(cacheSeconds, 15)
+        cacheSeconds: Math.min(cacheSeconds, 5)
       }
     }
   }

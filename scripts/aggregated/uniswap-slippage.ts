@@ -3,6 +3,7 @@ import { deltaNeutralGmxVaults } from '@ragetrade/sdk'
 import type { TokenSwappedEvent } from '@ragetrade/sdk/dist/typechain/delta-neutral-gmx-vaults/contracts/libraries/DnGmxJuniorVaultManager'
 import { fetchJson, formatUnits } from 'ethers/lib/utils'
 
+import { ENV } from '../../env'
 import { getProviderAggregate } from '../../providers'
 import { days, timestampRoundDown } from '../../utils'
 import type { GlobalTotalSharesResult } from './total-shares'
@@ -83,7 +84,7 @@ export async function getUniswapSlippage(
       networkName,
       provider,
       getEvents: [juniorVault.rebalanced],
-      startBlockNumber: 45412307
+      startBlockNumber: ENV.START_BLOCK_NUMBER
     },
     async (_i, blockNumber, event) => {
       const rc = await provider.getTransactionReceipt(event.transactionHash)

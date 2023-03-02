@@ -3,10 +3,12 @@ import { chainlink, deltaNeutralGmxVaults, gmxProtocol, tokens } from '@ragetrad
 import { BigNumber } from 'ethers'
 import { fetchJson, formatEther, formatUnits } from 'ethers/lib/utils'
 
+import { ENV } from '../../env'
 import { getProviderAggregate } from '../../providers'
-import { days, timestampRoundDown } from '../../utils'
+import { days, formatAsNum, timestampRoundDown } from '../../utils'
 import { intersection } from './util/combine'
 import { gmxVault, juniorVault } from './util/events'
+import { ShortsTracker__factory } from './util/events/gmx-vault/contracts'
 import { price } from './util/helpers'
 import { parallelize } from './util/parallelize'
 import type { Entry } from './util/types'
@@ -19,10 +21,10 @@ export type GlobalMarketMovementEntry = Entry<{
   glp_totalSupply: number
   vaultGlp: number
   glpPrice: number
-  wethUsdgAmount: number
-  wbtcUsdgAmount: number
-  linkUsdgAmount: number
-  uniUsdgAmount: number
+  wethPoolAmount: number
+  wbtcPoolAmount: number
+  linkPoolAmount: number
+  uniPoolAmount: number
   totalUsdcAmount: number
   wethTokenWeight: number
   wbtcTokenWeight: number
@@ -84,6 +86,10 @@ export async function getMarketMovement(
   const { gmxUnderlyingVault } = gmxProtocol.getContractsSync(networkName, provider)
   const { weth, wbtc, fsGLP, glp } = tokens.getContractsSync(networkName, provider)
   const { ethUsdAggregator } = chainlink.getContractsSync(networkName, provider)
+  const shortTracker = ShortsTracker__factory.connect(
+    '0xf58eEc83Ba28ddd79390B9e90C4d3EbfF1d434da',
+    provider
+  )
 
   // LINK / USD: https://arbiscan.io/address/0x86E53CF1B870786351Da77A57575e79CB55812CB
   // UNI / USD: https://arbiscan.io/address/0x9C917083fDb403ab5ADbEC26Ee294f6EcAda2720
@@ -113,120 +119,111 @@ export async function getMarketMovement(
         juniorVault.deposit,
         juniorVault.withdraw,
         juniorVault.rebalanced,
-        gmxVault.increaseUsdgAmount,
-        gmxVault.decreaseUsdgAmount
+        gmxVault.increasePoolAmount,
+        gmxVault.decreasePoolAmount
       ],
       ignoreMoreEventsInSameBlock: true,
-      startBlockNumber: 45412307
+      startBlockNumber: ENV.START_BLOCK_NUMBER
     },
     async (_i, blockNumber, event) => {
       const block = await provider.getBlock(blockNumber)
       if (!block) return null
 
-      const usdgAmounts = await Promise.all(
+      const poolAmounts = await Promise.all(
         allWhitelistedTokens.map((token) =>
-          gmxUnderlyingVault.usdgAmounts(token, { blockTag: blockNumber })
+          gmxUnderlyingVault.poolAmounts(token, { blockTag: blockNumber })
         )
       )
 
-      const wethUsdgAmount = Number(
-        formatEther(
-          await gmxUnderlyingVault.usdgAmounts(weth.address, {
-            blockTag: blockNumber
-          })
-        )
-      )
-      const wbtcUsdgAmount = Number(
-        formatEther(
-          await gmxUnderlyingVault.usdgAmounts(wbtc.address, {
-            blockTag: blockNumber
-          })
-        )
-      )
-      const linkUsdgAmount = Number(
-        formatEther(
-          await gmxUnderlyingVault.usdgAmounts(link.address, {
-            blockTag: blockNumber
-          })
-        )
-      )
-      const uniUsdgAmount = Number(
-        formatEther(
-          await gmxUnderlyingVault.usdgAmounts(uni.address, {
-            blockTag: blockNumber
-          })
-        )
-      )
+      const wethShortSizes = await gmxUnderlyingVault
+        .globalShortSizes(weth.address, { blockTag: blockNumber })
+        .then((res) => formatAsNum(res, 30))
+
+      const wbtcShortSizes = await gmxUnderlyingVault
+        .globalShortSizes(wbtc.address, { blockTag: blockNumber })
+        .then((res) => formatAsNum(res, 30))
+
+      const wethReservedAmounts = await gmxUnderlyingVault
+        .reservedAmounts(weth.address, { blockTag: blockNumber })
+        .then((res) => formatAsNum(res, 18))
+
+      const wbtcReservedAmounts = await gmxUnderlyingVault
+        .reservedAmounts(wbtc.address, { blockTag: blockNumber })
+        .then((res) => formatAsNum(res, 8))
+
+      const wethShortAveragePrice = await shortTracker
+        .globalShortAveragePrices(weth.address, { blockTag: blockNumber })
+        .then((res) => formatAsNum(res, 30))
+
+      const wbtcShortAveragePrice = await shortTracker
+        .globalShortAveragePrices(wbtc.address, { blockTag: blockNumber })
+        .then((res) => formatAsNum(res, 30))
+
+      const wethPoolAmount = await gmxUnderlyingVault
+        .poolAmounts(weth.address, { blockTag: blockNumber })
+        .then((res) => formatAsNum(res, 18))
+
+      const wbtcPoolAmount = await gmxUnderlyingVault
+        .poolAmounts(wbtc.address, { blockTag: blockNumber })
+        .then((res) => formatAsNum(res, 8))
+
+      const linkPoolAmount = await gmxUnderlyingVault
+        .poolAmounts(link.address, { blockTag: blockNumber })
+        .then((res) => formatAsNum(res, 18))
+
+      const uniPoolAmount = await gmxUnderlyingVault
+        .poolAmounts(uni.address, { blockTag: blockNumber })
+        .then((res) => formatAsNum(res, 18))
+
+      const [wethPrice, wbtcPrice] = await Promise.all([
+        price(weth.address, blockNumber, networkName),
+        price(wbtc.address, blockNumber, networkName)
+      ])
+
+      const glpPrice = await dnGmxJuniorVault
+        .getPrice(false, { blockTag: blockNumber })
+        .then((res) => formatAsNum(res, 18))
+
+      const linkPrice = await linkUsdAggregator
+        .latestRoundData({ blockTag: blockNumber })
+        .then((res) => formatAsNum(res.answer, 8))
+
+      const uniPrice = await uniUsdAggregator
+        .latestRoundData({ blockTag: blockNumber })
+        .then((res) => formatAsNum(res.answer, 8))
+
+      const fsGlp_balanceOf_juniorVault = await fsGLP
+        .balanceOf(dnGmxJuniorVault.address, { blockTag: blockNumber })
+        .then((res) => formatAsNum(res, 18))
+
+      const fsGlp_balanceOf_batchingManager = await dnGmxBatchingManager
+        .dnGmxJuniorVaultGlpBalance({ blockTag: blockNumber })
+        .then((res) => formatAsNum(res, 18))
+
+      const totalGLPSupply = await glp
+        .totalSupply({ blockTag: blockNumber })
+        .then((res) => formatAsNum(res, 18))
 
       const totalUsdcAmount = Number(
-        formatEther(usdgAmounts.reduce((a, b) => a.add(b), BigNumber.from(0)))
-      )
-
-      const wethTokenWeight = wethUsdgAmount / totalUsdcAmount
-      const wbtcTokenWeight = wbtcUsdgAmount / totalUsdcAmount
-      const linkTokenWeight = linkUsdgAmount / totalUsdcAmount
-      const uniTokenWeight = uniUsdgAmount / totalUsdcAmount
-
-      const glpPrice = Number(
-        formatEther(
-          await dnGmxJuniorVault.getPrice(false, {
-            blockTag: blockNumber
-          })
-        )
-      )
-
-      const wethPrice = await price(weth.address, blockNumber, networkName)
-      const wbtcPrice = await price(wbtc.address, blockNumber, networkName)
-      const linkPrice = Number(
-        formatUnits(
-          (
-            await linkUsdAggregator.latestRoundData({
-              blockTag: blockNumber
-            })
-          ).answer,
-          8
-        )
-      )
-      const uniPrice = Number(
-        formatUnits(
-          (
-            await uniUsdAggregator.latestRoundData({
-              blockTag: blockNumber
-            })
-          ).answer,
-          8
-        )
-      )
-      const fsGlp_balanceOf_juniorVault = Number(
-        formatEther(
-          await fsGLP.balanceOf(dnGmxJuniorVault.address, {
-            blockTag: blockNumber
-          })
-        )
-      )
-      const fsGlp_balanceOf_batchingManager = Number(
-        formatEther(
-          await dnGmxBatchingManager.dnGmxJuniorVaultGlpBalance({
-            blockTag: blockNumber
-          })
-        )
-      )
-
-      // this is not used, but here for reference in output data
-      const glp_totalSupply = Number(
-        formatEther(
-          await glp.totalSupply({
-            blockTag: blockNumber
-          })
-        )
+        formatEther(poolAmounts.reduce((a, b) => a.add(b), BigNumber.from(0)))
       )
 
       const vaultGlp = fsGlp_balanceOf_juniorVault + fsGlp_balanceOf_batchingManager
 
-      const wethCurrentToken = (wethTokenWeight * vaultGlp * glpPrice) / wethPrice
-      const wbtcCurrentToken = (wbtcTokenWeight * vaultGlp * glpPrice) / wbtcPrice
-      const linkCurrentToken = (linkTokenWeight * vaultGlp * glpPrice) / linkPrice
-      const uniCurrentToken = (uniTokenWeight * vaultGlp * glpPrice) / uniPrice
+      // (poolAmount - reserveAmount) + (shortSize / averagePrice)
+      const wethTokenWeight =
+        wethPoolAmount - wethReservedAmounts + wethShortSizes / wethShortAveragePrice
+
+      const wbtcTokenWeight =
+        wbtcPoolAmount - wbtcReservedAmounts + wbtcShortSizes / wbtcShortAveragePrice
+
+      const linkTokenWeight = linkPoolAmount
+      const uniTokenWeight = uniPoolAmount
+
+      const wethCurrentToken = (wethTokenWeight * vaultGlp) / totalGLPSupply
+      const wbtcCurrentToken = (wbtcTokenWeight * vaultGlp) / totalGLPSupply
+      const linkCurrentToken = (linkTokenWeight * vaultGlp) / totalGLPSupply
+      const uniCurrentToken = (uniTokenWeight * vaultGlp) / totalGLPSupply
 
       return {
         blockNumber: blockNumber,
@@ -234,13 +231,13 @@ export async function getMarketMovement(
         timestamp: block.timestamp,
         fsGlp_balanceOf_juniorVault,
         fsGlp_balanceOf_batchingManager,
-        glp_totalSupply,
+        glp_totalSupply: totalGLPSupply,
         vaultGlp,
         glpPrice,
-        wethUsdgAmount,
-        wbtcUsdgAmount,
-        linkUsdgAmount,
-        uniUsdgAmount,
+        wethPoolAmount,
+        wbtcPoolAmount,
+        linkPoolAmount,
+        uniPoolAmount,
         totalUsdcAmount,
         wethTokenWeight,
         wbtcTokenWeight,

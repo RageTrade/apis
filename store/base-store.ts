@@ -16,11 +16,7 @@ export class BaseStore {
    * @param _valueFn Function that should return the value for setting if it doesn't exist.
    * @returns The value.
    */
-  async getOrSet<V>(
-    key: string,
-    valueFn: () => V | Promise<V>,
-    secondsOld?: number
-  ): Promise<V> {
+  async getOrSet<V>(key: string, valueFn: () => any, secondsOld?: number): Promise<V> {
     const read = await this.get<V>(key, secondsOld)
 
     const valuePromise = this._promises.get(key)

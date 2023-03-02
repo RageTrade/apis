@@ -13,9 +13,9 @@
     "serve:dev": "tsx watch ./server.ts",
     "index": "pm2 start ./build/indexer/start.js",
     "index:stop": "pm2 stop ./build/indexer/start.js",
-    "start": "pnpm build && pnpm start:nobuild",
+    "start": "pnpm install && pnpm build && pnpm start:nobuild",
     "start:nobuild": "pnpm serve && pnpm index",
-    "restart2": "pnpm build && pnpm stop && pnpm start:nobuild",
+    "restart": "pnpm install && pnpm build && pnpm stop && pnpm start:nobuild",
     "stop": "pm2 delete all 2>&1 || true",
     "lint": "eslint --cache .",
     "lint:fix": "eslint --fix --cache ."
@@ -23,7 +23,7 @@
   "dependencies": {
     "@ethersproject/abstract-provider": "^5.7.0",
     "@ethersproject/providers": "^5.7.2",
-    "@ragetrade/sdk": "^1.1.0-alpha.7",
+    "@ragetrade/sdk": "1.0.0-parallel-arbmain.7",
     "@uniswap/sdk-core": "^3.1.1",
     "@uniswap/v3-sdk": "^3.9.0",
     "@urql/devtools": "^2.0.3",
@@ -47,6 +47,8 @@
     "zod": "^3.20.2"
   },
   "devDependencies": {
+    "@ethersproject/abi": "^5.7.0",
+    "@typechain/ethers-v5": "^10.2.0",
     "@types/cookie-parser": "^1.4.3",
     "@types/cors": "^2.8.12",
     "@types/debug": "^4.1.7",
@@ -67,6 +69,8 @@
     "prettier": "2.7.1",
     "react": "^18.2.0",
     "tsx": "^3.12.3",
-    "typescript": "4.8"
+    "typechain": "^8.1.1",
+    "typescript": "4.8",
+    "yesno": "^0.4.0"
   }
 }

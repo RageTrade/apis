@@ -1,10 +1,9 @@
 import type { NetworkName } from '@ragetrade/sdk'
 import { deltaNeutralGmxVaults } from '@ragetrade/sdk'
-
-import { ErrorWithStatusCode, getLogs } from '../../../../../utils'
-
 import type { WithdrawEvent } from '@ragetrade/sdk/dist/typechain/delta-neutral-gmx-vaults/contracts/vaults/DnGmxSeniorVault'
 import type { ethers } from 'ethers'
+
+import { ErrorWithStatusCode, getLogs } from '../../../../../utils'
 
 export async function withdraw(
   networkName: NetworkName,

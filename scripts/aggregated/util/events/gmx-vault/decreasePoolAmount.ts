@@ -1,12 +1,11 @@
 import type { NetworkName } from '@ragetrade/sdk'
-import { ethers } from 'ethers'
-
 import { gmxProtocol } from '@ragetrade/sdk'
+import { ethers } from 'ethers'
 
 import { getLogs } from '../../../../../utils'
 import { GET_LOGS_INTERVAL, getStartBlock, oneInFiftyBlocks } from './common'
 
-export async function decreaseUsdgAmount(
+export async function decreasePoolAmount(
   networkName: NetworkName,
   provider: ethers.providers.Provider,
   startBlockNumberOverride?: number
@@ -15,7 +14,7 @@ export async function decreaseUsdgAmount(
 
   const _gmxUnderlyingVault = new ethers.Contract(
     gmxUnderlyingVault.address,
-    ['event DecreaseUsdgAmount(address token, uint256 amount)'], // bcz not currently in interface in dn vault repo
+    ['event DecreasePoolAmount(address token, uint256 amount)'], // bcz not currently in interface in dn vault repo
     provider
   )
 
@@ -30,7 +29,7 @@ export async function decreaseUsdgAmount(
   }
 
   const logs = await getLogs(
-    _gmxUnderlyingVault.filters.DecreaseUsdgAmount(),
+    _gmxUnderlyingVault.filters.DecreasePoolAmount(),
     startBlock,
     endBlock,
     _gmxUnderlyingVault

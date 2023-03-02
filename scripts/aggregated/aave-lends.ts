@@ -2,6 +2,7 @@ import type { NetworkName, ResultWithMetadata } from '@ragetrade/sdk'
 import { aave, deltaNeutralGmxVaults, formatUsdc, tokens } from '@ragetrade/sdk'
 import { fetchJson } from 'ethers/lib/utils'
 
+import { ENV } from '../../env'
 import { getProviderAggregate } from '../../providers'
 import { days, timestampRoundDown } from '../../utils'
 import type { GlobalTotalSharesResult } from './total-shares'
@@ -75,7 +76,7 @@ export async function getAaveLends(
         seniorVault.withdraw
       ],
       ignoreMoreEventsInSameBlock: true, // to prevent reprocessing same data
-      startBlockNumber: 45412307
+      startBlockNumber: ENV.START_BLOCK_NUMBER
     },
     async (_i, blockNumber, event) => {
       const aUsdcJuniorBefore = Number(

@@ -1,5 +1,5 @@
-import { deltaNeutralGmxVaults, NetworkName } from '@ragetrade/sdk'
-import { gmxProtocol, tokens } from '@ragetrade/sdk'
+import type { NetworkName } from '@ragetrade/sdk'
+import { deltaNeutralGmxVaults, gmxProtocol, tokens } from '@ragetrade/sdk'
 import type { ethers } from 'ethers'
 import { BigNumber } from 'ethers'
 import { formatEther, formatUnits } from 'ethers/lib/utils'

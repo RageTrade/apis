@@ -5,15 +5,18 @@ import {
   getNetworkName as getNetworkNameSdk,
   getVaultName as getVaultNameSdk
 } from '@ragetrade/sdk'
+import type {
+  TypedEvent,
+  TypedEventFilter
+} from '@ragetrade/sdk/dist/typechain/core/common'
 import type { BigNumber, EventFilter } from 'ethers'
 import { ethers } from 'ethers'
-import { fetchJson, getAddress, isAddress } from 'ethers/lib/utils'
+import { fetchJson, formatUnits, getAddress, isAddress } from 'ethers/lib/utils'
 import type express from 'express'
 import type { Request } from 'express'
 import createError from 'http-errors'
 
 import { ENV } from './env'
-import { TypedEvent, TypedEventFilter } from '@ragetrade/sdk/dist/typechain/core/common'
 
 export const secs = 1
 export const mins = 60
@@ -247,6 +250,10 @@ export function safeDivNumer(numerator: number, denominator: number) {
   return denominator === 0 ? 0 : numerator / denominator
 }
 
+export function formatAsNum(num: BigNumber, decimals: number) {
+  return Number(formatUnits(num, decimals))
+}
+
 export function timestampRoundDown(timestampSec: number) {
   return timestampSec - (timestampSec % days)
 }
@@ -295,7 +302,7 @@ export async function getLogs(
       _fetchedBlock = _toBlock
       // next getLogs query range
 
-      let newToBlock = Math.min(
+      const newToBlock = Math.min(
         toBlock,
         _toBlock + 2 * roundNumber(_toBlock - _fromBlock + 1)
       )
@@ -304,7 +311,7 @@ export async function getLogs(
     } catch (e: any) {
       if (typeof e?.message === 'string') {
         // if error message contains a block range, use that as the new toBlock
-        let [, fromBlockStr, toBlockStr] = e.message.match(
+        const [, fromBlockStr, toBlockStr] = e.message.match(
           /\[(0x[0-9a-fA-F]+), (0x[0-9a-fA-F]+)\]/
         )
         console.log('match', fromBlockStr, toBlockStr)
@@ -338,4 +345,30 @@ function roundNumber(num: number) {
   num = Math.floor(Math.abs(num))
   if (num <= 10) return num
   return Math.pow(2, Math.floor(Math.log2(num)))
+}
+
+export type CacheMeta = {
+  cacheTimestamp: number
+  cacheSeconds: number
+}
+
+export type CacheResponse = CacheMeta & {
+  result?: any
+  error?: string
+  status?: number
+}
+
+export function isCacheResponse(val: any): val is CacheResponse {
+  return (
+    typeof val === 'object' &&
+    'cacheSeconds' in val &&
+    typeof val.cacheSeconds === 'number' &&
+    'cacheTimestamp' in val &&
+    typeof val.cacheTimestamp === 'number'
+  )
+}
+
+export function isCacheExpired(cacheMeta: CacheMeta) {
+  const now = currentTimestamp()
+  return now - cacheMeta.cacheTimestamp > cacheMeta.cacheSeconds
 }

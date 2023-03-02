@@ -1,7 +1,7 @@
 import 'isomorphic-unfetch'
 
-import { aave, NetworkName } from '@ragetrade/sdk'
-import { deltaNeutralGmxVaults, typechain } from '@ragetrade/sdk'
+import type { NetworkName } from '@ragetrade/sdk'
+import { aave, deltaNeutralGmxVaults, typechain } from '@ragetrade/sdk'
 import { formatUnits } from 'ethers/lib/utils'
 
 import { getProvider } from '../../../providers'

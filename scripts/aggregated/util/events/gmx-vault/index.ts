@@ -1,2 +1,2 @@
-export * from './decreaseUsdgAmount'
-export * from './increaseUsdgAmount'
+export * from './decreasePoolAmount'
+export * from './increasePoolAmount'
