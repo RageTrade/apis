@@ -1,5 +1,5 @@
 import { BigNumber, BigNumberish, ethers } from 'ethers'
-import { formatUnits, hexDataSlice } from 'ethers/lib/utils'
+import { hexDataSlice } from 'ethers/lib/utils'
 
 import { deltaNeutralGmxVaults, gmxProtocol, NetworkName, tokens } from '@ragetrade/sdk'
 import { IERC20 } from '@ragetrade/sdk/dist/typechain/core'
@@ -10,6 +10,7 @@ import { parallelize } from '../util/parallelize'
 
 import type { Entry } from '../util/types'
 import { price } from '../util/helpers'
+import { formatAsNum } from '../../../utils'
 export type RebalanceInfoEntry = Entry<{
   blockNumber: number
   timestamp: number
@@ -36,8 +37,11 @@ export async function getRebalanceInfo(
 
   const { weth, wbtc } = tokens.getContractsSync(networkName, provider)
 
-  const { gmxUnderlyingVault } = gmxProtocol.getContractsSync(networkName, provider)
-  const { dnGmxJuniorVault, dnGmxTraderHedgeStrategy } =
+  const { gmxUnderlyingVault, fsGLP, glp } = gmxProtocol.getContractsSync(
+    networkName,
+    provider
+  )
+  const { dnGmxJuniorVault, dnGmxTraderHedgeStrategy, dnGmxBatchingManager } =
     deltaNeutralGmxVaults.getContractsSync(networkName, provider)
   const { DnGmxTraderHedgeStrategyDeployment } =
     deltaNeutralGmxVaults.getDeployments(networkName)
@@ -57,6 +61,20 @@ export async function getRebalanceInfo(
 
       const timestamp = block.timestamp
 
+      const fsGlp_balanceOf_juniorVault = await fsGLP
+        .balanceOf(dnGmxJuniorVault.address, { blockTag: blockNumber })
+        .then((res) => formatAsNum(res, 18))
+
+      const fsGlp_balanceOf_batchingManager = await dnGmxBatchingManager
+        .dnGmxJuniorVaultGlpBalance({ blockTag: blockNumber })
+        .then((res) => formatAsNum(res, 18))
+
+      const vaultGlp = fsGlp_balanceOf_juniorVault + fsGlp_balanceOf_batchingManager
+
+      const totalGLPSupply = await glp
+        .totalSupply({ blockTag: blockNumber })
+        .then((res) => formatAsNum(res, 18))
+
       let traderOIHedgeBps = 0
       try {
         traderOIHedgeBps = await dnGmxTraderHedgeStrategy.traderOIHedgeBps({
@@ -64,36 +82,34 @@ export async function getRebalanceInfo(
         })
       } catch {}
       async function traderOIHedgeGmx(token: IERC20, decimals: number) {
-        const reservedAmount = Number(
-          formatUnits(
-            await gmxUnderlyingVault.reservedAmounts(token.address, {
-              blockTag: blockNumber
-            }),
-            decimals
-          )
+        const reservedAmount = formatAsNum(
+          await gmxUnderlyingVault.reservedAmounts(token.address, {
+            blockTag: blockNumber
+          }),
+          decimals
         )
-        const globalShortSize = Number(
-          formatUnits(
-            await gmxUnderlyingVault.globalShortSizes(token.address, {
-              blockTag: blockNumber
-            }),
-            30
-          )
+        const globalShortSize = formatAsNum(
+          await gmxUnderlyingVault.globalShortSizes(token.address, {
+            blockTag: blockNumber
+          }),
+          30
         )
-        const globalShortAveragePrice = Number(
-          formatUnits(
-            await gmxUnderlyingVault.globalShortAveragePrices(token.address, {
-              blockTag: blockNumber
-            }),
-            30
-          )
+
+        const globalShortAveragePrice = formatAsNum(
+          await gmxUnderlyingVault.globalShortAveragePrices(token.address, {
+            blockTag: blockNumber
+          }),
+          30
         )
 
         const maxBps = 10000
+
         return (
-          ((reservedAmount - globalShortSize / globalShortAveragePrice) *
+          ((((reservedAmount - globalShortSize / globalShortAveragePrice) *
             traderOIHedgeBps) /
-          maxBps
+            maxBps) *
+            vaultGlp) /
+          totalGLPSupply
         )
       }
 
@@ -107,12 +123,12 @@ export async function getRebalanceInfo(
         blockNumber
       )
 
-      const btcTraderOIHedgeRage = Number(
-        formatUnits(parseInt128(hexDataSlice(word, 16, 32)), 8)
-      )
-      const ethTraderOIHedgeRage = Number(
-        formatUnits(parseInt128(hexDataSlice(word, 0, 16)), 18)
-      )
+      const btcTraderOIHedgeRage =
+        (formatAsNum(parseInt128(hexDataSlice(word, 16, 32)), 8) * vaultGlp) /
+        totalGLPSupply
+      const ethTraderOIHedgeRage =
+        (formatAsNum(parseInt128(hexDataSlice(word, 0, 16)), 18) * vaultGlp) /
+        totalGLPSupply
 
       const wbtcPrice = await price(wbtc.address, blockNumber, networkName)
       const wethPrice = await price(weth.address, blockNumber, networkName)
