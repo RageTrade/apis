@@ -45,7 +45,6 @@ export async function getRebalanceInfo(
     deltaNeutralGmxVaults.getContractsSync(networkName, provider)
   const { DnGmxTraderHedgeStrategyDeployment } =
     deltaNeutralGmxVaults.getDeployments(networkName)
-  console.log(DnGmxTraderHedgeStrategyDeployment.receipt?.blockNumber)
 
   const data = await parallelize<RebalanceInfoEntry>(
     {
@@ -104,13 +103,7 @@ export async function getRebalanceInfo(
 
         const maxBps = 10000
 
-        return (
-          ((((reservedAmount - globalShortSize / globalShortAveragePrice) *
-            traderOIHedgeBps) /
-            maxBps) *
-            vaultGlp) /
-          totalGLPSupply
-        )
+        return reservedAmount - globalShortSize / globalShortAveragePrice
       }
 
       const btcTraderOIHedgeGmx = await traderOIHedgeGmx(wbtc, 8)
@@ -123,12 +116,8 @@ export async function getRebalanceInfo(
         blockNumber
       )
 
-      const btcTraderOIHedgeRage =
-        (formatAsNum(parseInt128(hexDataSlice(word, 16, 32)), 8) * vaultGlp) /
-        totalGLPSupply
-      const ethTraderOIHedgeRage =
-        (formatAsNum(parseInt128(hexDataSlice(word, 0, 16)), 18) * vaultGlp) /
-        totalGLPSupply
+      const btcTraderOIHedgeRage = formatAsNum(parseInt128(hexDataSlice(word, 16, 32)), 8)
+      const ethTraderOIHedgeRage = formatAsNum(parseInt128(hexDataSlice(word, 0, 16)), 18)
 
       const wbtcPrice = await price(wbtc.address, blockNumber, networkName)
       const wethPrice = await price(weth.address, blockNumber, networkName)
