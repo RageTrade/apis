@@ -9,6 +9,7 @@ import { juniorVault } from '../util/events'
 import { parallelize } from '../util/parallelize'
 
 import type { Entry } from '../util/types'
+import { price } from '../util/helpers'
 export type RebalanceInfoEntry = Entry<{
   blockNumber: number
   timestamp: number
@@ -18,6 +19,9 @@ export type RebalanceInfoEntry = Entry<{
 
   btcTraderOIHedgeGmx: number
   ethTraderOIHedgeGmx: number
+
+  wbtcPrice: number
+  wethPrice: number
 }>
 
 export interface RebalanceInfoResult {
@@ -55,18 +59,32 @@ export async function getRebalanceInfo(
 
       let traderOIHedgeBps = 0
       try {
-        traderOIHedgeBps = await dnGmxTraderHedgeStrategy.traderOIHedgeBps()
+        traderOIHedgeBps = await dnGmxTraderHedgeStrategy.traderOIHedgeBps({
+          blockTag: blockNumber
+        })
       } catch {}
       async function traderOIHedgeGmx(token: IERC20, decimals: number) {
         const reservedAmount = Number(
-          formatUnits(await gmxUnderlyingVault.reservedAmounts(token.address), decimals)
+          formatUnits(
+            await gmxUnderlyingVault.reservedAmounts(token.address, {
+              blockTag: blockNumber
+            }),
+            decimals
+          )
         )
         const globalShortSize = Number(
-          formatUnits(await gmxUnderlyingVault.globalShortSizes(token.address), 30)
+          formatUnits(
+            await gmxUnderlyingVault.globalShortSizes(token.address, {
+              blockTag: blockNumber
+            }),
+            30
+          )
         )
         const globalShortAveragePrice = Number(
           formatUnits(
-            await gmxUnderlyingVault.globalShortAveragePrices(token.address),
+            await gmxUnderlyingVault.globalShortAveragePrices(token.address, {
+              blockTag: blockNumber
+            }),
             30
           )
         )
@@ -85,7 +103,8 @@ export async function getRebalanceInfo(
       const slotFor_btcTraderOIHedge_ethTraderOIHedge = 252 + 35
       const word = await provider.getStorageAt(
         dnGmxJuniorVault.address,
-        slotFor_btcTraderOIHedge_ethTraderOIHedge
+        slotFor_btcTraderOIHedge_ethTraderOIHedge,
+        blockNumber
       )
 
       const btcTraderOIHedgeRage = Number(
@@ -95,6 +114,9 @@ export async function getRebalanceInfo(
         formatUnits(parseInt128(hexDataSlice(word, 0, 16)), 18)
       )
 
+      const wbtcPrice = await price(wbtc.address, blockNumber, networkName)
+      const wethPrice = await price(weth.address, blockNumber, networkName)
+
       const v: RebalanceInfoEntry = {
         blockNumber,
         timestamp,
@@ -103,7 +125,10 @@ export async function getRebalanceInfo(
         ethTraderOIHedgeGmx,
 
         btcTraderOIHedgeRage,
-        ethTraderOIHedgeRage
+        ethTraderOIHedgeRage,
+
+        wbtcPrice,
+        wethPrice
       }
 
       return v
