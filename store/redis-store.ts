@@ -1,8 +1,9 @@
 import Debugger from 'debug'
-import type { Redis } from 'ioredis'
 
 import { isCacheExpired, isCacheResponse, years } from '../utils'
 import { BaseStore } from './base-store'
+
+import type { Redis } from 'ioredis'
 
 const debug = Debugger('apis:redis-store')
 
@@ -70,11 +71,8 @@ export class RedisStore extends BaseStore {
           if (typeof value.cacheSeconds === 'number') {
             expirySeconds = value.cacheSeconds
           }
-          // do not write to cache if expiry is 0
-          if (expirySeconds !== 0) {
-            // save for infinite time but with a non zero ttl
-            await this.set<V>(key, value, 1 * years)
-          }
+          // only writes to cache if expirySeconds is positive or -1
+          await this.set<V>(key, value, expirySeconds)
         }
         this._promises.delete(key)
         return value
