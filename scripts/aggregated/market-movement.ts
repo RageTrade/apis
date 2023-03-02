@@ -5,7 +5,7 @@ import { fetchJson, formatEther, formatUnits } from 'ethers/lib/utils'
 
 import { ENV } from '../../env'
 import { getProviderAggregate } from '../../providers'
-import { days, timestampRoundDown } from '../../utils'
+import { days, formatAsNum, timestampRoundDown } from '../../utils'
 import { intersection } from './util/combine'
 import { gmxVault, juniorVault } from './util/events'
 import { ShortsTracker__factory } from './util/events/gmx-vault/contracts'
@@ -65,9 +65,6 @@ export interface GlobalMarketMovementResult {
   totalUniPnl: number
   totalPnl: number
 }
-
-const formatAsNum = (num: BigNumber, decimals: number) =>
-  Number(formatUnits(num, decimals))
 
 export async function getMarketMovement(
   networkName: NetworkName,

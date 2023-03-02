@@ -11,7 +11,7 @@ import type {
 } from '@ragetrade/sdk/dist/typechain/core/common'
 import type { BigNumber, EventFilter } from 'ethers'
 import { ethers } from 'ethers'
-import { fetchJson, getAddress, isAddress } from 'ethers/lib/utils'
+import { fetchJson, formatUnits, getAddress, isAddress } from 'ethers/lib/utils'
 import type express from 'express'
 import type { Request } from 'express'
 import createError from 'http-errors'
@@ -248,6 +248,10 @@ export function safeDiv(numerator: BigNumber, denominator: BigNumber) {
 
 export function safeDivNumer(numerator: number, denominator: number) {
   return denominator === 0 ? 0 : numerator / denominator
+}
+
+export function formatAsNum(num: BigNumber, decimals: number) {
+  return Number(formatUnits(num, decimals))
 }
 
 export function timestampRoundDown(timestampSec: number) {
