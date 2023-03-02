@@ -1,7 +1,7 @@
 import type { NetworkName } from '@ragetrade/sdk'
 import { chainlink, deltaNeutralGmxVaults, gmxProtocol, tokens } from '@ragetrade/sdk'
 import { BigNumber } from 'ethers'
-import { fetchJson, formatEther, formatUnits } from 'ethers/lib/utils'
+import { fetchJson, formatEther } from 'ethers/lib/utils'
 
 import { ENV } from '../../env'
 import { getProviderAggregate } from '../../providers'
@@ -25,6 +25,12 @@ export type GlobalMarketMovementEntry = Entry<{
   wbtcPoolAmount: number
   linkPoolAmount: number
   uniPoolAmount: number
+  wethReservedAmounts: number
+  wethShortSizes: number
+  wethShortAveragePrice: number
+  wbtcReservedAmounts: number
+  wbtcShortSizes: number
+  wbtcShortAveragePrice: number
   totalUsdcAmount: number
   wethTokenWeight: number
   wbtcTokenWeight: number
@@ -238,6 +244,12 @@ export async function getMarketMovement(
         wbtcPoolAmount,
         linkPoolAmount,
         uniPoolAmount,
+        wethReservedAmounts,
+        wethShortSizes,
+        wethShortAveragePrice,
+        wbtcReservedAmounts,
+        wbtcShortSizes,
+        wbtcShortAveragePrice,
         totalUsdcAmount,
         wethTokenWeight,
         wbtcTokenWeight,
