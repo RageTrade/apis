@@ -87,7 +87,7 @@ export async function getMarketMovement(
 
   const provider = getProviderAggregate(networkName)
 
-  const { dnGmxJuniorVault, dnGmxBatchingManager } =
+  const { dnGmxJuniorVault, dnGmxBatchingManager, dnGmxTraderHedgeStrategy } =
     deltaNeutralGmxVaults.getContractsSync(networkName, provider)
   const { gmxUnderlyingVault } = gmxProtocol.getContractsSync(networkName, provider)
   const { weth, wbtc, fsGLP, glp } = tokens.getContractsSync(networkName, provider)
@@ -216,12 +216,20 @@ export async function getMarketMovement(
 
       const vaultGlp = fsGlp_balanceOf_juniorVault + fsGlp_balanceOf_batchingManager
 
-      // (poolAmount - reserveAmount) + (shortSize / averagePrice)
+      const traderOIHedgeBps = await dnGmxTraderHedgeStrategy.traderOIHedgeBps({
+        blockTag: blockNumber
+      })
+
+      // (poolAmount - traderOIHedgeBps * reserveAmount) + traderOIHedgeBps * (shortSize / averagePrice)
       const wethTokenWeight =
-        wethPoolAmount - wethReservedAmounts + wethShortSizes / wethShortAveragePrice
+        wethPoolAmount -
+        traderOIHedgeBps * wethReservedAmounts +
+        traderOIHedgeBps * (wethShortSizes / wethShortAveragePrice)
 
       const wbtcTokenWeight =
-        wbtcPoolAmount - wbtcReservedAmounts + wbtcShortSizes / wbtcShortAveragePrice
+        wbtcPoolAmount -
+        traderOIHedgeBps * wbtcReservedAmounts +
+        traderOIHedgeBps * (wbtcShortSizes / wbtcShortAveragePrice)
 
       const linkTokenWeight = linkPoolAmount
       const uniTokenWeight = uniPoolAmount
