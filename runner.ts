@@ -1,6 +1,7 @@
 import { config } from 'dotenv'
 import path from 'path'
 import yesno from 'yesno'
+import fs from 'fs-extra'
 
 config()
 
@@ -16,11 +17,22 @@ const req = require(path.resolve(process.cwd(), process.argv[2]))
         "Result too long to print, just add ' print' to the end or respond to the question next:"
       )
 
+      const getFileName = (i: number) => `out${i || ''}.json`
+      let i = 0
+      let fileName = ''
+      while (fs.existsSync((fileName = getFileName(i)))) {
+        i++
+      }
+
       const answer = await yesno({
-        question: 'Print result?'
+        question: `Press "y" to print in console or "n" to write the output to "${fileName}" file`
       })
       if (answer) {
         console.log(str)
+      } else {
+        console.log(`writing to ${fileName} please wait...`)
+        fs.writeFileSync(fileName, str)
+        console.log(`done`)
       }
     }
   }
