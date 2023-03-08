@@ -221,8 +221,10 @@ export async function getMarketMovement(
         traderOIHedgeBps = await dnGmxTraderHedgeStrategy.traderOIHedgeBps({
           blockTag: blockNumber
         })
+
+        traderOIHedgeBps = traderOIHedgeBps / 10_000
       } catch (err) {
-        console.error(err)
+        console.error('traderOIHedgeBps call failed', err)
       }
 
       // (poolAmount - traderOIHedgeBps * reserveAmount) + traderOIHedgeBps * (shortSize / averagePrice)
