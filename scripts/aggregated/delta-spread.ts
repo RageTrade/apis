@@ -5,10 +5,11 @@ import { fetchJson, formatEther, formatUnits } from 'ethers/lib/utils'
 
 import { ENV } from '../../env'
 import { getProviderAggregate } from '../../providers'
-import { days, timestampRoundDown } from '../../utils'
+import { days, formatAsNum, timestampRoundDown } from '../../utils'
 import type { GlobalTotalSharesResult } from './total-shares'
 import { intersection } from './util/combine'
 import { juniorVault } from './util/events'
+import { ShortsTracker__factory } from './util/events/gmx-vault/contracts'
 import { decimals, name, price } from './util/helpers'
 import { parallelize } from './util/parallelize'
 import type { Entry } from './util/types'
@@ -35,8 +36,12 @@ export type GlobalDeltaSpreadEntry = Entry<{
   ethPrice: number
   btcAmountAfter: number
   ethAmountAfter: number
-  btcUsdgAmount: number
-  ethUsdgAmount: number
+  btcPoolAmount: number
+  ethPoolAmount: number
+
+  ethCurrentToken: number
+  btcCurrentToken: number
+
   fsGlp_balanceOf_juniorVault: number
   fsGlp_balanceOf_batchingManager: number
   glp_totalSupply: number
@@ -102,6 +107,11 @@ export async function getDeltaSpread(
     url: `http://localhost:3000/data/aggregated/get-total-shares?networkName=${networkName}`,
     timeout: 1_000_000_000 // huge number
   })
+
+  const shortTracker = ShortsTracker__factory.connect(
+    '0xf58eEc83Ba28ddd79390B9e90C4d3EbfF1d434da',
+    provider
+  )
 
   const data = await parallelize(
     {
@@ -183,15 +193,46 @@ export async function getDeltaSpread(
       })
       const ethAmountAfter = Number(formatUnits(_ethAmountAfter, 18))
 
-      const _btcUsdgAmount = await gmxUnderlyingVault.usdgAmounts(wbtc.address, {
+      const _btcPoolAmount = await gmxUnderlyingVault.poolAmounts(wbtc.address, {
         blockTag: blockNumber
       })
-      const btcUsdgAmount = Number(formatEther(_btcUsdgAmount))
+      const btcPoolAmount = Number(formatEther(_btcPoolAmount))
 
-      const _ethUsdgAmount = await gmxUnderlyingVault.usdgAmounts(weth.address, {
+      const _ethPoolAmount = await gmxUnderlyingVault.poolAmounts(weth.address, {
         blockTag: blockNumber
       })
-      const ethUsdgAmount = Number(formatEther(_ethUsdgAmount))
+      const ethPoolAmount = Number(formatEther(_ethPoolAmount))
+
+      const wethShortSizes = await gmxUnderlyingVault
+        .globalShortSizes(weth.address, { blockTag: blockNumber })
+        .then((res) => formatAsNum(res, 30))
+
+      const wbtcShortSizes = await gmxUnderlyingVault
+        .globalShortSizes(wbtc.address, { blockTag: blockNumber })
+        .then((res) => formatAsNum(res, 30))
+
+      const wethReservedAmounts = await gmxUnderlyingVault
+        .reservedAmounts(weth.address, { blockTag: blockNumber })
+        .then((res) => formatAsNum(res, 18))
+
+      const wbtcReservedAmounts = await gmxUnderlyingVault
+        .reservedAmounts(wbtc.address, { blockTag: blockNumber })
+        .then((res) => formatAsNum(res, 8))
+
+      const wethShortAveragePrice = await shortTracker
+        .globalShortAveragePrices(weth.address, { blockTag: blockNumber })
+        .then((res) => formatAsNum(res, 30))
+
+      const wbtcShortAveragePrice = await shortTracker
+        .globalShortAveragePrices(wbtc.address, { blockTag: blockNumber })
+        .then((res) => formatAsNum(res, 30))
+
+      // (poolAmount - reserveAmount) + (shortSize / averagePrice)
+      const ethTokenWeight =
+        ethPoolAmount - wethReservedAmounts + wethShortSizes / wethShortAveragePrice
+
+      const btcTokenWeight =
+        btcPoolAmount - wbtcReservedAmounts + wbtcShortSizes / wbtcShortAveragePrice
 
       const fsGlp_balanceOf_juniorVault = Number(
         formatEther(
@@ -214,6 +255,10 @@ export async function getDeltaSpread(
           })
         )
       )
+      const vaultGlp = fsGlp_balanceOf_juniorVault + fsGlp_balanceOf_batchingManager
+
+      const ethCurrentToken = (ethTokenWeight * vaultGlp) / glp_totalSupply
+      const btcCurrentToken = (btcTokenWeight * vaultGlp) / glp_totalSupply
 
       // TODO export price and then do the "last" kind of loop after this
       return {
@@ -236,8 +281,10 @@ export async function getDeltaSpread(
         ethPrice,
         btcAmountAfter,
         ethAmountAfter,
-        btcUsdgAmount,
-        ethUsdgAmount,
+        btcPoolAmount,
+        ethPoolAmount,
+        ethCurrentToken,
+        btcCurrentToken,
         fsGlp_balanceOf_juniorVault,
         fsGlp_balanceOf_batchingManager,
         glp_totalSupply
@@ -258,22 +305,11 @@ export async function getDeltaSpread(
   let last
   for (const current of dataWithTimestamp) {
     if (last) {
-      const lastBtcAmountVault =
-        (last.btcUsdgAmount *
-          (last.fsGlp_balanceOf_juniorVault + last.fsGlp_balanceOf_batchingManager)) /
-        last.glp_totalSupply /
-        last.btcPrice
-      const lastEthAmountVault =
-        (last.ethUsdgAmount *
-          (last.fsGlp_balanceOf_juniorVault + last.fsGlp_balanceOf_batchingManager)) /
-        last.glp_totalSupply /
-        last.ethPrice
-
       const priceDiffEth = current.ethPrice - last.ethPrice
       const priceDiffBtc = current.btcPrice - last.btcPrice
 
-      const btcHedgeDeltaPnl = (lastBtcAmountVault - last.btcAmountAfter) * priceDiffBtc
-      const ethHedgeDeltaPnl = (lastEthAmountVault - last.ethAmountAfter) * priceDiffEth
+      const btcHedgeDeltaPnl = last.ethCurrentToken * priceDiffEth
+      const ethHedgeDeltaPnl = last.btcCurrentToken * priceDiffBtc
 
       extraData.push({
         blockNumber: current.blockNumber,
