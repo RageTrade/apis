@@ -30,7 +30,7 @@ export async function perInterval2(networkName: NetworkName) {
 
   const startBlock = 55870561
   const endBlock = await provider.getBlockNumber()
-  const interval = 600
+  const interval = 6000
 
   const jones = dnGmxJuniorVault.attach('0x17ff154a329e37282eb9a76c3ae848fc277f24c7')
 
