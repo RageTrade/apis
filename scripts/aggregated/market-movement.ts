@@ -216,9 +216,14 @@ export async function getMarketMovement(
 
       const vaultGlp = fsGlp_balanceOf_juniorVault + fsGlp_balanceOf_batchingManager
 
-      const traderOIHedgeBps = await dnGmxTraderHedgeStrategy.traderOIHedgeBps({
-        blockTag: blockNumber
-      })
+      let traderOIHedgeBps = 0
+      try {
+        traderOIHedgeBps = await dnGmxTraderHedgeStrategy.traderOIHedgeBps({
+          blockTag: blockNumber
+        })
+      } catch (err) {
+        console.error(err)
+      }
 
       // (poolAmount - traderOIHedgeBps * reserveAmount) + traderOIHedgeBps * (shortSize / averagePrice)
       const wethTokenWeight =
