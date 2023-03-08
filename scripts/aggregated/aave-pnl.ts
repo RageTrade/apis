@@ -1,5 +1,6 @@
 import type { NetworkName, ResultWithMetadata } from '@ragetrade/sdk'
 import { aave, deltaNeutralGmxVaults, tokens } from '@ragetrade/sdk'
+import { ethers } from 'ethers'
 import { fetchJson, formatEther, formatUnits } from 'ethers/lib/utils'
 
 import { ENV } from '../../env'
@@ -57,6 +58,10 @@ export async function getAavePnl(
   const vdWbtc = aUsdc.attach(wbtcVariableDebtTokenAddress)
   const vdWeth = aUsdc.attach(wethVariableDebtTokenAddress)
 
+  const startBlock = 65567250
+  const endBlock = await provider.getBlockNumber()
+  const interval = 500
+
   const data = await parallelize(
     {
       networkName,
@@ -66,10 +71,19 @@ export async function getAavePnl(
         juniorVault.withdraw,
         juniorVault.rebalanced,
         gmxVault.increasePoolAmount,
-        gmxVault.decreasePoolAmount
+        gmxVault.decreasePoolAmount,
+        () => {
+          const events = []
+          for (let i = startBlock; i <= endBlock; i += interval) {
+            events.push({
+              blockNumber: i
+            })
+          }
+          return events as ethers.Event[]
+        }
       ],
       ignoreMoreEventsInSameBlock: true, // to prevent reprocessing same data
-      startBlockNumber: ENV.START_BLOCK_NUMBER
+      startBlockNumber: startBlock
     },
     async (_i, blockNumber, event) => {
       const block = await provider.getBlock(blockNumber)

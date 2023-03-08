@@ -1,6 +1,6 @@
 import type { NetworkName } from '@ragetrade/sdk'
 import { chainlink, deltaNeutralGmxVaults, gmxProtocol, tokens } from '@ragetrade/sdk'
-import { BigNumber } from 'ethers'
+import { BigNumber, ethers } from 'ethers'
 import { fetchJson, formatEther } from 'ethers/lib/utils'
 
 import { ENV } from '../../env'
@@ -117,6 +117,10 @@ export async function getMarketMovement(
     allWhitelistedTokens.push(await gmxUnderlyingVault.allWhitelistedTokens(i))
   }
 
+  const startBlock = 65567250
+  const endBlock = await provider.getBlockNumber()
+  const interval = 500
+
   const data = await parallelize(
     {
       networkName,
@@ -126,10 +130,19 @@ export async function getMarketMovement(
         juniorVault.withdraw,
         juniorVault.rebalanced,
         gmxVault.increasePoolAmount,
-        gmxVault.decreasePoolAmount
+        gmxVault.decreasePoolAmount,
+        () => {
+          const events = []
+          for (let i = startBlock; i <= endBlock; i += interval) {
+            events.push({
+              blockNumber: i
+            })
+          }
+          return events as ethers.Event[]
+        }
       ],
       ignoreMoreEventsInSameBlock: true,
-      startBlockNumber: ENV.START_BLOCK_NUMBER
+      startBlockNumber: startBlock
     },
     async (_i, blockNumber, event) => {
       const block = await provider.getBlock(blockNumber)
