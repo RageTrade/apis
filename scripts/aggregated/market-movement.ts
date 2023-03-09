@@ -49,6 +49,12 @@ export type GlobalMarketMovementEntry = Entry<{
   linkUsdgAmount: number
   uniUsdgAmount: number
   totalUsdgAmount: number
+  linkShortSizes: number
+  uniShortSizes: number
+  linkReservedAmounts: number
+  uniReservedAmounts: number
+  linkShortAveragePrice: number
+  uniShortAveragePrice: number
 
   ethPnl: number
   btcPnl: number
@@ -211,6 +217,14 @@ export async function getMarketMovement(
         .globalShortSizes(wbtc.address, { blockTag: blockNumber })
         .then((res) => formatAsNum(res, 30))
 
+      const linkShortSizes = await gmxUnderlyingVault
+        .globalShortSizes(link.address, { blockTag: blockNumber })
+        .then((res) => formatAsNum(res, 18))
+
+      const uniShortSizes = await gmxUnderlyingVault
+        .globalShortSizes(uni.address, { blockTag: blockNumber })
+        .then((res) => formatAsNum(res, 18))
+
       const wethReservedAmounts = await gmxUnderlyingVault
         .reservedAmounts(weth.address, { blockTag: blockNumber })
         .then((res) => formatAsNum(res, 18))
@@ -219,12 +233,28 @@ export async function getMarketMovement(
         .reservedAmounts(wbtc.address, { blockTag: blockNumber })
         .then((res) => formatAsNum(res, 8))
 
+      const linkReservedAmounts = await gmxUnderlyingVault
+        .reservedAmounts(link.address, { blockTag: blockNumber })
+        .then((res) => formatAsNum(res, 18))
+
+      const uniReservedAmounts = await gmxUnderlyingVault
+        .reservedAmounts(uni.address, { blockTag: blockNumber })
+        .then((res) => formatAsNum(res, 18))
+
       const wethShortAveragePrice = await shortTracker
         .globalShortAveragePrices(weth.address, { blockTag: blockNumber })
         .then((res) => formatAsNum(res, 30))
 
       const wbtcShortAveragePrice = await shortTracker
         .globalShortAveragePrices(wbtc.address, { blockTag: blockNumber })
+        .then((res) => formatAsNum(res, 30))
+
+      const linkShortAveragePrice = await shortTracker
+        .globalShortAveragePrices(link.address, { blockTag: blockNumber })
+        .then((res) => formatAsNum(res, 30))
+
+      const uniShortAveragePrice = await shortTracker
+        .globalShortAveragePrices(uni.address, { blockTag: blockNumber })
         .then((res) => formatAsNum(res, 30))
 
       const wethPoolAmount = await gmxUnderlyingVault
@@ -344,7 +374,13 @@ export async function getMarketMovement(
         wbtcUsdgAmount,
         linkUsdgAmount,
         uniUsdgAmount,
-        totalUsdgAmount
+        totalUsdgAmount,
+        linkShortSizes,
+        uniShortSizes,
+        linkReservedAmounts,
+        uniReservedAmounts,
+        linkShortAveragePrice,
+        uniShortAveragePrice
       }
     }
   )
