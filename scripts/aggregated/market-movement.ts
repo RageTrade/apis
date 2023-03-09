@@ -124,8 +124,8 @@ export async function getMarketMovement(
 
   // const startBlock = 65567250
   // const endBlock = await provider.getBlockNumber()
-  const startBlock = 67433250
-  const endBlock = 67453750
+  const startBlock = 67762250
+  const endBlock = 67829400
   const interval = 500
 
   const data = await parallelize(
