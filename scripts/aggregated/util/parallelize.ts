@@ -15,37 +15,27 @@ export type OnEachEvent<Data, Event extends ethers.Event> = (
   event: Event
 ) => Promise<Data | null | undefined>
 
+export interface Options<T> {
+  networkName: NetworkName
+  provider: ethers.providers.Provider
+  getEvents: T
+  ignoreMoreEventsInSameBlock?: boolean
+  startBlockNumber?: number
+  endBlockNumber?: number
+}
+
 export async function parallelize<Data, Event extends ethers.Event>(
-  options: {
-    networkName: NetworkName
-    provider: ethers.providers.Provider
-    getEvents: EventFn<Event> | [EventFn<Event>]
-    ignoreMoreEventsInSameBlock?: boolean
-    startBlockNumber?: number
-  },
+  options: Options<EventFn<Event> | [EventFn<Event>]>,
   onEachEvent: OnEachEvent<Data, Event>
 ): Promise<Data[]>
 
 export async function parallelize<Data>(
-  options: {
-    networkName: NetworkName
-    provider: ethers.providers.Provider
-    getEvents: EventFn<ethers.Event>[]
-    ignoreMoreEventsInSameBlock?: boolean
-    startBlockNumber?: number
-  },
+  options: Options<EventFn<ethers.Event>[]>,
   onEachEvent: OnEachEvent<Data, ethers.Event>
 ): Promise<Data[]>
 
 export async function parallelize<Data, Event extends ethers.Event>(
-  options: {
-    networkName: NetworkName
-    provider: ethers.providers.Provider
-    getEvents: EventFn<Event> | EventFn<Event>[]
-    ignoreMoreEventsInSameBlock?: boolean
-    startBlockNumber?: number
-    endBlockNumber?: number
-  },
+  options: Options<EventFn<Event> | EventFn<Event>[]>,
   onEachEvent: OnEachEvent<Data, Event>
 ): Promise<Data[]> {
   const {
