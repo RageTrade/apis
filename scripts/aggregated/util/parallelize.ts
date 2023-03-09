@@ -6,7 +6,8 @@ import { ENV } from '../../../env'
 export type EventFn<Event> = (
   networkName: NetworkName,
   provider: ethers.providers.Provider,
-  startBlockNumber?: number
+  startBlockNumber?: number,
+  endBlockNumber?: number
 ) => Event[] | Promise<Event[]>
 
 export type OnEachEvent<Data, Event extends ethers.Event> = (
@@ -51,11 +52,16 @@ export async function parallelize<Data, Event extends ethers.Event>(
 
   if (Array.isArray(getEvents)) {
     for (const _getEvents of getEvents) {
-      const events = await _getEvents(networkName, provider)
+      const events = await _getEvents(
+        networkName,
+        provider,
+        startBlockNumber,
+        endBlockNumber
+      )
       allEvents = allEvents.concat(events)
     }
   } else {
-    allEvents = await getEvents(networkName, provider)
+    allEvents = await getEvents(networkName, provider, startBlockNumber, endBlockNumber)
   }
 
   allEvents = allEvents.sort((a, b) => a.blockNumber - b.blockNumber)
