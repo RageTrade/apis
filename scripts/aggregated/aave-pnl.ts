@@ -71,19 +71,10 @@ export async function getAavePnl(
         juniorVault.withdraw,
         juniorVault.rebalanced,
         gmxVault.increasePoolAmount,
-        gmxVault.decreasePoolAmount,
-        () => {
-          const events = []
-          for (let i = startBlock; i <= endBlock; i += interval) {
-            events.push({
-              blockNumber: i
-            })
-          }
-          return events as ethers.Event[]
-        }
+        gmxVault.decreasePoolAmount
       ],
       ignoreMoreEventsInSameBlock: true, // to prevent reprocessing same data
-      startBlockNumber: startBlock
+      startBlockNumber: ENV.START_BLOCK_NUMBER
     },
     async (_i, blockNumber, event) => {
       const block = await provider.getBlock(blockNumber)
