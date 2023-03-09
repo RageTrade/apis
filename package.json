@@ -16,6 +16,7 @@
     "start": "pnpm install && pnpm build && pnpm start:nobuild",
     "start:nobuild": "pnpm serve && pnpm index",
     "restart": "pnpm install && pnpm build && pnpm stop && pnpm start:nobuild",
+    "restart2": "pnpm install && pnpm build && pnpm stop && pnpm start:nobuild",
     "stop": "pm2 delete all 2>&1 || true",
     "lint": "eslint --cache .",
     "lint:fix": "eslint --fix --cache ."
