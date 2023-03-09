@@ -60,8 +60,8 @@ export async function getAavePnl(
 
   // const startBlock = 65567250
   // const endBlock = await provider.getBlockNumber()
-  const startBlock = 67762250
-  const endBlock = 67829400
+  const startBlock = 65567250
+  const endBlock = 68048150
   const interval = 500
 
   const data = await parallelize(
