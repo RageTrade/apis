@@ -44,6 +44,7 @@ export async function parallelize<Data, Event extends ethers.Event>(
     getEvents: EventFn<Event> | EventFn<Event>[]
     ignoreMoreEventsInSameBlock?: boolean
     startBlockNumber?: number
+    endBlockNumber?: number
   },
   onEachEvent: OnEachEvent<Data, Event>
 ): Promise<Data[]> {
@@ -52,7 +53,8 @@ export async function parallelize<Data, Event extends ethers.Event>(
     provider,
     getEvents,
     ignoreMoreEventsInSameBlock,
-    startBlockNumber
+    startBlockNumber,
+    endBlockNumber
   } = options
 
   let allEvents: Event[] = []
@@ -70,6 +72,9 @@ export async function parallelize<Data, Event extends ethers.Event>(
 
   if (startBlockNumber) {
     allEvents = allEvents.filter((e) => e.blockNumber >= startBlockNumber)
+  }
+  if (endBlockNumber) {
+    allEvents = allEvents.filter((e) => e.blockNumber <= endBlockNumber)
   }
 
   if (ignoreMoreEventsInSameBlock) {
