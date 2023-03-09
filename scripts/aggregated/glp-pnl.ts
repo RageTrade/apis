@@ -14,7 +14,7 @@ import type { Entry } from './util/types'
 export type GlobalGlpPnlEntry = Entry<{
   timestamp: number
   fsGlp_balanceOf_juniorVault: number
-  fsGlp_balanceOf_batchingManager: number
+  // fsGlp_balanceOf_batchingManager: number
   glpPrice: number
   glpPnl: number
 }>
@@ -66,18 +66,21 @@ export async function getGlpPnl(
         juniorVault.rebalanced,
         gmxVault.increasePoolAmount,
         gmxVault.decreasePoolAmount,
-        () => {
-          const events = []
-          for (let i = startBlock; i <= endBlock; i += interval) {
-            events.push({
-              blockNumber: i
-            })
-          }
-          return events as ethers.Event[]
-        }
+        gmxVault.increaseReservedAmount,
+        gmxVault.decreaseReservedAmount
+        // () => {
+        //   const events = []
+        //   for (let i = startBlock; i <= endBlock; i += interval) {
+        //     events.push({
+        //       blockNumber: i
+        //     })
+        //   }
+        //   return events as ethers.Event[]
+        // }
       ],
       ignoreMoreEventsInSameBlock: true, // to prevent reprocessing same data
-      startBlockNumber: startBlock
+      startBlockNumber: startBlock,
+      endBlockNumber: endBlock
     },
     async (_i, blockNumber, event) => {
       const block = await provider.getBlock(blockNumber)
@@ -91,13 +94,13 @@ export async function getGlpPnl(
         )
       )
 
-      const fsGlp_balanceOf_batchingManager = Number(
-        formatEther(
-          await dnGmxBatchingManager.dnGmxJuniorVaultGlpBalance({
-            blockTag: blockNumber
-          })
-        )
-      )
+      // const fsGlp_balanceOf_batchingManager = Number(
+      //   formatEther(
+      //     await dnGmxBatchingManager.dnGmxJuniorVaultGlpBalance({
+      //       blockTag: blockNumber
+      //     })
+      //   )
+      // )
 
       const glpPrice = Number(
         formatEther(
@@ -113,7 +116,7 @@ export async function getGlpPnl(
         timestamp: block.timestamp,
         transactionHash: event.transactionHash,
         fsGlp_balanceOf_juniorVault,
-        fsGlp_balanceOf_batchingManager,
+        // fsGlp_balanceOf_batchingManager,
         glpPrice
       }
     }
@@ -124,15 +127,13 @@ export async function getGlpPnl(
   let last
   for (const current of data) {
     if (last) {
-      const glpPnl =
-        (last.fsGlp_balanceOf_juniorVault + last.fsGlp_balanceOf_batchingManager) *
-        (current.glpPrice - last.glpPrice)
+      const glpPnl = last.fsGlp_balanceOf_juniorVault * (current.glpPrice - last.glpPrice)
 
       extraData.push({
         blockNumber: current.blockNumber,
         transactionHash: current.transactionHash,
         fsGlp_balanceOf_juniorVault: current.fsGlp_balanceOf_juniorVault,
-        fsGlp_balanceOf_batchingManager: current.fsGlp_balanceOf_batchingManager,
+        // fsGlp_balanceOf_batchingManager: current.fsGlp_balanceOf_batchingManager,
         glpPrice: current.glpPrice,
         glpPnl
       })
@@ -141,7 +142,7 @@ export async function getGlpPnl(
         blockNumber: current.blockNumber,
         transactionHash: current.transactionHash,
         fsGlp_balanceOf_juniorVault: current.fsGlp_balanceOf_juniorVault,
-        fsGlp_balanceOf_batchingManager: current.fsGlp_balanceOf_batchingManager,
+        // fsGlp_balanceOf_batchingManager: current.fsGlp_balanceOf_batchingManager,
         glpPrice: current.glpPrice,
         glpPnl: 0
       })

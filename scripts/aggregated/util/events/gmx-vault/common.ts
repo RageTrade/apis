@@ -17,3 +17,4 @@ export const getStartBlock = (networkName: NetworkName) => {
   }
 }
 export const oneInFiftyBlocks = (e: ethers.Event) => [0].includes(e.blockNumber % 50)
+export const oneInTenBlocks = (e: ethers.Event) => [0].includes(e.blockNumber % 10)

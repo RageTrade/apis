@@ -3,12 +3,18 @@ import { gmxProtocol } from '@ragetrade/sdk'
 import { ethers } from 'ethers'
 
 import { getLogs } from '../../../../../utils'
-import { GET_LOGS_INTERVAL, getStartBlock, oneInFiftyBlocks } from './common'
+import {
+  GET_LOGS_INTERVAL,
+  getStartBlock,
+  oneInFiftyBlocks,
+  oneInTenBlocks
+} from './common'
 
 export async function increasePoolAmount(
   networkName: NetworkName,
   provider: ethers.providers.Provider,
-  startBlockNumberOverride?: number
+  startBlockNumberOverride?: number,
+  endBlockNumberOverride?: number
 ): Promise<ethers.Event[]> {
   const { gmxUnderlyingVault } = gmxProtocol.getContractsSync(networkName, provider)
 
@@ -21,19 +27,12 @@ export async function increasePoolAmount(
   let startBlock = getStartBlock(networkName)
   const endBlock = await provider.getBlockNumber()
 
-  if (typeof startBlockNumberOverride === 'number') {
-    // to make sure cache is hit for various startBlockNumberOverride
-    startBlock +=
-      GET_LOGS_INTERVAL *
-      Math.floor((startBlockNumberOverride - startBlock) / GET_LOGS_INTERVAL)
-  }
-
   const logs = await getLogs(
     _gmxUnderlyingVault.filters.IncreasePoolAmount(),
-    startBlock,
-    endBlock,
+    startBlockNumberOverride ?? startBlock,
+    endBlockNumberOverride ?? endBlock,
     _gmxUnderlyingVault
   )
 
-  return logs.filter(oneInFiftyBlocks)
+  return logs //.filter(oneInTenBlocks)
 }

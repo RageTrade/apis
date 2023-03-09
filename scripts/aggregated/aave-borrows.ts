@@ -80,18 +80,21 @@ export async function getAaveBorrows(
         juniorVault.rebalanced,
         gmxVault.increasePoolAmount,
         gmxVault.decreasePoolAmount,
-        () => {
-          const events = []
-          for (let i = startBlock; i <= endBlock; i += interval) {
-            events.push({
-              blockNumber: i
-            })
-          }
-          return events as ethers.Event[]
-        }
+        gmxVault.increaseReservedAmount,
+        gmxVault.decreaseReservedAmount
+        // () => {
+        //   const events = []
+        //   for (let i = startBlock; i <= endBlock; i += interval) {
+        //     events.push({
+        //       blockNumber: i
+        //     })
+        //   }
+        //   return events as ethers.Event[]
+        // }
       ],
       ignoreMoreEventsInSameBlock: true, // to prevent reprocessing same data
-      startBlockNumber: startBlock
+      startBlockNumber: startBlock,
+      endBlockNumber: endBlock
     },
     async (_i, blockNumber, event) => {
       const block = await provider.getBlock(blockNumber)
