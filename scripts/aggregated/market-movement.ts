@@ -1,7 +1,7 @@
 import type { NetworkName } from '@ragetrade/sdk'
 import { chainlink, deltaNeutralGmxVaults, gmxProtocol, tokens } from '@ragetrade/sdk'
 import { BigNumber, ethers } from 'ethers'
-import { fetchJson, formatEther } from 'ethers/lib/utils'
+import { fetchJson, formatEther, formatUnits } from 'ethers/lib/utils'
 
 import { ENV } from '../../env'
 import { getProviderAggregate } from '../../providers'
@@ -61,6 +61,15 @@ export type GlobalMarketMovementEntry = Entry<{
   linkPnl: number
   uniPnl: number
   pnl: number
+
+  wethMaxPrice: number
+  wethMinPrice: number
+  wbtcMaxPrice: number
+  wbtcMinPrice: number
+  linkMaxPrice: number
+  linkMinPrice: number
+  uniMaxPrice: number
+  uniMinPrice: number
 }>
 
 export interface GlobalMarketMovementDailyEntry {
@@ -101,6 +110,19 @@ export async function getMarketMovement(
   const { dnGmxJuniorVault, dnGmxBatchingManager, dnGmxTraderHedgeStrategy } =
     deltaNeutralGmxVaults.getContractsSync(networkName, provider)
   const { gmxUnderlyingVault } = gmxProtocol.getContractsSync(networkName, provider)
+  const iface = [
+    'function positions(bytes32 key) external view returns (uint256 size, uint256 collateral, uint256 averagePrice, uint256 entryFundingRate, uint256 reserveAmount, int256 realisedPnl, uint256 lastIncreasedTime)',
+    'function getPositionKey(address _account, address _collateralToken, address _indexToken, bool _isLong) public pure returns (bytes32)',
+    'function getMaxPrice(address _token) public view returns (uint256)',
+    'function getMinPrice(address _token) public view returns (uint256)'
+  ]
+
+  const _gmxUnderlyingVault = new ethers.Contract(
+    gmxUnderlyingVault.address,
+    iface,
+    provider
+  )
+
   const { weth, wbtc, fsGLP, glp } = tokens.getContractsSync(networkName, provider)
   const { ethUsdAggregator } = chainlink.getContractsSync(networkName, provider)
   const shortTracker = ShortsTracker__factory.connect(
@@ -130,8 +152,9 @@ export async function getMarketMovement(
 
   // const startBlock = 65567250
   // const endBlock = await provider.getBlockNumber()
-  const startBlock = 65567250
-  const endBlock = 68048150
+  const startBlock = 67125190
+  const endBlock = 67433056
+
   const interval = 500
 
   const data = await parallelize(
@@ -147,12 +170,12 @@ export async function getMarketMovement(
         gmxVault.increaseReservedAmount,
         gmxVault.decreaseReservedAmount
         // () => {
-        //   const events = []
-        //   for (let i = startBlock; i <= endBlock; i += interval) {
-        //     events.push({
-        //       blockNumber: i
-        //     })
-        //   }
+        //   const events = [{ blockNumber: 68607760 }, { blockNumber: 68607761 }]
+        // for (let i = startBlock; i <= endBlock; i += interval) {
+        //   events.push({
+        //     blockNumber: i
+        //   })
+        // }
         //   return events as ethers.Event[]
         // }
       ],
@@ -338,6 +361,50 @@ export async function getMarketMovement(
       const linkCurrentToken = (linkTokenWeight * vaultGlp) / totalGLPSupply
       const uniCurrentToken = (uniTokenWeight * vaultGlp) / totalGLPSupply
 
+      const wethMaxPrice = await _gmxUnderlyingVault
+        .getMaxPrice(weth.address, {
+          blockTag: blockNumber
+        })
+        .then((res: any) => formatUnits(res, 30))
+      const wethMinPrice = await _gmxUnderlyingVault
+        .getMinPrice(weth.address, {
+          blockTag: blockNumber
+        })
+        .then((res: any) => formatUnits(res, 30))
+
+      const wbtcMaxPrice = await _gmxUnderlyingVault
+        .getMaxPrice(wbtc.address, {
+          blockTag: blockNumber
+        })
+        .then((res: any) => formatUnits(res, 30))
+      const wbtcMinPrice = await _gmxUnderlyingVault
+        .getMinPrice(wbtc.address, {
+          blockTag: blockNumber
+        })
+        .then((res: any) => formatUnits(res, 30))
+
+      const linkMaxPrice = await _gmxUnderlyingVault
+        .getMaxPrice(link.address, {
+          blockTag: blockNumber
+        })
+        .then((res: any) => formatUnits(res, 30))
+      const linkMinPrice = await _gmxUnderlyingVault
+        .getMinPrice(link.address, {
+          blockTag: blockNumber
+        })
+        .then((res: any) => formatUnits(res, 30))
+
+      const uniMaxPrice = await _gmxUnderlyingVault
+        .getMaxPrice(uni.address, {
+          blockTag: blockNumber
+        })
+        .then((res: any) => formatUnits(res, 30))
+      const uniMinPrice = await _gmxUnderlyingVault
+        .getMinPrice(uni.address, {
+          blockTag: blockNumber
+        })
+        .then((res: any) => formatUnits(res, 30))
+
       return {
         blockNumber: blockNumber,
         eventName: event.event ?? 'unknown',
@@ -380,7 +447,15 @@ export async function getMarketMovement(
         linkReservedAmounts,
         uniReservedAmounts,
         linkShortAveragePrice,
-        uniShortAveragePrice
+        uniShortAveragePrice,
+        wethMaxPrice,
+        wethMinPrice,
+        wbtcMaxPrice,
+        wbtcMinPrice,
+        linkMaxPrice,
+        linkMinPrice,
+        uniMaxPrice,
+        uniMinPrice
       }
     }
   )
@@ -396,10 +471,10 @@ export async function getMarketMovement(
   let last
   for (const current of data) {
     if (last) {
-      const ethPnl = last.wethCurrentToken * (current.wethPrice - last.wethPrice)
-      const btcPnl = last.wbtcCurrentToken * (current.wbtcPrice - last.wbtcPrice)
-      const uniPnl = last.uniCurrentToken * (current.uniPrice - last.uniPrice)
-      const linkPnl = last.linkCurrentToken * (current.linkPrice - last.linkPrice)
+      const ethPnl = last.wethCurrentToken * (current.wethMinPrice - last.wethMinPrice)
+      const btcPnl = last.wbtcCurrentToken * (current.wbtcMinPrice - last.wbtcMinPrice)
+      const uniPnl = last.uniCurrentToken * (current.uniMinPrice - last.uniMinPrice)
+      const linkPnl = last.linkCurrentToken * (current.linkMinPrice - last.linkMinPrice)
 
       extraData.push({
         blockNumber: current.blockNumber,
