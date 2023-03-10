@@ -455,7 +455,13 @@ export async function getMarketMovement(
         linkMaxPrice,
         linkMinPrice,
         uniMaxPrice,
-        uniMinPrice
+        uniMinPrice,
+        ...Object.fromEntries(
+          allWhitelistedTokens.map((address, i) => [
+            address,
+            Number(formatEther(usdgAmounts[i]))
+          ])
+        )
       }
     }
   )
