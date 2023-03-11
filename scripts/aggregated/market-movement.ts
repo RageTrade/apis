@@ -1,4 +1,4 @@
-import type { NetworkName } from '@ragetrade/sdk'
+import { IERC20Metadata__factory, NetworkName } from '@ragetrade/sdk'
 import { chainlink, deltaNeutralGmxVaults, gmxProtocol, tokens } from '@ragetrade/sdk'
 import { BigNumber, ethers } from 'ethers'
 import { fetchJson, formatEther, formatUnits } from 'ethers/lib/utils'
@@ -149,11 +149,17 @@ export async function getMarketMovement(
   for (let i = 0; i < allWhitelistedTokensLength; i++) {
     allWhitelistedTokens.push(await gmxUnderlyingVault.allWhitelistedTokens(i))
   }
+  const allWhitelistedTokensName = await Promise.all(
+    allWhitelistedTokens.map(async (tokenAddress) => {
+      const token = IERC20Metadata__factory.connect(tokenAddress, provider)
+      return token.name()
+    })
+  )
 
   // const startBlock = 65567250
   // const endBlock = await provider.getBlockNumber()
-  const startBlock = 67125190
-  const endBlock = 67433056
+  const startBlock = 65567250
+  const endBlock = 68048150
 
   const interval = 500
 
@@ -457,8 +463,8 @@ export async function getMarketMovement(
         uniMaxPrice,
         uniMinPrice,
         ...Object.fromEntries(
-          allWhitelistedTokens.map((address, i) => [
-            address,
+          allWhitelistedTokensName.map((tokenName, i) => [
+            tokenName,
             Number(formatEther(usdgAmounts[i]))
           ])
         )
