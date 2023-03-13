@@ -81,8 +81,8 @@ export async function getGlpPnl(
         // }
       ],
       ignoreMoreEventsInSameBlock: true, // to prevent reprocessing same data
-      startBlockNumber: startBlock,
-      endBlockNumber: endBlock
+      startBlockNumber: startBlock
+      // endBlockNumber: endBlock
     },
     async (_i, blockNumber, event) => {
       const block = await provider.getBlock(blockNumber)

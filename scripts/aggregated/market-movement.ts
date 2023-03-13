@@ -70,6 +70,18 @@ export type GlobalMarketMovementEntry = Entry<{
   linkMinPrice: number
   uniMaxPrice: number
   uniMinPrice: number
+
+  wethAvgPrice: number
+  wbtcAvgPrice: number
+  linkAvgPrice: number
+  uniAvgPrice: number
+
+  wethGuaranteedUsdAmount: number
+  wbtcGuaranteedUsdAmount: number
+  linkGuaranteedUsdAmount: number
+  uniGuaranteedUsdAmount: number
+
+  traderOIHedgeBps: number
 }>
 
 export interface GlobalMarketMovementDailyEntry {
@@ -168,13 +180,13 @@ export async function getMarketMovement(
       networkName,
       provider,
       getEvents: [
-        juniorVault.deposit,
-        juniorVault.withdraw,
-        juniorVault.rebalanced,
-        gmxVault.increasePoolAmount,
-        gmxVault.decreasePoolAmount,
-        gmxVault.increaseReservedAmount,
-        gmxVault.decreaseReservedAmount
+        // juniorVault.deposit,
+        // juniorVault.withdraw,
+        juniorVault.rebalanced
+        // gmxVault.increasePoolAmount,
+        // gmxVault.decreasePoolAmount,
+        // gmxVault.increaseReservedAmount,
+        // gmxVault.decreaseReservedAmount
         // () => {
         //   const events = [{ blockNumber: 68607760 }, { blockNumber: 68607761 }]
         // for (let i = startBlock; i <= endBlock; i += interval) {
@@ -186,8 +198,8 @@ export async function getMarketMovement(
         // }
       ],
       ignoreMoreEventsInSameBlock: true,
-      startBlockNumber: startBlock,
-      endBlockNumber: endBlock
+      startBlockNumber: startBlock
+      // endBlockNumber: endBlock
     },
     async (_i, blockNumber, event) => {
       const block = await provider.getBlock(blockNumber)
@@ -302,6 +314,22 @@ export async function getMarketMovement(
         .poolAmounts(uni.address, { blockTag: blockNumber })
         .then((res) => formatAsNum(res, 18))
 
+      const wethGuaranteedUsdAmount = await gmxUnderlyingVault
+        .guaranteedUsd(weth.address, { blockTag: blockNumber })
+        .then((res) => formatAsNum(res, 30))
+
+      const wbtcGuaranteedUsdAmount = await gmxUnderlyingVault
+        .guaranteedUsd(wbtc.address, { blockTag: blockNumber })
+        .then((res) => formatAsNum(res, 30))
+
+      const linkGuaranteedUsdAmount = await gmxUnderlyingVault
+        .guaranteedUsd(link.address, { blockTag: blockNumber })
+        .then((res) => formatAsNum(res, 30))
+
+      const uniGuaranteedUsdAmount = await gmxUnderlyingVault
+        .guaranteedUsd(uni.address, { blockTag: blockNumber })
+        .then((res) => formatAsNum(res, 30))
+
       const [wethPrice, wbtcPrice] = await Promise.all([
         price(weth.address, blockNumber, networkName),
         price(wbtc.address, blockNumber, networkName)
@@ -371,45 +399,50 @@ export async function getMarketMovement(
         .getMaxPrice(weth.address, {
           blockTag: blockNumber
         })
-        .then((res: any) => formatUnits(res, 30))
+        .then((res: any) => Number(formatUnits(res, 30)))
       const wethMinPrice = await _gmxUnderlyingVault
         .getMinPrice(weth.address, {
           blockTag: blockNumber
         })
-        .then((res: any) => formatUnits(res, 30))
+        .then((res: any) => Number(formatUnits(res, 30)))
 
       const wbtcMaxPrice = await _gmxUnderlyingVault
         .getMaxPrice(wbtc.address, {
           blockTag: blockNumber
         })
-        .then((res: any) => formatUnits(res, 30))
+        .then((res: any) => Number(formatUnits(res, 30)))
       const wbtcMinPrice = await _gmxUnderlyingVault
         .getMinPrice(wbtc.address, {
           blockTag: blockNumber
         })
-        .then((res: any) => formatUnits(res, 30))
+        .then((res: any) => Number(formatUnits(res, 30)))
 
       const linkMaxPrice = await _gmxUnderlyingVault
         .getMaxPrice(link.address, {
           blockTag: blockNumber
         })
-        .then((res: any) => formatUnits(res, 30))
+        .then((res: any) => Number(formatUnits(res, 30)))
       const linkMinPrice = await _gmxUnderlyingVault
         .getMinPrice(link.address, {
           blockTag: blockNumber
         })
-        .then((res: any) => formatUnits(res, 30))
+        .then((res: any) => Number(formatUnits(res, 30)))
 
       const uniMaxPrice = await _gmxUnderlyingVault
         .getMaxPrice(uni.address, {
           blockTag: blockNumber
         })
-        .then((res: any) => formatUnits(res, 30))
+        .then((res: any) => Number(formatUnits(res, 30)))
       const uniMinPrice = await _gmxUnderlyingVault
         .getMinPrice(uni.address, {
           blockTag: blockNumber
         })
-        .then((res: any) => formatUnits(res, 30))
+        .then((res: any) => Number(formatUnits(res, 30)))
+
+      const wbtcAvgPrice = (wbtcMaxPrice + wbtcMinPrice) / 2
+      const wethAvgPrice = (wethMaxPrice + wethMinPrice) / 2
+      const linkAvgPrice = (linkMaxPrice + linkMinPrice) / 2
+      const uniAvgPrice = (uniMaxPrice + uniMinPrice) / 2
 
       return {
         blockNumber: blockNumber,
@@ -462,6 +495,15 @@ export async function getMarketMovement(
         linkMinPrice,
         uniMaxPrice,
         uniMinPrice,
+        wethAvgPrice,
+        wbtcAvgPrice,
+        linkAvgPrice,
+        uniAvgPrice,
+        wethGuaranteedUsdAmount,
+        wbtcGuaranteedUsdAmount,
+        linkGuaranteedUsdAmount,
+        uniGuaranteedUsdAmount,
+        traderOIHedgeBps,
         ...Object.fromEntries(
           allWhitelistedTokensName.map((tokenName, i) => [
             tokenName,
@@ -477,6 +519,10 @@ export async function getMarketMovement(
     btcPnl: number
     uniPnl: number
     linkPnl: number
+    ethUnhedgedTraderPnl: number
+    btcUnhedgedTraderPnl: number
+    uniUnhedgedTraderPnl: number
+    linkUnhedgedTraderPnl: number
     pnl: number
   }>[] = []
 
@@ -488,12 +534,37 @@ export async function getMarketMovement(
       const uniPnl = last.uniCurrentToken * (current.uniMinPrice - last.uniMinPrice)
       const linkPnl = last.linkCurrentToken * (current.linkMinPrice - last.linkMinPrice)
 
+      const ethUnhedgedTraderPnl =
+        (((current.wethReservedAmounts -
+          current.wethShortSizes / current.wethShortAveragePrice) *
+          (10000 - current.traderOIHedgeBps)) /
+          10000) *
+        (current.wethAvgPrice - last.wethAvgPrice)
+      const btcUnhedgedTraderPnl =
+        (((current.wbtcReservedAmounts -
+          current.wbtcShortSizes / current.wbtcShortAveragePrice) *
+          (10000 - current.traderOIHedgeBps)) /
+          10000) *
+        (current.wbtcAvgPrice - last.wbtcAvgPrice)
+      const uniUnhedgedTraderPnl =
+        (current.uniReservedAmounts -
+          current.uniShortSizes / current.uniShortAveragePrice) *
+        (current.uniAvgPrice - last.uniAvgPrice)
+      const linkUnhedgedTraderPnl =
+        (current.linkReservedAmounts -
+          current.linkShortSizes / current.linkShortAveragePrice) *
+        (current.linkAvgPrice - last.linkAvgPrice)
+
       extraData.push({
         blockNumber: current.blockNumber,
         ethPnl,
         btcPnl,
         uniPnl,
         linkPnl,
+        ethUnhedgedTraderPnl,
+        btcUnhedgedTraderPnl,
+        uniUnhedgedTraderPnl,
+        linkUnhedgedTraderPnl,
         pnl: ethPnl + btcPnl + uniPnl + linkPnl
       })
     } else {
@@ -503,6 +574,10 @@ export async function getMarketMovement(
         btcPnl: 0,
         uniPnl: 0,
         linkPnl: 0,
+        ethUnhedgedTraderPnl: 0,
+        btcUnhedgedTraderPnl: 0,
+        uniUnhedgedTraderPnl: 0,
+        linkUnhedgedTraderPnl: 0,
         pnl: 0
       })
     }
