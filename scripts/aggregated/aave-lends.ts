@@ -1,5 +1,6 @@
 import type { NetworkName, ResultWithMetadata } from '@ragetrade/sdk'
 import { aave, deltaNeutralGmxVaults, formatUsdc, tokens } from '@ragetrade/sdk'
+import { ethers } from 'ethers'
 import { fetchJson } from 'ethers/lib/utils'
 
 import { getProviderAggregate } from '../../providers'
@@ -72,7 +73,8 @@ export async function getAaveLends(
         juniorVault.withdraw,
         juniorVault.rebalanced,
         seniorVault.deposit,
-        seniorVault.withdraw
+        seniorVault.withdraw,
+        () => [{ blockNumber: 68912424 } as ethers.Event] // include that one RebalanceProfit event
       ],
       ignoreMoreEventsInSameBlock: true, // to prevent reprocessing same data
       startBlockNumber: 45412307
