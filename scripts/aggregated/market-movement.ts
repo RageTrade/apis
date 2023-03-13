@@ -180,13 +180,13 @@ export async function getMarketMovement(
       networkName,
       provider,
       getEvents: [
-        // juniorVault.deposit,
-        // juniorVault.withdraw,
-        juniorVault.rebalanced
-        // gmxVault.increasePoolAmount,
-        // gmxVault.decreasePoolAmount,
-        // gmxVault.increaseReservedAmount,
-        // gmxVault.decreaseReservedAmount
+        juniorVault.deposit,
+        juniorVault.withdraw,
+        juniorVault.rebalanced,
+        gmxVault.increasePoolAmount,
+        gmxVault.decreasePoolAmount,
+        gmxVault.increaseReservedAmount,
+        gmxVault.decreaseReservedAmount
         // () => {
         //   const events = [{ blockNumber: 68607760 }, { blockNumber: 68607761 }]
         // for (let i = startBlock; i <= endBlock; i += interval) {
