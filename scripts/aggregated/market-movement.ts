@@ -1,6 +1,6 @@
 import type { NetworkName } from '@ragetrade/sdk'
 import { chainlink, deltaNeutralGmxVaults, gmxProtocol, tokens } from '@ragetrade/sdk'
-import { BigNumber } from 'ethers'
+import { BigNumber, ethers } from 'ethers'
 import { fetchJson, formatEther, formatUnits } from 'ethers/lib/utils'
 
 import { getProviderAggregate } from '../../providers'
@@ -28,10 +28,14 @@ export type GlobalMarketMovementEntry = Entry<{
   wbtcTokenWeight: number
   linkTokenWeight: number
   uniTokenWeight: number
-  wethPrice: number
-  wbtcPrice: number
-  linkPrice: number
-  uniPrice: number
+  wethMaxPrice: number
+  wethMinPrice: number
+  wbtcMaxPrice: number
+  wbtcMinPrice: number
+  linkMaxPrice: number
+  linkMinPrice: number
+  uniMaxPrice: number
+  uniMinPrice: number
   wethCurrentToken: number
   wbtcCurrentToken: number
   linkCurrentToken: number
@@ -105,6 +109,18 @@ export async function getMarketMovement(
     allWhitelistedTokens.push(await gmxUnderlyingVault.allWhitelistedTokens(i))
   }
 
+  const iface = [
+    'function positions(bytes32 key) external view returns (uint256 size, uint256 collateral, uint256 averagePrice, uint256 entryFundingRate, uint256 reserveAmount, int256 realisedPnl, uint256 lastIncreasedTime)',
+    'function getPositionKey(address _account, address _collateralToken, address _indexToken, bool _isLong) public pure returns (bytes32)',
+    'function getMaxPrice(address _token) public view returns (uint256)',
+    'function getMinPrice(address _token) public view returns (uint256)'
+  ]
+  const _gmxUnderlyingVault = new ethers.Contract(
+    gmxUnderlyingVault.address,
+    iface,
+    provider
+  )
+
   const data = await parallelize(
     {
       networkName,
@@ -175,28 +191,50 @@ export async function getMarketMovement(
         )
       )
 
-      const wethPrice = await price(weth.address, blockNumber, networkName)
-      const wbtcPrice = await price(wbtc.address, blockNumber, networkName)
-      const linkPrice = Number(
-        formatUnits(
-          (
-            await linkUsdAggregator.latestRoundData({
-              blockTag: blockNumber
-            })
-          ).answer,
-          8
-        )
-      )
-      const uniPrice = Number(
-        formatUnits(
-          (
-            await uniUsdAggregator.latestRoundData({
-              blockTag: blockNumber
-            })
-          ).answer,
-          8
-        )
-      )
+      const wethMaxPrice = await _gmxUnderlyingVault
+        .getMaxPrice(weth.address, {
+          blockTag: blockNumber
+        })
+        .then((res: any) => formatUnits(res, 30))
+      const wethMinPrice = await _gmxUnderlyingVault
+        .getMinPrice(weth.address, {
+          blockTag: blockNumber
+        })
+        .then((res: any) => formatUnits(res, 30))
+
+      const wbtcMaxPrice = await _gmxUnderlyingVault
+        .getMaxPrice(wbtc.address, {
+          blockTag: blockNumber
+        })
+        .then((res: any) => formatUnits(res, 30))
+      const wbtcMinPrice = await _gmxUnderlyingVault
+        .getMinPrice(wbtc.address, {
+          blockTag: blockNumber
+        })
+        .then((res: any) => formatUnits(res, 30))
+
+      const linkMaxPrice = await _gmxUnderlyingVault
+        .getMaxPrice(link.address, {
+          blockTag: blockNumber
+        })
+        .then((res: any) => formatUnits(res, 30))
+      const linkMinPrice = await _gmxUnderlyingVault
+        .getMinPrice(link.address, {
+          blockTag: blockNumber
+        })
+        .then((res: any) => formatUnits(res, 30))
+
+      const uniMaxPrice = await _gmxUnderlyingVault
+        .getMaxPrice(uni.address, {
+          blockTag: blockNumber
+        })
+        .then((res: any) => formatUnits(res, 30))
+      const uniMinPrice = await _gmxUnderlyingVault
+        .getMinPrice(uni.address, {
+          blockTag: blockNumber
+        })
+        .then((res: any) => formatUnits(res, 30))
+
       const fsGlp_balanceOf_juniorVault = Number(
         formatEther(
           await fsGLP.balanceOf(dnGmxJuniorVault.address, {
@@ -223,10 +261,10 @@ export async function getMarketMovement(
 
       const vaultGlp = fsGlp_balanceOf_juniorVault + fsGlp_balanceOf_batchingManager
 
-      const wethCurrentToken = (wethTokenWeight * vaultGlp * glpPrice) / wethPrice
-      const wbtcCurrentToken = (wbtcTokenWeight * vaultGlp * glpPrice) / wbtcPrice
-      const linkCurrentToken = (linkTokenWeight * vaultGlp * glpPrice) / linkPrice
-      const uniCurrentToken = (uniTokenWeight * vaultGlp * glpPrice) / uniPrice
+      const wethCurrentToken = (wethTokenWeight * vaultGlp * glpPrice) / wethMinPrice
+      const wbtcCurrentToken = (wbtcTokenWeight * vaultGlp * glpPrice) / wbtcMinPrice
+      const linkCurrentToken = (linkTokenWeight * vaultGlp * glpPrice) / linkMinPrice
+      const uniCurrentToken = (uniTokenWeight * vaultGlp * glpPrice) / uniMinPrice
 
       return {
         blockNumber: blockNumber,
@@ -246,10 +284,14 @@ export async function getMarketMovement(
         wbtcTokenWeight,
         linkTokenWeight,
         uniTokenWeight,
-        wethPrice,
-        wbtcPrice,
-        linkPrice,
-        uniPrice,
+        wethMaxPrice,
+        wethMinPrice,
+        wbtcMaxPrice,
+        wbtcMinPrice,
+        linkMaxPrice,
+        linkMinPrice,
+        uniMaxPrice,
+        uniMinPrice,
         wethCurrentToken,
         wbtcCurrentToken,
         linkCurrentToken,
@@ -269,10 +311,10 @@ export async function getMarketMovement(
   let last
   for (const current of data) {
     if (last) {
-      const ethPnl = last.wethCurrentToken * (current.wethPrice - last.wethPrice)
-      const btcPnl = last.wbtcCurrentToken * (current.wbtcPrice - last.wbtcPrice)
-      const uniPnl = last.uniCurrentToken * (current.uniPrice - last.uniPrice)
-      const linkPnl = last.linkCurrentToken * (current.linkPrice - last.linkPrice)
+      const ethPnl = last.wethCurrentToken * (current.wethMinPrice - last.wethMinPrice)
+      const btcPnl = last.wbtcCurrentToken * (current.wbtcMinPrice - last.wbtcMinPrice)
+      const uniPnl = last.uniCurrentToken * (current.uniMinPrice - last.uniMinPrice)
+      const linkPnl = last.linkCurrentToken * (current.linkMinPrice - last.linkMinPrice)
 
       extraData.push({
         blockNumber: current.blockNumber,
