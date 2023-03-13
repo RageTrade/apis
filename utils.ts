@@ -14,6 +14,7 @@ import createError from 'http-errors'
 
 import { ENV } from './env'
 import { TypedEvent, TypedEventFilter } from '@ragetrade/sdk/dist/typechain/core/common'
+import { CacheResponse } from './cache'
 
 export const secs = 1
 export const mins = 60
@@ -66,6 +67,27 @@ export function getParamAsString(req: Request, paramName: string): string {
 
 export function getExcludeRawData(req: Request): boolean {
   return getOptionalParamAsBoolean(req, 'excludeRawData', false)
+}
+
+export function getOptionalParamAsInteger(
+  req: Request,
+  paramName: string
+): number | undefined
+export function getOptionalParamAsInteger(
+  req: Request,
+  paramName: string,
+  defaultValue: number
+): number
+export function getOptionalParamAsInteger(
+  req: Request,
+  paramName: string,
+  defaultValue?: number
+): number | undefined {
+  const input = getParam(req, paramName, false)
+  if (typeof input === 'undefined') {
+    return defaultValue
+  }
+  return getParamAsInteger(req, paramName)
 }
 
 export function getOptionalParamAsBoolean(
@@ -137,6 +159,56 @@ export function handleRuntimeErrors(fn: express.RequestHandler): express.Request
       next(createError(e.status ?? 500, removeApiKeysFromString(e.message)))
     }
   }
+}
+
+interface AggregateDataResult {
+  data?: any[]
+}
+
+export function getPageSize(req: Request): number | undefined {
+  return getOptionalParamAsInteger(req, 'pageSize')
+}
+
+export function getPageNumber(req: Request): number | undefined {
+  return getOptionalParamAsInteger(req, 'pageNumber')
+}
+
+export async function pagination(
+  req: Request,
+  response:
+    | CacheResponse<AggregateDataResult>
+    | Promise<CacheResponse<AggregateDataResult>>
+) {
+  response = await response
+
+  if (!('result' in response)) {
+    return response
+  }
+
+  const excludeRawData = getExcludeRawData(req)
+  const pageSize = getPageSize(req)
+  const pageNumber = getPageNumber(req)
+
+  if (excludeRawData) {
+    delete response.result.data
+    return response
+  }
+
+  if (pageSize !== undefined && pageNumber !== undefined) {
+    if (!Array.isArray(response.result.data)) {
+      throw new Error('data array not available for pagination')
+    }
+
+    ;(response as any).pageNumber = pageNumber
+    ;(response as any).pageSize = pageSize
+    ;(response as any).pageLength = Math.ceil(response.result.data.length / pageSize)
+    response.result.data = response.result.data.slice(
+      pageSize * (pageNumber - 1),
+      pageSize * pageNumber
+    )
+  }
+
+  return response
 }
 
 export async function retry<R>(fn: () => R | Promise<R>, failedValue?: R): Promise<R> {
