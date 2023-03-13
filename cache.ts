@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-shadow */
 
+import { boolean } from 'zod'
 import { getRedisClient } from './redis-utils/get-client'
 import { RedisStore } from './store/redis-store'
 import { currentTimestamp } from './utils'
@@ -15,11 +16,13 @@ const cache = new RedisStore({
   updateCache: true
 })
 
-export function cacheFunctionResult<F extends (...args: any[]) => any>(
+type InferResultType<R> = R extends { result: infer T } ? T : R
+
+export async function cacheFunctionResult<T, F extends (...args: any[]) => any>(
   fn: F,
   args: Parameters<F>,
   options?: Options
-) {
+): Promise<CacheResponse<InferResultType<Awaited<ReturnType<F>>>>> {
   const { tags = [], cacheSeconds = 0 } = options || {}
 
   const key = [
@@ -32,14 +35,20 @@ export function cacheFunctionResult<F extends (...args: any[]) => any>(
   return cache.getOrSet(key, () => generateResponse(fn, args, cacheSeconds), cacheSeconds)
 }
 
+function doesResultExtendsResponse(
+  result: any
+): result is { result: any; cacheTimestamp?: number } {
+  return typeof result === 'object' && result !== null && 'result' in result
+}
+
 type CacheMeta = {
   cacheTimestamp: number
   cacheSeconds: number
 }
 
-export type CacheResponse = CacheMeta &
+type CacheResponse<T> = CacheMeta &
   (
-    | { result: any }
+    | { result: T }
     | {
         error: string
         status: number
@@ -49,14 +58,14 @@ export type CacheResponse = CacheMeta &
 // includes error in the cache function output,
 // this is needed for preventing someone to abuse
 // an endpoint which does not cache due to revert
-async function generateResponse<F extends (...args: any[]) => any>(
+async function generateResponse<R, F extends (...args: any[]) => Promise<R>>(
   fn: F,
   args: Parameters<F>,
   cacheSeconds: number
-): Promise<CacheResponse> {
+): Promise<CacheResponse<InferResultType<R>>> {
   try {
     const result = await fn(...args)
-    if (result.result) {
+    if (doesResultExtendsResponse(result)) {
       // allows to override `cacheTimestamp`
       return {
         ...result,
@@ -67,7 +76,7 @@ async function generateResponse<F extends (...args: any[]) => any>(
         cacheSeconds
       }
     } else {
-      return { result, cacheTimestamp: currentTimestamp(), cacheSeconds }
+      return { result: result as any, cacheTimestamp: currentTimestamp(), cacheSeconds }
     }
   } catch (error: any) {
     if (error instanceof TypeError) {
