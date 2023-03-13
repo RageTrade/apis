@@ -45,7 +45,7 @@ type CacheMeta = {
   cacheSeconds: number
 }
 
-type CacheResponse<T> = CacheMeta &
+export type CacheResponse<T> = CacheMeta &
   (
     | { result: T }
     | {
