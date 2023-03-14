@@ -278,11 +278,11 @@ export async function getMarketMovement(
 
       const linkShortSizes = await gmxUnderlyingVault
         .globalShortSizes(link.address, { blockTag: blockNumber })
-        .then((res) => formatAsNum(res, 18))
+        .then((res) => formatAsNum(res, 30))
 
       const uniShortSizes = await gmxUnderlyingVault
         .globalShortSizes(uni.address, { blockTag: blockNumber })
-        .then((res) => formatAsNum(res, 18))
+        .then((res) => formatAsNum(res, 30))
 
       const wethReservedAmounts = await gmxUnderlyingVault
         .reservedAmounts(weth.address, { blockTag: blockNumber })
@@ -543,25 +543,33 @@ export async function getMarketMovement(
       const linkPnl = last.linkCurrentToken * (current.linkMinPrice - last.linkMinPrice)
 
       const ethUnhedgedTraderPnl =
-        (((current.wethReservedAmounts -
+        ((((current.wethReservedAmounts -
           current.wethShortSizes / current.wethShortAveragePrice) *
           (10000 - current.traderOIHedgeBps)) /
           10000) *
-        (current.wethAvgPrice - last.wethAvgPrice)
+          (current.wethAvgPrice - last.wethAvgPrice) *
+          current.vaultGlp) /
+        current.glp_totalSupply
       const btcUnhedgedTraderPnl =
-        (((current.wbtcReservedAmounts -
+        ((((current.wbtcReservedAmounts -
           current.wbtcShortSizes / current.wbtcShortAveragePrice) *
           (10000 - current.traderOIHedgeBps)) /
           10000) *
-        (current.wbtcAvgPrice - last.wbtcAvgPrice)
+          (current.wbtcAvgPrice - last.wbtcAvgPrice) *
+          current.vaultGlp) /
+        current.glp_totalSupply
       const uniUnhedgedTraderPnl =
-        (current.uniReservedAmounts -
+        ((current.uniReservedAmounts -
           current.uniShortSizes / current.uniShortAveragePrice) *
-        (current.uniAvgPrice - last.uniAvgPrice)
+          (current.uniAvgPrice - last.uniAvgPrice) *
+          current.vaultGlp) /
+        current.glp_totalSupply
       const linkUnhedgedTraderPnl =
-        (current.linkReservedAmounts -
+        ((current.linkReservedAmounts -
           current.linkShortSizes / current.linkShortAveragePrice) *
-        (current.linkAvgPrice - last.linkAvgPrice)
+          (current.linkAvgPrice - last.linkAvgPrice) *
+          current.vaultGlp) /
+        current.glp_totalSupply
 
       extraData.push({
         blockNumber: current.blockNumber,
