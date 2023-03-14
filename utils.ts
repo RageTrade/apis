@@ -216,7 +216,7 @@ export async function pagination(
 
   // reduce the data size
   if (Array.isArray(response.result?.data) && response.result?.data?.length > 5000) {
-    response.result.data = response.result.data.slice(0, 5000)
+    response.result.data = response.result.data.slice(0, 1000)
   }
 
   return response
