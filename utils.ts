@@ -193,13 +193,16 @@ export async function pagination(
   const pageNumber = getPageNumber(req)
 
   if (excludeRawData) {
-    delete response.result.data
+    delete response.result?.data
     return response
   }
 
   if (pageSize !== undefined && pageNumber !== undefined) {
-    if (!Array.isArray(response.result.data)) {
+    if (!Array.isArray(response?.result?.data)) {
       throw new Error('data array not available for pagination')
+    }
+    if (pageSize > 5000) {
+      throw new Error('page size upto 5000 is allowed, kindly reduce it')
     }
 
     ;(response as any).pageNumber = pageNumber
@@ -209,6 +212,11 @@ export async function pagination(
       pageSize * (pageNumber - 1),
       pageSize * pageNumber
     )
+  }
+
+  // reduce the data size
+  if (Array.isArray(response.result?.data) && response.result?.data?.length > 5000) {
+    response.result.data = response.result.data.slice(0, 5000)
   }
 
   return response
