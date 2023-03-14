@@ -43,13 +43,13 @@ specifiers:
   node-fetch: '2'
   pm2: ^5.2.0
   prettier: 2.7.1
+  promptly: ^3.2.0
   react: ^18.2.0
   tsup: ^6.5.0
   tsx: ^3.12.3
   typechain: ^8.1.1
   typescript: '4.8'
   urql: ^3.0.3
-  yesno: ^0.4.0
   zod: ^3.20.2
 
 dependencies:
@@ -75,6 +75,7 @@ dependencies:
   morgan: 1.9.1
   node-cron: 3.0.2
   node-fetch: 2.6.8
+  promptly: 3.2.0
   tsup: 6.5.0_typescript@4.8.4
   urql: 3.0.3_onqnqwb3ubg5opvemcqf7c2qhy
   zod: 3.20.2
@@ -104,7 +105,6 @@ devDependencies:
   tsx: 3.12.3
   typechain: 8.1.1_typescript@4.8.4
   typescript: 4.8.4
-  yesno: 0.4.0
 
 packages:
 
@@ -4294,7 +4294,6 @@ packages:
 
   /mute-stream/0.0.8:
     resolution: {integrity: sha512-nnbWWOkoWyUsTjKrhgD0dcz22mdkSnpYqbEjIm2nhwhuxlSkpywJmBo8h0ZqJdkp73mb90SssHkN4rsRaBAfAA==}
-    dev: true
 
   /mz/2.7.0:
     resolution: {integrity: sha512-z81GNO7nnYMEhrGh9LeymoE4+Yr0Wn5McHIZMK5cfQCl+NDX08sCZgUc9/6MHni9IWuFLm1Z3HTCXu2z9fN62Q==}
@@ -4775,6 +4774,12 @@ packages:
       read: 1.0.7
     dev: true
 
+  /promptly/3.2.0:
+    resolution: {integrity: sha512-WnR9obtgW+rG4oUV3hSnNGl1pHm3V1H/qD9iJBumGSmVsSC5HpZOLuu8qdMb6yCItGfT7dcRszejr/5P3i9Pug==}
+    dependencies:
+      read: 1.0.7
+    dev: false
+
   /proxy-addr/2.0.7:
     resolution: {integrity: sha512-llQsMLSUDUPT44jdrU/O37qlnifitDP+ZwrmmZcoSKyLKvtZxpyV0n2/bD/N4tBAAZ/gJEdZU7KMraoK1+XYAg==}
     engines: {node: '>= 0.10'}
@@ -4863,7 +4868,6 @@ packages:
     engines: {node: '>=0.8'}
     dependencies:
       mute-stream: 0.0.8
-    dev: true
 
   /readable-stream/1.1.14:
     resolution: {integrity: sha512-+MeVjFf4L44XUkhM1eYbD8fyEsxcV81pqMSR5gblfcLCHfZvbrqy4/qYHE+/R5HoBUT11WV5O08Cr1n3YXkWVQ==}
@@ -5918,10 +5922,6 @@ packages:
       y18n: 5.0.8
       yargs-parser: 20.2.4
     dev: false
-
-  /yesno/0.4.0:
-    resolution: {integrity: sha512-tdBxmHvbXPBKYIg81bMCB7bVeDmHkRzk5rVJyYYXurwKkHq/MCd8rz4HSJUP7hW0H2NlXiq8IFiWvYKEHhlotA==}
-    dev: true
 
   /yocto-queue/0.1.0:
     resolution: {integrity: sha512-rVksvsnNCdJ/ohGc6xgPwyN8eheCxsiLM8mxuE/t/mOVqJewPuO1miLpTHQiRgTKCLexL4MeAFVagts7HmNZ2Q==}
