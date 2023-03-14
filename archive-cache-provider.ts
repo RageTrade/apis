@@ -128,10 +128,26 @@ export class ArchiveCacheProvider extends RetryProvider {
 
   async send(method: string, params: any): Promise<any> {
     if (method === 'eth_getTransactionReceipt') {
-      const key = getKey([this.network.name, 'send', method, ...params])
+      const key = getKey([this.network.name, 'send', method, JSON.stringify(params)])
       return this.redisStore.getOrSet(key, async () => super.send(method, params), -1)
     } else {
-      return super.send(method, params)
+      const key = getKey([
+        this.network.name,
+        'send',
+        'error',
+        method,
+        JSON.stringify(params)
+      ])
+      try {
+        const val: string | undefined = await this.redisStore.get(key)
+        if (val) {
+          throw new Error(val)
+        }
+        return await super.send(method, params)
+      } catch (e: any) {
+        await this.redisStore.set(key, e.message, -1)
+        throw new Error(e.message)
+      }
     }
   }
 }
