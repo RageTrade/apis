@@ -82,7 +82,7 @@ export async function getVaultInfo(networkName: NetworkName) {
     }
   )
 
-  return { data, dataLength: data.length }
+  return { data, dailyData: data, dataLength: data.length }
 
   async function getJuniorVaultInfo(blockNumber: number) {
     const priceD18 = await dnGmxJuniorVault.getPrice(false, {
