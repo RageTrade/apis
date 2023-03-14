@@ -59,19 +59,6 @@ export async function getAavePnl(
   const vdWbtc = aUsdc.attach(wbtcVariableDebtTokenAddress)
   const vdWeth = aUsdc.attach(wethVariableDebtTokenAddress)
 
-  const iface = [
-    'function positions(bytes32 key) external view returns (uint256 size, uint256 collateral, uint256 averagePrice, uint256 entryFundingRate, uint256 reserveAmount, int256 realisedPnl, uint256 lastIncreasedTime)',
-    'function getPositionKey(address _account, address _collateralToken, address _indexToken, bool _isLong) public pure returns (bytes32)',
-    'function getMaxPrice(address _token) public view returns (uint256)',
-    'function getMinPrice(address _token) public view returns (uint256)'
-  ]
-
-  const _gmxUnderlyingVault = new ethers.Contract(
-    gmxUnderlyingVault.address,
-    iface,
-    provider
-  )
-
   // const startBlock = 65567250
   // const endBlock = await provider.getBlockNumber()
   const startBlock = 65567250
@@ -138,29 +125,8 @@ export async function getAavePnl(
           })
         )
       )
-      const wethMaxPrice = await _gmxUnderlyingVault
-        .getMaxPrice(weth.address, {
-          blockTag: blockNumber
-        })
-        .then((res: any) => Number(formatUnits(res, 30)))
-      const wethMinPrice = await _gmxUnderlyingVault
-        .getMinPrice(weth.address, {
-          blockTag: blockNumber
-        })
-        .then((res: any) => Number(formatUnits(res, 30)))
-
-      const wbtcMaxPrice = await _gmxUnderlyingVault
-        .getMaxPrice(wbtc.address, {
-          blockTag: blockNumber
-        })
-        .then((res: any) => Number(formatUnits(res, 30)))
-      const wbtcMinPrice = await _gmxUnderlyingVault
-        .getMinPrice(wbtc.address, {
-          blockTag: blockNumber
-        })
-        .then((res: any) => Number(formatUnits(res, 30)))
-      const btcPrice = (wbtcMaxPrice + wbtcMinPrice) / 2
-      const ethPrice = (wethMaxPrice + wethMinPrice) / 2
+      const ethPrice = await price(weth.address, blockNumber, networkName)
+      const btcPrice = await price(wbtc.address, blockNumber, networkName)
 
       return {
         blockNumber,
