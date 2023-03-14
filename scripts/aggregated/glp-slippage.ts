@@ -9,6 +9,7 @@ import { days, timestampRoundDown } from '../../utils'
 import type { GlobalTotalSharesResult } from './total-shares'
 import { intersection } from './util/combine'
 import { juniorVault } from './util/events'
+import { price } from './util/helpers'
 import { parallelize } from './util/parallelize'
 import type { Entry } from './util/types'
 
@@ -48,7 +49,7 @@ export async function getGlpSlippage(
 
   const provider = getProviderAggregate(networkName)
 
-  const { fsGLP } = tokens.getContractsSync(networkName, provider)
+  const { fsGLP, usdc } = tokens.getContractsSync(networkName, provider)
   const { glpManager } = gmxProtocol.getContractsSync(networkName, provider)
   const { dnGmxJuniorVault } = deltaNeutralGmxVaults.getContractsSync(
     networkName,
@@ -95,6 +96,7 @@ export async function getGlpSlippage(
 
         const _glpAmt = Number(formatEther(glpQuantity))
         const _usdcAmt = Number(formatUsdc(usdcQuantity))
+        const usdcPrice = await price(usdc.address, blockNumber, networkName)
 
         const [_, aumMin] = await glpManager.getAums({
           blockTag: blockNumber
@@ -107,9 +109,9 @@ export async function getGlpSlippage(
         const _glpPriceMin = Number(formatUnits(aumMin.div(totalSuply), 12))
 
         if (fromGlpToUsdc) {
-          _pnlMin = _scaling * (_usdcAmt - _glpAmt * _glpPriceMin)
+          _pnlMin = _scaling * (_usdcAmt * usdcPrice - _glpAmt * _glpPriceMin)
         } else {
-          _pnlMin = _scaling * (_glpAmt * _glpPriceMin - _usdcAmt)
+          _pnlMin = _scaling * (_glpAmt * _glpPriceMin - _usdcAmt * usdcPrice)
         }
 
         glpAmt += _glpAmt
