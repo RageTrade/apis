@@ -18,19 +18,19 @@ cron.schedule(
     console.log(`deleted ${keys.length} keys`)
 
     const apis = [
-      'http://localhost:3000/data/aggregated/get-aave-pnl?networkName=arbmain',
-      'http://localhost:3000/data/aggregated/get-glp-pnl?networkName=arbmain',
-      'http://localhost:3000/data/aggregated/get-glp-slippage?networkName=arbmain',
-      'http://localhost:3000/data/aggregated/get-glp-rewards?networkName=arbmain',
-      'http://localhost:3000/data/aggregated/get-total-shares?networkName=arbmain',
-      'http://localhost:3000/data/aggregated/get-uniswap-slippage?networkName=arbmain',
-      'http://localhost:3000/data/aggregated/get-delta-spread?networkName=arbmain',
-      'http://localhost:3000/data/aggregated/get-aave-lends?networkName=arbmain',
-      'http://localhost:3000/data/aggregated/get-aave-borrows?networkName=arbmain',
-      'http://localhost:3000/data/aggregated/get-trader-pnl?networkName=arbmain',
-      'http://localhost:3000/data/aggregated/get-vault-info?networkName=arbmain',
-      'http://localhost:3000/data/aggregated/get-market-movement?networkName=arbmain',
-      'http://localhost:3000/data/aggregated/get-rebalance-info?networkName=arbmain'
+      'http://localhost:3000/data/aggregated/get-aave-pnl?networkName=arbmain&excludeRawData=true',
+      'http://localhost:3000/data/aggregated/get-glp-pnl?networkName=arbmain&excludeRawData=true',
+      'http://localhost:3000/data/aggregated/get-glp-slippage?networkName=arbmain&excludeRawData=true',
+      'http://localhost:3000/data/aggregated/get-glp-rewards?networkName=arbmain&excludeRawData=true',
+      'http://localhost:3000/data/aggregated/get-total-shares?networkName=arbmain&excludeRawData=true',
+      'http://localhost:3000/data/aggregated/get-uniswap-slippage?networkName=arbmain&excludeRawData=true',
+      'http://localhost:3000/data/aggregated/get-delta-spread?networkName=arbmain&excludeRawData=true',
+      'http://localhost:3000/data/aggregated/get-aave-lends?networkName=arbmain&excludeRawData=true',
+      'http://localhost:3000/data/aggregated/get-aave-borrows?networkName=arbmain&excludeRawData=true',
+      'http://localhost:3000/data/aggregated/get-trader-pnl?networkName=arbmain&excludeRawData=true',
+      'http://localhost:3000/data/aggregated/get-vault-info?networkName=arbmain&excludeRawData=true',
+      'http://localhost:3000/data/aggregated/get-market-movement?networkName=arbmain&excludeRawData=true',
+      'http://localhost:3000/data/aggregated/get-rebalance-info?networkName=arbmain&excludeRawData=true'
     ]
     for (const api of apis) {
       // serially fetch each api to avoid overload
