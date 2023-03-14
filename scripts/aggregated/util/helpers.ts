@@ -1,6 +1,6 @@
 import type { NetworkName } from '@ragetrade/sdk'
-import { chainlink, tokens } from '@ragetrade/sdk'
-import type { ethers } from 'ethers'
+import { chainlink, tokens, gmxProtocol } from '@ragetrade/sdk'
+import { ethers } from 'ethers'
 import { formatUnits } from 'ethers/lib/utils'
 
 import { getProviderAggregate } from '../../../providers'
@@ -34,83 +34,85 @@ export function decimals(addr: string, networkName: NetworkName) {
 }
 
 export async function price(addr: string, blockNumber: number, networkName: NetworkName) {
-  const { weth, wbtc, usdc } = tokens.getContractsSync(
-    networkName,
-    getProviderAggregate(networkName)
-  )
+  const provider = getProviderAggregate(networkName)
+  const { weth, wbtc, usdc } = tokens.getContractsSync(networkName, provider)
   const link = wbtc.attach('0xf97f4df75117a78c1A5a0DBb814Af92458539FB4')
   const uni = wbtc.attach('0xFa7F8980b0f1E64A2062791cc3b0871572f1F7f0')
-  const { ethUsdAggregator, btcUsdAggregator } = chainlink.getContractsSync(
-    networkName,
-    getProviderAggregate(networkName)
-  )
+  const { ethUsdAggregator, btcUsdAggregator } = chainlink.getContractsSync(networkName)
+  const { gmxUnderlyingVault } = gmxProtocol.getContractsSync(networkName, provider)
   const usdcUsdAggregator = ethUsdAggregator.attach(
     '0x50834F3163758fcC1Df9973b6e91f0F0F0434aD3'
   )
-  const linkUsdAggregator = ethUsdAggregator.attach(
-    '0x86E53CF1B870786351Da77A57575e79CB55812CB'
-  )
-  const uniUsdAggregator = ethUsdAggregator.attach(
-    '0x9C917083fDb403ab5ADbEC26Ee294f6EcAda2720'
+
+  const iface = [
+    'function positions(bytes32 key) external view returns (uint256 size, uint256 collateral, uint256 averagePrice, uint256 entryFundingRate, uint256 reserveAmount, int256 realisedPnl, uint256 lastIncreasedTime)',
+    'function getPositionKey(address _account, address _collateralToken, address _indexToken, bool _isLong) public pure returns (bytes32)',
+    'function getMaxPrice(address _token) public view returns (uint256)',
+    'function getMinPrice(address _token) public view returns (uint256)'
+  ]
+
+  const _gmxUnderlyingVault = new ethers.Contract(
+    gmxUnderlyingVault.address,
+    iface,
+    provider
   )
 
   switch (addr.toLowerCase()) {
     case weth.address.toLowerCase():
-      return Number(
-        formatUnits(
-          (
-            await ethUsdAggregator.latestRoundData({
-              blockTag: blockNumber
-            })
-          ).answer,
-          8
-        )
-      )
+      const wethMaxPrice = await _gmxUnderlyingVault
+        .getMaxPrice(weth.address, {
+          blockTag: blockNumber
+        })
+        .then((res: any) => Number(formatUnits(res, 30)))
+      const wethMinPrice = await _gmxUnderlyingVault
+        .getMinPrice(weth.address, {
+          blockTag: blockNumber
+        })
+        .then((res: any) => Number(formatUnits(res, 30)))
+      return (wethMaxPrice + wethMinPrice) / 2
     case wbtc.address.toLowerCase():
-      return Number(
-        formatUnits(
-          (
-            await btcUsdAggregator.latestRoundData({
-              blockTag: blockNumber
-            })
-          ).answer,
-          8
-        )
-      )
+      const wbtcMaxPrice = await _gmxUnderlyingVault
+        .getMaxPrice(wbtc.address, {
+          blockTag: blockNumber
+        })
+        .then((res: any) => Number(formatUnits(res, 30)))
+      const wbtcMinPrice = await _gmxUnderlyingVault
+        .getMinPrice(wbtc.address, {
+          blockTag: blockNumber
+        })
+        .then((res: any) => Number(formatUnits(res, 30)))
+      return (wbtcMaxPrice + wbtcMinPrice) / 2
     case usdc.address.toLowerCase():
-      return Number(
-        formatUnits(
-          (
-            await usdcUsdAggregator.latestRoundData({
-              blockTag: blockNumber
-            })
-          ).answer,
-          8
-        )
-      )
+      return usdcUsdAggregator
+        .latestRoundData({
+          blockTag: blockNumber
+        })
+        .then((res) => Number(formatUnits(res.answer)))
 
     case link.address.toLowerCase():
-      return Number(
-        formatUnits(
-          (
-            await linkUsdAggregator.latestRoundData({
-              blockTag: blockNumber
-            })
-          ).answer,
-          8
-        )
-      )
+      const linkMaxPrice = await _gmxUnderlyingVault
+        .getMaxPrice(link.address, {
+          blockTag: blockNumber
+        })
+        .then((res: any) => Number(formatUnits(res, 30)))
+      const linkMinPrice = await _gmxUnderlyingVault
+        .getMinPrice(link.address, {
+          blockTag: blockNumber
+        })
+        .then((res: any) => Number(formatUnits(res, 30)))
+      return (linkMaxPrice + linkMinPrice) / 2
     case uni.address.toLowerCase():
-      return Number(
-        formatUnits(
-          (
-            await uniUsdAggregator.latestRoundData({
-              blockTag: blockNumber
-            })
-          ).answer,
-          8
-        )
-      )
+      const uniMaxPrice = await _gmxUnderlyingVault
+        .getMaxPrice(uni.address, {
+          blockTag: blockNumber
+        })
+        .then((res: any) => Number(formatUnits(res, 30)))
+      const uniMinPrice = await _gmxUnderlyingVault
+        .getMinPrice(uni.address, {
+          blockTag: blockNumber
+        })
+        .then((res: any) => Number(formatUnits(res, 30)))
+      return (uniMaxPrice + uniMinPrice) / 2
     default:
       throw new Error('i dont know')
   }
