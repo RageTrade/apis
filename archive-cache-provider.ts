@@ -4,6 +4,7 @@ import type {
   TransactionRequest
 } from '@ethersproject/abstract-provider'
 import type { Networkish } from '@ethersproject/providers'
+import Debugger from 'debug'
 import type { ethers } from 'ethers'
 import type { ConnectionInfo, Deferrable } from 'ethers/lib/utils'
 import { id } from 'ethers/lib/utils'
@@ -11,6 +12,8 @@ import { id } from 'ethers/lib/utils'
 import { getRedisClient } from './redis-utils/get-client'
 import { RetryProvider } from './retry-provider'
 import { RedisStore } from './store/redis-store'
+
+const debug = Debugger('apis:archive-cache-provider')
 
 export class ArchiveCacheProvider extends RetryProvider {
   // store: FileStore<string>;
@@ -145,7 +148,12 @@ export class ArchiveCacheProvider extends RetryProvider {
         }
         return await super.send(method, params)
       } catch (e: any) {
-        await this.redisStore.set(key, e.message, -1)
+        if (e.message.includes(`\\"error\\":{\\"code\\"`)) {
+          debug('error cached: ', e.message)
+          await this.redisStore.set(key, e.message, -1)
+        } else {
+          debug('error not cached', e.message)
+        }
         throw new Error(e.message)
       }
     }
