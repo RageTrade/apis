@@ -348,10 +348,8 @@ export async function getMarketMovement(
         .guaranteedUsd(uni.address, { blockTag: blockNumber })
         .then((res) => formatAsNum(res, 30))
 
-      const [wethPrice, wbtcPrice] = await Promise.all([
-        price(weth.address, blockNumber, networkName),
-        price(wbtc.address, blockNumber, networkName)
-      ])
+      const wethPrice = await price(weth.address, blockNumber, networkName)
+      const wbtcPrice = await price(wbtc.address, blockNumber, networkName)
 
       const glpPrice = await dnGmxJuniorVault
         .getPrice(false, { blockTag: blockNumber })
