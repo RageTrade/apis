@@ -85,7 +85,11 @@ export class RedisStore extends BaseStore {
 
   async get<V>(_key: string): Promise<V | undefined> {
     const valueStr = await this.client.get(_key)
-    if (valueStr === null) return undefined
+    if (valueStr === null) {
+      debug(`RedisStore.get: value not present in storage for key ${_key}`)
+      return undefined
+    }
+    debug('RedisStore.get: returning the cache value')
     return JSON.parse(valueStr) as V
   }
 
