@@ -148,7 +148,19 @@ export class ArchiveCacheProvider extends RetryProvider {
         }
         return await super.send(method, params)
       } catch (e: any) {
-        if (e.message.includes(`\\"error\\":{\\"code\\"`)) {
+        // errors that include this will be cached, put permanent thing like revert here
+        const includeStrings = [`\\"error\\":{\\"code\\"`]
+        // if error contains any this text, that will not be cached, put temp errors here
+        const excludeStrings = ['missing trie node']
+
+        if (
+          includeStrings
+            .map(e.message.includes)
+            .reduce((prev, curr) => prev && curr, true) &&
+          excludeStrings
+            .map(e.message.includes)
+            .reduce((prev, curr) => prev && !curr, true)
+        ) {
           debug('error cached: ', e.message)
           await this.redisStore.set(key, e.message, -1)
         } else {
