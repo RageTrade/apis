@@ -38,7 +38,7 @@ export async function price(addr: string, blockNumber: number, networkName: Netw
   const { weth, wbtc, usdc } = tokens.getContractsSync(networkName, provider)
   const link = wbtc.attach('0xf97f4df75117a78c1A5a0DBb814Af92458539FB4')
   const uni = wbtc.attach('0xFa7F8980b0f1E64A2062791cc3b0871572f1F7f0')
-  const { ethUsdAggregator, btcUsdAggregator } = chainlink.getContractsSync(networkName)
+  const { ethUsdAggregator } = chainlink.getContractsSync(networkName, provider)
   const { gmxUnderlyingVault } = gmxProtocol.getContractsSync(networkName, provider)
   const usdcUsdAggregator = ethUsdAggregator.attach(
     '0x50834F3163758fcC1Df9973b6e91f0F0F0434aD3'
