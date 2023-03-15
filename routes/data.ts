@@ -291,7 +291,7 @@ router.get(
   handleRuntimeErrors(async (req) => {
     const networkName = getNetworkName(req)
     return cacheFunctionResult(v2.getDnGmxVaultsInfo, [networkName], {
-      cacheSeconds: 10 * mins,
+      cacheSeconds: 1 * mins,
       tags: ['v2']
     })
   })
