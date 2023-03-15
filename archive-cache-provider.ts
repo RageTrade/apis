@@ -155,10 +155,10 @@ export class ArchiveCacheProvider extends RetryProvider {
 
         if (
           includeStrings
-            .map(e.message.includes)
+            .map((s) => e.message.includes(s))
             .reduce((prev, curr) => prev && curr, true) &&
           excludeStrings
-            .map(e.message.includes)
+            .map((s) => e.message.includes(s))
             .reduce((prev, curr) => prev && !curr, true)
         ) {
           debug('error cached: ', e.message)
