@@ -87,7 +87,7 @@ export async function price(addr: string, blockNumber: number, networkName: Netw
         .latestRoundData({
           blockTag: blockNumber
         })
-        .then((res) => Number(formatUnits(res.answer)))
+        .then((res) => Number(formatUnits(res.answer, 8)))
 
     case link.address.toLowerCase():
       const linkMaxPrice = await _gmxUnderlyingVault

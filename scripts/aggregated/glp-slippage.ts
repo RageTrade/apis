@@ -17,6 +17,7 @@ export type GlobalGlpSlippageEntry = Entry<{
   timestamp: number
   glpAmt: number
   usdcAmt: number
+  usdcPrice: number
   glpPriceMin: number
   pnlMin: number
   glpSlippage: number
@@ -88,6 +89,8 @@ export async function getGlpSlippage(
       let glpPriceMin = 0
       let pnlMin = 0
 
+      const usdcPrice = await price(usdc.address, blockNumber, networkName)
+
       for (const event of parsed) {
         const _scaling = 1
         let _pnlMin = 0
@@ -96,7 +99,6 @@ export async function getGlpSlippage(
 
         const _glpAmt = Number(formatEther(glpQuantity))
         const _usdcAmt = Number(formatUsdc(usdcQuantity))
-        const usdcPrice = await price(usdc.address, blockNumber, networkName)
 
         const [_, aumMin] = await glpManager.getAums({
           blockTag: blockNumber
@@ -125,6 +127,7 @@ export async function getGlpSlippage(
         transactionHash: event.transactionHash,
         logIndex: event.logIndex,
         glpAmt,
+        usdcPrice,
         usdcAmt,
         glpPriceMin,
         pnlMin,
