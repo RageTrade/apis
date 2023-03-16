@@ -5,6 +5,9 @@ import { boolean } from 'zod'
 import { getRedisClient } from './redis-utils/get-client'
 import { RedisStore } from './store/redis-store'
 import { currentTimestamp } from './utils'
+import Debugger from 'debug'
+
+const debugError = Debugger('apis:cache:error')
 
 interface Options {
   cacheSeconds: number
@@ -79,6 +82,7 @@ async function generateResponse<R, F extends (...args: any[]) => Promise<R>>(
       return { result: result as any, cacheTimestamp: currentTimestamp(), cacheSeconds }
     }
   } catch (error: any) {
+    debugError(JSON.stringify(error))
     if (error instanceof TypeError) {
       console.error('caught in generateResponse', error)
     }
