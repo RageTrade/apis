@@ -85,11 +85,17 @@ export async function getGlpSlippage(
 
       let glpAmt = 0
       let usdcAmt = 0
-
-      let glpPriceMin = 0
       let pnlMin = 0
 
       const usdcPrice = await price(usdc.address, blockNumber, networkName)
+
+      const [_, aumMin] = await glpManager.getAums({
+        blockTag: blockNumber
+      })
+      const totalSupply = await fsGLP.totalSupply({
+        blockTag: blockNumber
+      })
+      const glpPriceMin = Number(formatUnits(aumMin.div(totalSupply), 12))
 
       for (const event of parsed) {
         const _scaling = 1
@@ -100,25 +106,14 @@ export async function getGlpSlippage(
         const _glpAmt = Number(formatEther(glpQuantity))
         const _usdcAmt = Number(formatUsdc(usdcQuantity))
 
-        const [_, aumMin] = await glpManager.getAums({
-          blockTag: blockNumber
-        })
-
-        const totalSuply = await fsGLP.totalSupply({
-          blockTag: blockNumber
-        })
-
-        const _glpPriceMin = Number(formatUnits(aumMin.div(totalSuply), 12))
-
         if (fromGlpToUsdc) {
-          _pnlMin = _scaling * (_usdcAmt * usdcPrice - _glpAmt * _glpPriceMin)
+          _pnlMin = _scaling * (_usdcAmt * usdcPrice - _glpAmt * glpPriceMin)
         } else {
-          _pnlMin = _scaling * (_glpAmt * _glpPriceMin - _usdcAmt * usdcPrice)
+          _pnlMin = _scaling * (_glpAmt * glpPriceMin - _usdcAmt * usdcPrice)
         }
 
         glpAmt += _glpAmt
         usdcAmt += _usdcAmt
-        glpPriceMin = glpPriceMin
         pnlMin += _pnlMin
       }
 
