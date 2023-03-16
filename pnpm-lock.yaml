@@ -3,7 +3,7 @@ lockfileVersion: 5.4
 specifiers:
   '@ethersproject/abstract-provider': ^5.7.0
   '@ethersproject/providers': ^5.7.2
-  '@ragetrade/sdk': 1.1.0-alpha.9
+  '@ragetrade/sdk': 2.0.2
   '@types/cookie-parser': ^1.4.3
   '@types/cors': ^2.8.12
   '@types/debug': ^4.1.7
@@ -50,7 +50,7 @@ specifiers:
 dependencies:
   '@ethersproject/abstract-provider': 5.7.0
   '@ethersproject/providers': 5.7.2
-  '@ragetrade/sdk': 1.1.0-alpha.9_4tzilew2vuitdwerzusliplz24
+  '@ragetrade/sdk': 2.0.2_4tzilew2vuitdwerzusliplz24
   '@uniswap/sdk-core': 3.1.1
   '@uniswap/v3-sdk': 3.9.0_hardhat@2.12.7
   '@urql/devtools': 2.0.3_ioimjbecbkqzfeizgamzrgwc3y
@@ -880,8 +880,8 @@ packages:
       - supports-color
     dev: true
 
-  /@ragetrade/sdk/1.1.0-alpha.9_4tzilew2vuitdwerzusliplz24:
-    resolution: {integrity: sha512-vfYJvd0qmVTjsnYN49LOC2EeKoM6g5BPpfwNM7WfgFUh6O4bLdSxb2onVAG7at2fC44MPVoDqw1W0fiYE2V5cQ==}
+  /@ragetrade/sdk/2.0.2_4tzilew2vuitdwerzusliplz24:
+    resolution: {integrity: sha512-wT+BP6ng3sb88p6SOpjpc+iBZ1iz1bbijlim+BtWywhX7X/AKQViBlZpHJSbE2PCCXe7vNgveXCvxLf6XlaVhg==}
     engines: {node: '>=10'}
     hasBin: true
     peerDependencies:
