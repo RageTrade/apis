@@ -11,7 +11,7 @@ const req = require(path.resolve(process.cwd(), process.argv[2]))
 const args = parseBooleans(process.argv.slice(3))
 console.log(`Running ${Object.keys(req)[0]}(${args.map((str) => `"${str}"`).join(',')})`)
 ;(Object.values(req)[0] as Function)(...args).then(async (res: any) => {
-  while (true) {
+  while (!!res) {
     const question = 'Press P for print on console, C for CSV file and J for JSON file'
     let answer = await promptly.prompt(question)
     answer = answer.toLowerCase()
