@@ -177,7 +177,7 @@ export async function getAavePnl(
 
   const aaveBorrowsResponse: ResultWithMetadata<GlobalAaveBorrowsResult> =
     await fetchJson({
-      url: `http://localhost:3000/data/aggregated/get-aave-borrows?networkName=${networkName}`,
+      url: `http://localhost:3000/data/aggregated/get-aave-borrows?networkName=${networkName}&includeFullRawData=true`,
       timeout: 1_000_000_000 // huge number
     })
   const combinedData = intersection(

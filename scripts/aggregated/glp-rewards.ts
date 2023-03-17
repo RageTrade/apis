@@ -52,7 +52,7 @@ export async function getGlpRewards(
   const { fsGLP, weth } = tokens.getContractsSync(networkName, provider)
 
   const totalSharesData: ResultWithMetadata<GlobalTotalSharesResult> = await fetchJson({
-    url: `http://localhost:3000/data/aggregated/get-total-shares?networkName=${networkName}`,
+    url: `http://localhost:3000/data/aggregated/get-total-shares?networkName=${networkName}&includeFullRawData=true`,
     timeout: 1_000_000_000 // huge number
   })
 

@@ -41,12 +41,12 @@ export async function getUserTraderPnl(
 
   const globalTraderPnlResponse: ResultWithMetadata<GlobalTraderPnlResult> =
     await fetchJson({
-      url: `http://localhost:3000/data/aggregated/get-trader-pnl?networkName=${networkName}`,
+      url: `http://localhost:3000/data/aggregated/get-trader-pnl?networkName=${networkName}&includeFullRawData=true`,
       timeout: 1_000_000_000 // huge number
     })
 
   const userSharesResponse: ResultWithMetadata<UserSharesResult> = await fetchJson({
-    url: `http://localhost:3000/data/aggregated/user/get-shares?networkName=${networkName}&userAddress=${userAddress}`,
+    url: `http://localhost:3000/data/aggregated/user/get-shares?networkName=${networkName}&userAddress=${userAddress}&includeFullRawData=true`,
     timeout: 1_000_000_000 // huge number
   })
 

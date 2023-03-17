@@ -68,10 +68,6 @@ export function getParamAsString(req: Request, paramName: string): string {
   return input
 }
 
-export function getExcludeRawData(req: Request): boolean {
-  return getOptionalParamAsBoolean(req, 'excludeRawData', false)
-}
-
 export function getOptionalParamAsInteger(
   req: Request,
   paramName: string
@@ -168,6 +164,14 @@ interface AggregateDataResult {
   data?: any[]
 }
 
+export function getExcludeRawData(req: Request): boolean {
+  return getOptionalParamAsBoolean(req, 'excludeRawData', false)
+}
+
+export function getIncludeFullRawData(req: Request): boolean {
+  return getOptionalParamAsBoolean(req, 'includeFullRawData', false)
+}
+
 export function getPageSize(req: Request): number | undefined {
   return getOptionalParamAsInteger(req, 'pageSize')
 }
@@ -189,6 +193,7 @@ export async function pagination(
   }
 
   const excludeRawData = getExcludeRawData(req)
+  const includeFullRawData = getIncludeFullRawData(req)
   const pageSize = getPageSize(req)
   const pageNumber = getPageNumber(req)
 
@@ -215,7 +220,11 @@ export async function pagination(
   }
 
   // reduce the data size
-  if (Array.isArray(response.result?.data) && response.result?.data?.length > 5000) {
+  if (
+    !includeFullRawData &&
+    Array.isArray(response.result?.data) &&
+    response.result?.data?.length > 5000
+  ) {
     response.result.data = response.result.data.slice(0, 1000)
   }
 

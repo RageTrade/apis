@@ -69,12 +69,12 @@ export async function getUserDeltaSpread(
 
   const deltaSpreadResponse: ResultWithMetadata<GlobalDeltaSpreadResult> =
     await fetchJson({
-      url: `http://localhost:3000/data/aggregated/get-delta-spread?networkName=${networkName}`,
+      url: `http://localhost:3000/data/aggregated/get-delta-spread?networkName=${networkName}&includeFullRawData=true`,
       timeout: 1_000_000_000 // huge number
     })
 
   const userSharesResponse: ResultWithMetadata<UserSharesResult> = await fetchJson({
-    url: `http://localhost:3000/data/aggregated/user/get-shares?networkName=${networkName}&userAddress=${userAddress}`,
+    url: `http://localhost:3000/data/aggregated/user/get-shares?networkName=${networkName}&userAddress=${userAddress}&includeFullRawData=true`,
     timeout: 1_000_000_000 // huge number
   })
 

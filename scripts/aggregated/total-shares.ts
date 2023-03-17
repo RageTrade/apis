@@ -44,7 +44,7 @@ export async function getTotalShares(
 
   // this api contains extra block numbers
   const traderPnlData: ResultWithMetadata<GlobalTraderPnlResult> = await fetchJson({
-    url: `http://localhost:3000/data/aggregated/get-trader-pnl?networkName=${networkName}`,
+    url: `http://localhost:3000/data/aggregated/get-trader-pnl?networkName=${networkName}&includeFullRawData=true`,
     timeout: 1_000_000_000 // huge number
   })
 
