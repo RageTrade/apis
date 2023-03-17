@@ -1,7 +1,9 @@
 import type { NetworkName } from '@ragetrade/sdk'
-import type { ethers } from 'ethers'
+import { ethers } from 'ethers'
+import { keccak256, toUtf8Bytes } from 'ethers/lib/utils'
 
 import { ENV } from '../../../env'
+import { getRedisClient } from '../../../redis-utils/get-client'
 
 export type EventFn<Event> = (
   networkName: NetworkName,
@@ -85,6 +87,21 @@ export async function parallelize<Data, Event extends ethers.Event>(
     data.push()
   }
 
+  // if source code stays the same, this fingerprint will not change and we can cache data
+  const fingerprint = keccak256(toUtf8Bytes(onEachEvent.toString()))
+  const key = `parallelize-fingerprint-${fingerprint}`
+
+  const redis = getRedisClient()
+  const temp = new Map<string, Data>()
+  try {
+    const value = await redis.get(key)
+    const oldData = value ? JSON.parse(value) : []
+    // load a mapping indexed by event identifier, to make searching log N
+    for (const entry of oldData) {
+      temp.set(`${entry.blockNumber}-${entry.logIndex ?? 'none'}`, entry)
+    }
+  } catch {}
+
   const start = Date.now()
   let i = 0
   const promises = []
@@ -102,6 +119,14 @@ export async function parallelize<Data, Event extends ethers.Event>(
         logIndex: number,
         event: Event
       ) => {
+        // check if this was already queried last time
+        const cacheValue = await temp.get(`${blockNumber}-${logIndex ?? -1}`)
+        if (cacheValue) {
+          data[_i] = cacheValue
+          return
+        }
+        // run for new events since previous queries would use cache
+        // or if onEachEvent source code changed then run for every event
         let thisFailed = 0
         while (1) {
           // add random delay to avoid lot of requests being shot at same time
@@ -109,7 +134,20 @@ export async function parallelize<Data, Event extends ethers.Event>(
           if (inflight >= (ENV.MAX_INFLIGHT_LOOPS ?? 100)) continue
           try {
             inflight++
-            data[_i] = await onEachEvent(_i, blockNumber, event)
+            let result = await onEachEvent(_i, blockNumber, event)
+            if (result) {
+              // do not allow metadata to be overriden
+              const block = await provider.getBlock(blockNumber)
+              result = {
+                ...result,
+                blockNumber,
+                eventName,
+                transactionHash,
+                logIndex,
+                timestamp: block.timestamp
+              }
+            }
+            data[_i] = result
             done++
             inflight--
             break
@@ -162,7 +200,9 @@ export async function parallelize<Data, Event extends ethers.Event>(
   await Promise.all(promises)
 
   clearInterval(intr)
-  return data.filter((d) => !!d) as Data[]
+  const finalResult = data.filter((d) => !!d) as Data[]
+  await redis.set(key, JSON.stringify(finalResult))
+  return finalResult
 }
 
 // async function parallelizeRequest<T>(
