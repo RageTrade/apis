@@ -94,8 +94,9 @@ export function getOptionalParamAsBoolean(
   paramName: string,
   defaultValue: boolean
 ): boolean {
-  const input = getParam(req, paramName, false)
-  return !!(input ?? defaultValue)
+  let input = getParam(req, paramName, false)
+  let bool = input === 'false' ? false : !!input
+  return bool ?? defaultValue
 }
 
 export function getParam(req: Request, paramName: string, required = true) {
