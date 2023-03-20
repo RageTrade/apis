@@ -1,5 +1,9 @@
-import { chainlink, NetworkName } from '@ragetrade/sdk'
-import { deltaNeutralGmxVaults, gmxProtocol, tokens } from '@ragetrade/sdk'
+import type { NetworkName } from '@ragetrade/sdk'
+import { chainlink, deltaNeutralGmxVaults, gmxProtocol, tokens } from '@ragetrade/sdk'
+import type {
+  DepositEvent,
+  WithdrawEvent
+} from '@ragetrade/sdk/dist/typechain/tricrypto-vault/contracts/base/BaseVault'
 import type { ethers } from 'ethers'
 import { BigNumber } from 'ethers'
 import { formatEther, formatUnits } from 'ethers/lib/utils'
@@ -52,16 +56,33 @@ export async function perInterval2(networkName: NetworkName) {
         juniorVault.withdraw
       ],
       ignoreMoreEventsInSameBlock: true,
-      startBlockNumber: 65974513,
-      endBlockNumber: 66104510
+      startBlockNumber: 70226483,
+      endBlockNumber: 70566297
     },
-    async (_i, blockTag) => {
+    async (_i, blockTag, event) => {
       const block = await provider.getBlock(blockTag)
 
       const MAX_BPS = 10_000
       const { slippageThresholdGmxBps } = await dnGmxJuniorVault.getThresholds({
         blockTag
       })
+
+      const rc = await provider.getTransactionReceipt(event.transactionHash)
+
+      const depositFilter = dnGmxJuniorVault.filters.Deposit()
+      const withdrawFilter = dnGmxJuniorVault.filters.Withdraw()
+
+      const depositParsed = rc.logs
+        .filter((log) => log.topics[0] === depositFilter.topics?.[0])
+        .map((log) =>
+          dnGmxJuniorVault.interface.parseLog(log)
+        ) as unknown as DepositEvent[]
+
+      const withdrawParsed = rc.logs
+        .filter((log) => log.topics[0] === withdrawFilter.topics?.[0])
+        .map((log) =>
+          dnGmxJuniorVault.interface.parseLog(log)
+        ) as unknown as WithdrawEvent[]
 
       const ethPrice = await ethUsdAggregator
         .latestRoundData({ blockTag })
@@ -89,14 +110,80 @@ export async function perInterval2(networkName: NetworkName) {
 
       const totalCurrentBorrowValue = await getBorrowValue(currentBtc, currentEth)
 
-      const glpPriceInUsdcTrue = await getGlpPriceInUsdc(true)
-      const glpPriceInUsdcFalse = await getGlpPriceInUsdc(true)
+      const glpPriceInUsdcTrue = await getGlpPriceInUsdc({ maximize: true, blockTag })
+      const glpPriceInUsdcFalse = await getGlpPriceInUsdc({ maximize: false, blockTag })
 
-      const totalAssetsTrue = await totalAssets(true)
-      const totalAssetsFalse = await totalAssets(false)
+      const totalAssetsTrue = await totalAssets({
+        maximize: true,
+        dnUsdcDeposited,
+        totalCurrentBorrowValue,
+        fsGLP_balanceOf_dnGmxJuniorVault,
+        glpPriceInUsdcFalse,
+        glpPriceInUsdcTrue
+      })
+      const totalAssetsFalse = await totalAssets({
+        maximize: false,
+        dnUsdcDeposited,
+        totalCurrentBorrowValue,
+        fsGLP_balanceOf_dnGmxJuniorVault,
+        glpPriceInUsdcFalse,
+        glpPriceInUsdcTrue
+      })
 
       const dnGmxJuniorVault_totalSupply = await dnGmxJuniorVault
-        .totalSupply({ blockTag })
+        .totalSupply({ blockTag: blockTag })
+        .then((r) => formatAsNum(r, 18))
+
+      //------------------------------------------------------//
+
+      const dnUsdcDepositedPrev = await dnGmxJuniorVault
+        .dnUsdcDeposited({ blockTag: blockTag - 1 })
+        .then((r) => formatAsNum(r, 6))
+      const { currentBtc: currentBtcPrev, currentEth: currentEthPrev } =
+        await dnGmxJuniorVault
+          .getCurrentBorrows({ blockTag: blockTag - 1 })
+          .then((r) => ({
+            currentBtc: formatAsNum(r.currentBtcBorrow, 8),
+            currentEth: formatAsNum(r.currentEthBorrow, 18)
+          }))
+
+      const fsGLP_balanceOf_dnGmxJuniorVaultPrev = await fsGLP
+        .balanceOf(dnGmxJuniorVault.address, { blockTag: blockTag - 1 })
+        .then((r) => formatAsNum(r, 18))
+
+      const totalCurrentBorrowValuePrev = await getBorrowValue(
+        currentBtcPrev,
+        currentEthPrev
+      )
+
+      const glpPriceInUsdcTruePrev = await getGlpPriceInUsdc({
+        maximize: true,
+        blockTag: blockTag - 1
+      })
+      const glpPriceInUsdcFalsePrev = await getGlpPriceInUsdc({
+        maximize: false,
+        blockTag: blockTag - 1
+      })
+
+      const totalAssetsTruePrev = await totalAssets({
+        maximize: true,
+        dnUsdcDeposited: dnUsdcDepositedPrev,
+        totalCurrentBorrowValue: totalCurrentBorrowValuePrev,
+        fsGLP_balanceOf_dnGmxJuniorVault: fsGLP_balanceOf_dnGmxJuniorVaultPrev,
+        glpPriceInUsdcFalse: glpPriceInUsdcFalsePrev,
+        glpPriceInUsdcTrue: glpPriceInUsdcTruePrev
+      })
+      const totalAssetsFalsePrev = await totalAssets({
+        maximize: false,
+        dnUsdcDeposited: dnUsdcDepositedPrev,
+        totalCurrentBorrowValue: totalCurrentBorrowValuePrev,
+        fsGLP_balanceOf_dnGmxJuniorVault: fsGLP_balanceOf_dnGmxJuniorVaultPrev,
+        glpPriceInUsdcFalse: glpPriceInUsdcFalsePrev,
+        glpPriceInUsdcTrue: glpPriceInUsdcTruePrev
+      })
+
+      const dnGmxJuniorVault_totalSupplyPrev = await dnGmxJuniorVault
+        .totalSupply({ blockTag: blockTag - 1 })
         .then((r) => formatAsNum(r, 18))
 
       return {
@@ -115,15 +202,54 @@ export async function perInterval2(networkName: NetworkName) {
         currentEth,
         totalCurrentBorrowValue,
         dnGmxJuniorVault_totalSupply,
-        fsGLP_balanceOf_dnGmxJuniorVault
+        fsGLP_balanceOf_dnGmxJuniorVault,
+        deposits: depositParsed.map((e) => {
+          const { assets, shares } = e.args
+          return {
+            assets: formatUnits(assets, 18),
+            shares: formatUnits(shares, 18)
+          }
+        }),
+        withdraws: withdrawParsed.map((e) => {
+          const { assets, shares } = e.args
+          return {
+            assets: formatUnits(assets, 18),
+            shares: formatUnits(shares, 18)
+          }
+        }),
+
+        //------------------------//
+        blockNumberPrev: blockTag - 1,
+        dnUsdcDepositedPrev,
+        currentBtcPrev,
+        currentEthPrev,
+        fsGLP_balanceOf_dnGmxJuniorVaultPrev,
+        totalAssetsTruePrev,
+        totalAssetsFalsePrev,
+        dnGmxJuniorVault_totalSupplyPrev
       }
 
-      async function totalAssets(maximize: boolean) {
+      type TotalAssetsArgs = {
+        maximize: boolean
+        dnUsdcDeposited: number
+        totalCurrentBorrowValue: number
+        glpPriceInUsdcTrue: number
+        glpPriceInUsdcFalse: number
+        fsGLP_balanceOf_dnGmxJuniorVault: number
+      }
+      async function totalAssets({
+        maximize,
+        dnUsdcDeposited,
+        totalCurrentBorrowValue,
+        glpPriceInUsdcTrue,
+        glpPriceInUsdcFalse,
+        fsGLP_balanceOf_dnGmxJuniorVault
+      }: TotalAssetsArgs) {
         let aaveProfitGlp = 0
         let aaveLossGlp = 0
         {
-          let aaveProfit = dnUsdcDeposited > 0 ? dnUsdcDeposited : 0
-          let aaveLoss =
+          const aaveProfit = dnUsdcDeposited > 0 ? dnUsdcDeposited : 0
+          const aaveLoss =
             dnUsdcDeposited < 0
               ? Math.abs(-dnUsdcDeposited) + totalCurrentBorrowValue
               : totalCurrentBorrowValue
@@ -153,7 +279,11 @@ export async function perInterval2(networkName: NetworkName) {
         return (btcAmount * btcPrice + ethAmount * ethPrice) / usdcPrice
       }
 
-      async function getGlpPriceInUsdc(maximize: boolean) {
+      type GetGlpPriceInUsdcArgs = {
+        maximize: boolean
+        blockTag: number
+      }
+      async function getGlpPriceInUsdc({ maximize, blockTag }: GetGlpPriceInUsdcArgs) {
         // aum is in 1e30
         const aum = await glpManager
           .getAum(maximize, { blockTag })
