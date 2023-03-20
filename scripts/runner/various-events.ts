@@ -54,8 +54,8 @@ export async function perInterval2(networkName: NetworkName) {
         juniorVault.withdraw
       ],
       ignoreMoreEventsInSameBlock: true,
-      startBlockNumber: 69897309,
-      endBlockNumber: 70226048
+      startBlockNumber: 70226483,
+      endBlockNumber: 70566297
     },
     async (_i, blockTag, event) => {
       const block = await provider.getBlock(blockTag)
