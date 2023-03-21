@@ -52,7 +52,7 @@ export async function getGlpPnl(
   const { dnGmxJuniorVault, dnGmxBatchingManager } =
     deltaNeutralGmxVaults.getContractsSync(networkName, provider)
 
-  const startBlock = 65567250
+  const startBlock = ENV.START_BLOCK_NUMBER
   const endBlock = 68048150
   // const startBlock = 65567250
   // const endBlock = await provider.getBlockNumber()

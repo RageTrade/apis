@@ -61,7 +61,7 @@ export async function getAavePnl(
 
   // const startBlock = 65567250
   // const endBlock = await provider.getBlockNumber()
-  const startBlock = 65567250
+  const startBlock = ENV.START_BLOCK_NUMBER
   const endBlock = 68048150
   const interval = 500
 

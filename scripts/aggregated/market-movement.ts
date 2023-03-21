@@ -1,5 +1,11 @@
-import { IERC20Metadata__factory, NetworkName } from '@ragetrade/sdk'
-import { chainlink, deltaNeutralGmxVaults, gmxProtocol, tokens } from '@ragetrade/sdk'
+import type { NetworkName } from '@ragetrade/sdk'
+import {
+  chainlink,
+  deltaNeutralGmxVaults,
+  gmxProtocol,
+  IERC20Metadata__factory,
+  tokens
+} from '@ragetrade/sdk'
 import { BigNumber, ethers } from 'ethers'
 import { fetchJson, formatEther, formatUnits } from 'ethers/lib/utils'
 
@@ -188,7 +194,7 @@ export async function getMarketMovement(
 
   // const startBlock = 65567250
   // const endBlock = await provider.getBlockNumber()
-  const startBlock = 65567250
+  const startBlock = ENV.START_BLOCK_NUMBER
   const endBlock = 68048150
 
   const interval = 500
