@@ -30,11 +30,22 @@ export function combine<
   return combined
 }
 
+type IntersectionOptions = {
+  useLogIndex: boolean
+}
+
 export function intersection<
   A extends EntryBase,
   B extends EntryBase,
   Combiner extends (a: A, b: B) => any
->(a: A[], b: B[], combiner: Combiner): ReturnType<Combiner>[] {
+>(
+  a: A[],
+  b: B[],
+  combiner: Combiner,
+  options?: IntersectionOptions
+): ReturnType<Combiner>[] {
+  const { useLogIndex = true } = options || {}
+
   return combine(
     a,
     b,
@@ -42,7 +53,9 @@ export function intersection<
     (aItem, bItem) =>
       aItem.blockNumber === bItem.blockNumber &&
       // if log index exists then check that as well
-      (!!aItem.logIndex && !!bItem.logIndex ? aItem.logIndex === bItem.logIndex : true),
+      (useLogIndex && !!aItem.logIndex && !!bItem.logIndex
+        ? aItem.logIndex === bItem.logIndex
+        : true),
     combiner
   )
 }
