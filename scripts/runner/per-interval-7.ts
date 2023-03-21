@@ -56,8 +56,8 @@ export async function perInterval2(networkName: NetworkName) {
         juniorVault.withdraw
       ],
       ignoreMoreEventsInSameBlock: true,
-      startBlockNumber: 70226483,
-      endBlockNumber: 70566297
+      startBlockNumber: 70154289,
+      endBlockNumber: 70204865
     },
     async (_i, blockTag, event) => {
       const block = await provider.getBlock(blockTag)
@@ -134,6 +134,10 @@ export async function perInterval2(networkName: NetworkName) {
         .totalSupply({ blockTag: blockTag })
         .then((r) => formatAsNum(r, 18))
 
+      const vaultMarketValue = await dnGmxJuniorVault
+        .getVaultMarketValue({ blockTag: blockTag })
+        .then((r) => formatAsNum(r, 18))
+
       //------------------------------------------------------//
 
       const dnUsdcDepositedPrev = await dnGmxJuniorVault
@@ -186,6 +190,10 @@ export async function perInterval2(networkName: NetworkName) {
         .totalSupply({ blockTag: blockTag - 1 })
         .then((r) => formatAsNum(r, 18))
 
+      const vaultMarketValuePrev = await dnGmxJuniorVault
+        .getVaultMarketValue({ blockTag: blockTag })
+        .then((r) => formatAsNum(r, 18))
+
       return {
         blockNumber: blockTag,
         timestamp: block.timestamp,
@@ -203,6 +211,8 @@ export async function perInterval2(networkName: NetworkName) {
         totalCurrentBorrowValue,
         dnGmxJuniorVault_totalSupply,
         fsGLP_balanceOf_dnGmxJuniorVault,
+        vaultMarketValue,
+        vaultMarketValuePrev,
         deposits: depositParsed.map((e) => {
           const { assets, shares } = e.args
           return {
