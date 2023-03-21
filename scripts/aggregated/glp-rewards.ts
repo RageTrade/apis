@@ -61,7 +61,8 @@ export async function getGlpRewards(
       networkName,
       provider,
       getEvents: [juniorVault.rewardsHarvested],
-      startBlockNumber: ENV.START_BLOCK_NUMBER
+      startBlockNumber: ENV.START_BLOCK_NUMBER,
+      ignoreMoreEventsInSameBlock: true
     },
     async (_i, blockNumber, event) => {
       // const { juniorVaultGlp, seniorVaultAUsdc } = event.args;
@@ -100,10 +101,16 @@ export async function getGlpRewards(
     }
   )
 
-  const combinedData = intersection(data, totalSharesData.result.data, (a, b) => ({
-    ...a,
-    timestamp: b.timestamp
-  }))
+  const combinedData = intersection(
+    data,
+    totalSharesData.result.data,
+    (a, b) => ({
+      ...a,
+      ...b,
+      timestamp: b.timestamp
+    }),
+    { useLogIndex: false }
+  )
 
   return {
     data: combinedData,
