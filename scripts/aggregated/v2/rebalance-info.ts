@@ -1,16 +1,17 @@
-import { BigNumber, BigNumberish, ethers } from 'ethers'
+import type { NetworkName } from '@ragetrade/sdk'
+import { deltaNeutralGmxVaults, gmxProtocol, tokens } from '@ragetrade/sdk'
+import type { IERC20 } from '@ragetrade/sdk/dist/typechain/core'
+import type { BigNumberish } from 'ethers'
+import { BigNumber, ethers } from 'ethers'
 import { hexDataSlice } from 'ethers/lib/utils'
 
-import { deltaNeutralGmxVaults, gmxProtocol, NetworkName, tokens } from '@ragetrade/sdk'
-import { IERC20 } from '@ragetrade/sdk/dist/typechain/core'
-
+import { ENV } from '../../../env'
 import { getProviderAggregate } from '../../../providers'
-import { juniorVault } from '../util/events'
-import { parallelize } from '../util/parallelize'
-
-import type { Entry } from '../util/types'
-import { price } from '../util/helpers'
 import { formatAsNum } from '../../../utils'
+import { juniorVault } from '../util/events'
+import { price } from '../util/helpers'
+import { parallelize } from '../util/parallelize'
+import type { Entry } from '../util/types'
 export type RebalanceInfoEntry = Entry<{
   blockNumber: number
   timestamp: number
@@ -52,7 +53,7 @@ export async function getRebalanceInfo(
       provider,
       getEvents: [juniorVault.rebalanced],
       startBlockNumber:
-        DnGmxTraderHedgeStrategyDeployment.receipt?.blockNumber ?? 45412307
+        DnGmxTraderHedgeStrategyDeployment.receipt?.blockNumber ?? ENV.START_BLOCK_NUMBER
     },
     async (_i, blockNumber) => {
       const block = await provider.getBlock(blockNumber)
