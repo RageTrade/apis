@@ -191,7 +191,7 @@ export async function perInterval2(networkName: NetworkName) {
         .then((r) => formatAsNum(r, 18))
 
       const vaultMarketValuePrev = await dnGmxJuniorVault
-        .getVaultMarketValue({ blockTag: blockTag })
+        .getVaultMarketValue({ blockTag: blockTag - 1 })
         .then((r) => formatAsNum(r, 18))
 
       return {
