@@ -30,7 +30,8 @@ export class RedisStore extends BaseStore {
   async getOrSet<V>(
     key: string,
     valueFn: () => V | Promise<V>,
-    expirySeconds: number
+    expirySeconds: number,
+    shouldSkipCache?: (val: V) => boolean
   ): Promise<V> {
     this.startCacheUpdater({ key, valueFn, expirySeconds })
 
@@ -72,7 +73,10 @@ export class RedisStore extends BaseStore {
             expirySeconds = value.cacheSeconds
           }
           // only writes to cache if expirySeconds is positive or -1
-          await this.set<V>(key, value, expirySeconds)
+          // skips setting cache if shouldSkipCache is available and returns non-nullish
+          if (!shouldSkipCache || !shouldSkipCache(value)) {
+            await this.set<V>(key, value, expirySeconds)
+          }
         }
         this._promises.delete(key)
         return value

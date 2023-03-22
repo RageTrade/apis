@@ -67,7 +67,8 @@ export class ArchiveCacheProvider extends RetryProvider {
             return super.call(transaction, blockTag)
           }
         },
-        -1
+        -1,
+        (val) => val === '0x' // skip cache for calls that return empty data (nodes rarely do this)
       )
     } else {
       return super.call(transaction, blockTag)
@@ -151,7 +152,7 @@ export class ArchiveCacheProvider extends RetryProvider {
         // errors that include this will be cached, put permanent thing like revert here
         const includeStrings = [`\\"error\\":{\\"code\\"`]
         // if error contains any this text, that will not be cached, put temp errors here
-        const excludeStrings = ['missing trie node']
+        const excludeStrings = ['missing trie node', 'execution aborted (timeout =']
 
         if (
           includeStrings
