@@ -92,10 +92,11 @@ export async function parallelize<Data, Event extends ethers.Event>(
   const key = `parallelize-fingerprint-${fingerprint}`
 
   const redis = getRedisClient()
+  let oldData: any[] = []
   const temp = new Map<string, Data>()
   try {
     const value = await redis.get(key)
-    const oldData = value ? JSON.parse(value) : []
+    oldData = value ? JSON.parse(value) : []
     // load a mapping indexed by event identifier, to make searching log N
     for (const entry of oldData) {
       temp.set(`${entry.blockNumber}-${entry.logIndex ?? 'none'}`, entry)
@@ -143,11 +144,12 @@ export async function parallelize<Data, Event extends ethers.Event>(
                 blockNumber,
                 eventName,
                 transactionHash,
-                logIndex,
+                // logIndex // this is commented to keep logIndex optional
                 timestamp: block.timestamp
               }
             }
             data[_i] = result
+            oldData.push(result)
             done++
             inflight--
             break
@@ -183,6 +185,7 @@ export async function parallelize<Data, Event extends ethers.Event>(
     )
   }
 
+  let redisPromise: Promise<any> = new Promise((res) => res(null))
   const intr = setInterval(() => {
     console.warn(
       'inflight',
@@ -195,11 +198,13 @@ export async function parallelize<Data, Event extends ethers.Event>(
       'total',
       allEvents.length
     )
+    redisPromise = redis.set(key, JSON.stringify(oldData))
   }, 5000)
 
   await Promise.all(promises)
 
   clearInterval(intr)
+  await redisPromise
   const finalResult = data.filter((d) => !!d) as Data[]
   await redis.set(key, JSON.stringify(finalResult))
   return finalResult
