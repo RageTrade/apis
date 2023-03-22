@@ -1,6 +1,6 @@
 import { getRedisClient } from './get-client'
 
-export async function getAggregatedApiCacheKeys() {
+export async function listAggregatedApiCacheKeys() {
   let cursor: string | number = 0
   let keys = []
   const result = []
