@@ -1,7 +1,7 @@
 import { fetchJson } from 'ethers/lib/utils'
 import cron from 'node-cron'
 
-import { getAggregatedApiCacheKeys } from './redis-utils/get-aggregated-api-cache-keys'
+import { listAggregatedApiCacheKeys } from './redis-utils/list-aggregated-api-cache-keys'
 import { getRedisClient } from './redis-utils/get-client'
 
 // refresh aggregated api cache every day at 1am UTC
@@ -10,7 +10,7 @@ cron.schedule(
   async () => {
     console.log('refreshing aggregated api cache')
 
-    const keys = await getAggregatedApiCacheKeys()
+    const keys = await listAggregatedApiCacheKeys()
     const client = getRedisClient()
     for (const key of keys) {
       await client.del(key)
