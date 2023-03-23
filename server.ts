@@ -2,7 +2,6 @@ import { config } from 'dotenv'
 config()
 
 import './fetch-polyfill'
-import './cron-jobs'
 
 import Debugger from 'debug'
 import http from 'http'
