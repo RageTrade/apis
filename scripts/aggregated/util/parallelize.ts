@@ -190,8 +190,6 @@ export async function parallelize<Data, Event extends ethers.Event>(
   let redisPromise: Promise<any> = new Promise((res) => res(null))
   const intr = setInterval(() => {
     console.info(
-      'source',
-      label,
       'retries',
       failed,
       'inflight',
@@ -201,7 +199,8 @@ export async function parallelize<Data, Event extends ethers.Event>(
       'done',
       done,
       'speed',
-      ((done * 1000) / (Date.now() - start)).toFixed(3)
+      ((done * 1000) / (Date.now() - start)).toFixed(3),
+      `( ${label} )`
     )
 
     redisPromise = redis.set(key, JSON.stringify(oldData))
