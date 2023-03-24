@@ -1,5 +1,5 @@
 import type { NetworkName } from '@ragetrade/sdk'
-import { ethers } from 'ethers'
+import type { ethers } from 'ethers'
 import { keccak256, toUtf8Bytes } from 'ethers/lib/utils'
 
 import { ENV } from '../../../env'
@@ -19,6 +19,7 @@ export type OnEachEvent<Data, Event extends ethers.Event> = (
 ) => Promise<Data | null | undefined>
 
 export interface Options<T> {
+  label: string
   networkName: NetworkName
   provider: ethers.providers.Provider
   getEvents: T
@@ -42,6 +43,7 @@ export async function parallelize<Data, Event extends ethers.Event>(
   onEachEvent: OnEachEvent<Data, Event>
 ): Promise<Data[]> {
   const {
+    label,
     networkName,
     provider,
     getEvents,
@@ -187,17 +189,15 @@ export async function parallelize<Data, Event extends ethers.Event>(
 
   let redisPromise: Promise<any> = new Promise((res) => res(null))
   const intr = setInterval(() => {
-    console.warn(
-      'inflight',
+    console.table({
+      label,
+      retries: failed,
       inflight,
-      'done',
+      total: allEvents.length,
       done,
-      (done * 1000) / (Date.now() - start),
-      'retries',
-      failed,
-      'total',
-      allEvents.length
-    )
+      speed: ((done * 1000) / (Date.now() - start)).toFixed(3)
+    })
+
     redisPromise = redis.set(key, JSON.stringify(oldData))
   }, 5000)
 
