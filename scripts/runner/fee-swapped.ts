@@ -28,6 +28,7 @@ export async function perInterval(networkName: NetworkName) {
 
   const data = await parallelize(
     {
+      label: 'fee-swapped',
       networkName,
       provider,
       getEvents: [glpSwapped],

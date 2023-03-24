@@ -64,6 +64,7 @@ export async function getGlpSlippage(
 
   const data = await parallelize(
     {
+      label: 'getGlpSlippage',
       networkName,
       provider,
       getEvents: [

@@ -54,6 +54,7 @@ export async function getRebalanceInfo(
 
   const data = await parallelize(
     {
+      label: 'getRebalanceInfo',
       networkName,
       provider,
       getEvents: [juniorVault.rebalanced],

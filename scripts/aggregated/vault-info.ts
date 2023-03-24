@@ -44,6 +44,7 @@ export async function getVaultInfo(networkName: NetworkName) {
 
   const data = await parallelize(
     {
+      label: 'getVaultInfo',
       networkName,
       provider,
       getEvents: [

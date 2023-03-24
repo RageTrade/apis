@@ -50,6 +50,7 @@ export async function getTotalShares(
 
   const data = await parallelize(
     {
+      label: 'getTotalShares',
       networkName,
       provider,
       getEvents: [

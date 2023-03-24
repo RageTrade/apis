@@ -66,6 +66,7 @@ export async function getAaveLends(
 
   const data = await parallelize(
     {
+      label: 'getAaveLends',
       networkName,
       provider,
       getEvents: [

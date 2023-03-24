@@ -74,6 +74,7 @@ export async function getAaveBorrows(
 
   const data = await parallelize(
     {
+      label: 'getAaveBorrows',
       networkName,
       provider,
       getEvents: [

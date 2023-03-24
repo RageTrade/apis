@@ -1,17 +1,16 @@
 import type { NetworkName } from '@ragetrade/sdk'
 import { chainlink, deltaNeutralGmxVaults, gmxProtocol, tokens } from '@ragetrade/sdk'
-import { BigNumber, ethers } from 'ethers'
-import { fetchJson, formatEther } from 'ethers/lib/utils'
+import type { ethers } from 'ethers'
+import { BigNumber } from 'ethers'
+import { formatEther } from 'ethers/lib/utils'
 
-import { ENV } from '../../env'
 import { getProviderAggregate } from '../../providers'
 import { days, formatAsNum, timestampRoundDown } from '../../utils'
-import { Entry } from '../aggregated/util/types'
 import { intersection } from '../aggregated/util/combine'
-import { gmxVault, juniorVault } from '../aggregated/util/events'
 import { ShortsTracker__factory } from '../aggregated/util/events/gmx-vault/contracts'
 import { price } from '../aggregated/util/helpers'
 import { parallelize } from '../aggregated/util/parallelize'
+import type { Entry } from '../aggregated/util/types'
 
 export type GlobalMarketMovementEntry = Entry<{
   timestamp: number
@@ -113,6 +112,7 @@ export async function getMarketMovement(
 
   const data = await parallelize(
     {
+      label: 'per-interval-mm',
       networkName,
       provider,
       getEvents: () => {

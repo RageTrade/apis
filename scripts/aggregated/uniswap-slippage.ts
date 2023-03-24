@@ -81,6 +81,7 @@ export async function getUniswapSlippage(
 
   const data = await parallelize(
     {
+      label: 'getUniswapSlippage',
       networkName,
       provider,
       getEvents: [juniorVault.rebalanced],

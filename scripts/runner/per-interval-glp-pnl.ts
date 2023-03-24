@@ -25,6 +25,7 @@ export async function perInterval2(networkName: NetworkName) {
 
   const data = await parallelize(
     {
+      label: 'per-interval-glp-pnl',
       networkName,
       provider,
       getEvents: () => {

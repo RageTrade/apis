@@ -115,6 +115,7 @@ export async function getDeltaSpread(
 
   const data = await parallelize(
     {
+      label: 'getDeltaSpread',
       networkName,
       provider,
       getEvents: [juniorVault.deposit, juniorVault.withdraw, juniorVault.rebalanced],

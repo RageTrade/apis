@@ -66,6 +66,7 @@ export async function perInterval(networkName: NetworkName) {
 
   const data = await parallelize(
     {
+      label: 'per-interval',
       networkName,
       provider,
       getEvents: [

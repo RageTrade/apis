@@ -60,6 +60,7 @@ export async function getGlpPnl(
 
   const data = await parallelize(
     {
+      label: 'getGlpPnl',
       networkName,
       provider,
       getEvents: [

@@ -58,6 +58,7 @@ export async function getGlpRewards(
 
   const data = await parallelize(
     {
+      label: 'getGlpRewards',
       networkName,
       provider,
       getEvents: [juniorVault.rewardsHarvested],

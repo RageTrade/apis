@@ -201,6 +201,7 @@ export async function getMarketMovement(
 
   const data = await parallelize(
     {
+      label: 'getMarketMovement',
       networkName,
       provider,
       getEvents: [
