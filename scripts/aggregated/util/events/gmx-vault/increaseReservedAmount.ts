@@ -27,7 +27,7 @@ export async function increaseReservedAmount(
     provider
   )
 
-  let startBlock = getStartBlock(networkName)
+  const startBlock = getStartBlock(networkName)
   const endBlock = await provider.getBlockNumber()
 
   const logs = await getLogs(
@@ -37,5 +37,5 @@ export async function increaseReservedAmount(
     _gmxUnderlyingVault
   )
 
-  return logs //.filter(oneInTenBlocks)
+  return logs.filter(oneInTenBlocks)
 }
