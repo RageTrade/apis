@@ -215,17 +215,15 @@ export async function getMarketMovementGeneric(
       networkName,
       provider,
       getEvents: [
-        // juniorVault.deposit,
-        // juniorVault.withdraw,
-        // juniorVault.rebalanced,
         gmxVault.increasePoolAmount,
         gmxVault.decreasePoolAmount,
         gmxVault.increaseReservedAmount,
         gmxVault.decreaseReservedAmount
       ],
       ignoreMoreEventsInSameBlock: true,
-      startBlockNumber: 47916800
+      startBlockNumber: 47916800,
       // endBlockNumber: endBlock
+      label: 'market-movement-generic'
     },
     async (_i, blockNumber, event) => {
       const block = await provider.getBlock(blockNumber)
@@ -269,12 +267,6 @@ export async function getMarketMovementGeneric(
       // const totalUsdgAmount = Number(
       //   formatEther(usdgAmounts.reduce((a, b) => a.add(b), BigNumber.from(0)))
       // )
-
-      const poolAmounts = await Promise.all(
-        allWhitelistedTokens.map((token) =>
-          gmxUnderlyingVault.poolAmounts(token, { blockTag: blockNumber })
-        )
-      )
 
       const wethShortSizes = await gmxUnderlyingVault
         .globalShortSizes(weth.address, { blockTag: blockNumber })
