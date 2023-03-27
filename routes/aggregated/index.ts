@@ -7,7 +7,9 @@ import {
   getExcludeRawData,
   getNetworkName,
   handleRuntimeErrors,
-  hours
+  hours,
+  secs,
+  getParamAsString
 } from '../../utils'
 import UserRouter from './user'
 import V2Router from './v2'
@@ -222,6 +224,17 @@ router.get(
         tags: ['aggregated']
       })
     )
+  })
+)
+
+router.get(
+  '/progress',
+  handleRuntimeErrors(async (req) => {
+    const label = getParamAsString(req, 'label')
+    return cacheFunctionResult(aggregated.progress, [label], {
+      cacheSeconds: 1 * secs,
+      tags: ['aggregated']
+    })
   })
 )
 
