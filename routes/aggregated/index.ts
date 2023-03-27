@@ -193,6 +193,25 @@ router.get(
 )
 
 router.get(
+  '/get-market-movement-generic',
+  handleRuntimeErrors(async (req) => {
+    const networkName = getNetworkName(req)
+    const excludeRawData = getExcludeRawData(req)
+    return pagination(
+      req,
+      cacheFunctionResult(
+        aggregated.getMarketMovementGeneric,
+        [networkName, excludeRawData],
+        {
+          cacheSeconds: 30 * hours,
+          tags: ['aggregated']
+        }
+      )
+    )
+  })
+)
+
+router.get(
   '/get-rebalance-info',
   handleRuntimeErrors(async (req) => {
     const networkName = getNetworkName(req)
