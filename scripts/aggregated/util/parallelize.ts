@@ -4,6 +4,9 @@ import { keccak256, toUtf8Bytes } from 'ethers/lib/utils'
 
 import { ENV } from '../../../env'
 import { getRedisClient } from '../../../redis-utils/get-client'
+import { currentTimestamp } from '../../../utils'
+
+const redis = getRedisClient()
 
 export type EventFn<Event> = (
   networkName: NetworkName,
@@ -52,10 +55,13 @@ export async function parallelize<Data, Event extends ethers.Event>(
     endBlockNumber
   } = options
 
+  await updateProgress(label, 'fresh', 'started')
+
   let allEvents: Event[] = []
 
   if (Array.isArray(getEvents)) {
-    for (const _getEvents of getEvents) {
+    for (const [i, _getEvents] of getEvents.entries()) {
+      await updateProgress(label, 'update', `querying events bucket ${i}`)
       const events = await _getEvents(
         networkName,
         provider,
@@ -65,8 +71,11 @@ export async function parallelize<Data, Event extends ethers.Event>(
       allEvents = allEvents.concat(events)
     }
   } else {
+    await updateProgress(label, 'update', `querying single event bucket`)
     allEvents = await getEvents(networkName, provider, startBlockNumber, endBlockNumber)
   }
+
+  await updateProgress(label, 'update', `all events are queried`)
 
   allEvents = allEvents.sort((a, b) => a.blockNumber - b.blockNumber)
 
@@ -91,9 +100,9 @@ export async function parallelize<Data, Event extends ethers.Event>(
 
   // if source code stays the same, this fingerprint will not change and we can cache data
   const fingerprint = keccak256(toUtf8Bytes(onEachEvent.toString()))
+  // TODO get these inline constant prepends in a file and import here
   const key = `parallelize-fingerprint-${fingerprint}`
 
-  const redis = getRedisClient()
   let oldData: any[] = []
   const temp = new Map<string, Data>()
   try {
@@ -104,6 +113,8 @@ export async function parallelize<Data, Event extends ethers.Event>(
       temp.set(`${entry.blockNumber}-${entry.logIndex ?? 'none'}`, entry)
     }
   } catch {}
+
+  await updateProgress(label, 'update', `starting query`)
 
   const start = Date.now()
   let i = 0
@@ -189,6 +200,7 @@ export async function parallelize<Data, Event extends ethers.Event>(
 
   let redisPromise: Promise<any> = new Promise((res) => res(null))
   const intr = setInterval(() => {
+    const speed = Number(((done * 1000) / (Date.now() - start)).toFixed(3))
     console.info(
       'retries',
       failed,
@@ -199,11 +211,19 @@ export async function parallelize<Data, Event extends ethers.Event>(
       'done',
       done,
       'speed',
-      ((done * 1000) / (Date.now() - start)).toFixed(3),
+      speed,
       `( ${label} )`
     )
 
-    redisPromise = redis.set(key, JSON.stringify(oldData))
+    redisPromise = redis.set(key, JSON.stringify(oldData)).then(() =>
+      updateProgress(label, 'update', `interval`, {
+        retries: failed,
+        inflight,
+        total: allEvents.length,
+        done,
+        speed
+      })
+    )
   }, 5000)
 
   await Promise.all(promises)
@@ -212,14 +232,94 @@ export async function parallelize<Data, Event extends ethers.Event>(
   await redisPromise
   const finalResult = data.filter((d) => !!d) as Data[]
   await redis.set(key, JSON.stringify(finalResult))
+  await updateProgress(label, 'end', `finished`)
   return finalResult
 }
 
-// async function parallelizeRequest<T>(
-//   arr: () => Promise<T>,
-//   maxInflight: number
-// ) {
-//   for (let i = 0; i < arr.length; i++) {
-//     arr[i]()
-//   }
-// }
+interface ProgressUpdate {
+  label: string
+  description: string
+  startTime: number
+  updateTime: number
+  endTime: number
+  currentProgress: {
+    retries: number
+    inflight: number
+    total: number
+    done: number
+    speed: number
+  }
+}
+
+async function updateProgress(
+  label: string,
+  type: 'fresh' | 'update' | 'end',
+  description: string,
+  currentProgress?: ProgressUpdate['currentProgress']
+) {
+  // TODO get these inline constant prepends in a file
+  const progressKey = `parallelize-progress-${label}`
+  const str = await redis.get(progressKey)
+  let progress: ProgressUpdate
+  if (type === 'fresh' || !isProgressUpdate(str)) {
+    progress = {
+      label,
+      description,
+      startTime: currentTimestamp(),
+      updateTime: currentTimestamp(),
+      endTime: -1,
+      currentProgress: {
+        retries: 0,
+        inflight: 0,
+        total: 0,
+        done: 0,
+        speed: 0
+      }
+    }
+  } else if (type === 'update') {
+    progress = JSON.parse(str)
+    if (currentProgress === undefined) {
+      currentProgress = {
+        retries: 0,
+        inflight: 0,
+        total: 0,
+        done: 0,
+        speed: 0
+      }
+    }
+    progress.updateTime = currentTimestamp()
+    progress.description = description
+    progress.currentProgress = currentProgress
+  } else if (type === 'end') {
+    progress = JSON.parse(str)
+    progress.description = description
+    progress.updateTime = currentTimestamp()
+    progress.endTime = currentTimestamp()
+  } else {
+    throw new Error('unknown type in updateProgress: ' + JSON.stringify(type))
+  }
+  await redis.set(progressKey, JSON.stringify(progress))
+
+  function isProgressUpdate(redisResp: string | null): redisResp is string {
+    let val = null
+    try {
+      val = JSON.parse(redisResp ?? '')
+    } catch {}
+
+    return (
+      val !== null &&
+      typeof val === 'object' &&
+      typeof val.label === 'string' &&
+      typeof val.description === 'string' &&
+      typeof val.startTime === 'number' &&
+      typeof val.updateTime === 'number' &&
+      typeof val.endTime === 'number' &&
+      typeof val.currentProgress === 'object' &&
+      typeof val.currentProgress.retries === 'number' &&
+      typeof val.currentProgress.inflight === 'number' &&
+      typeof val.currentProgress.total === 'number' &&
+      typeof val.currentProgress.done === 'number' &&
+      typeof val.currentProgress.speed === 'number'
+    )
+  }
+}
