@@ -1,15 +1,19 @@
 import type { NetworkName } from '@ragetrade/sdk'
 import { chainlink, deltaNeutralGmxVaults, gmxProtocol, tokens } from '@ragetrade/sdk'
+import { BatchDepositEvent } from '@ragetrade/sdk/dist/typechain/delta-neutral-gmx-vaults/contracts/interfaces/IDnGmxBatchingManager'
 import type { AssetSlippageEvent } from '@ragetrade/sdk/dist/typechain/delta-neutral-gmx-vaults/contracts/interfaces/IDnGmxJuniorVault'
 import type {
   GlpSwappedEvent,
   TokenSwappedEvent,
   VaultStateEvent
 } from '@ragetrade/sdk/dist/typechain/delta-neutral-gmx-vaults/contracts/libraries/DnGmxJuniorVaultManager'
+import { BigNumber } from 'ethers'
+import { parseEther } from 'ethers/lib/utils'
 
 import { getProviderAggregate } from '../../providers'
 import { formatAsNum } from '../../utils'
-import { juniorVault } from '../aggregated/util/events'
+import { juniorVault, batchingManager } from '../aggregated/util/events'
+import { decimals, price } from '../aggregated/util/helpers'
 import { parallelize } from '../aggregated/util/parallelize'
 
 export async function perInterval2(networkName: NetworkName) {
@@ -19,12 +23,10 @@ export async function perInterval2(networkName: NetworkName) {
     networkName,
     provider
   )
-  const { dnGmxJuniorVault } = deltaNeutralGmxVaults.getContractsSync(
-    networkName,
-    provider
-  )
+  const { dnGmxJuniorVault, dnGmxBatchingManager } =
+    deltaNeutralGmxVaults.getContractsSync(networkName, provider)
 
-  const { weth, wbtc, fsGLP, glp } = tokens.getContractsSync(networkName, provider)
+  const { weth, wbtc, fsGLP, glp, usdc } = tokens.getContractsSync(networkName, provider)
   const { ethUsdAggregator, btcUsdAggregator } = chainlink.getContractsSync(
     networkName,
     provider
@@ -49,17 +51,36 @@ export async function perInterval2(networkName: NetworkName) {
       networkName,
       provider,
       getEvents: [
-        //
-        juniorVault.deposit,
-        juniorVault.withdraw
+        // batchingManager.depositToken
+        juniorVault.deposit
+        // juniorVault.withdraw
       ],
       ignoreMoreEventsInSameBlock: true,
-      startBlockNumber: 70226483,
-      endBlockNumber: 70566297
+      // TODO change block numbers here
+      startBlockNumber: 74528892,
+      endBlockNumber: 74537046
     },
     async (_i, blockTag, event) => {
+      if (
+        event.args.caller.toLowerCase() !== dnGmxBatchingManager.address.toLowerCase()
+      ) {
+        return null
+      }
+
       const block = await provider.getBlock(blockTag)
 
+      const rc = await provider.getTransactionReceipt(event.transactionHash)
+
+      const batchDepositFilter = dnGmxBatchingManager.filters.BatchDeposit()
+      const batchDepositEvents = rc.logs
+        .filter((log) => log.topics[0] === batchDepositFilter.topics?.[0])
+        .map((log) =>
+          dnGmxBatchingManager.interface.parseLog(log)
+        ) as unknown as BatchDepositEvent[]
+
+      //
+      // other
+      //
       const MAX_BPS = 10_000
       const { slippageThresholdGmxBps } = await dnGmxJuniorVault.getThresholds({
         blockTag
@@ -79,8 +100,6 @@ export async function perInterval2(networkName: NetworkName) {
       // - AssetSlippage
       // - TokenSwapped
       // - GlpSwapped
-
-      const rc = await provider.getTransactionReceipt(event.transactionHash)
 
       const tokenSwapFilter = dnGmxJuniorVault.filters.TokenSwapped()
       const assetSlippageFilter = dnGmxJuniorVault.filters.AssetSlippage()
@@ -125,71 +144,211 @@ export async function perInterval2(networkName: NetworkName) {
       //     uniswapVolume += fromDollar
       //   }
 
+      function getPrice_(token: string) {
+        switch (token.toLowerCase()) {
+          case wbtc.address.toLowerCase():
+            return btcPrice
+          case weth.address.toLowerCase():
+            return ethPrice
+          case usdc.address.toLowerCase():
+            return usdcPrice
+          default:
+            throw new Error('i dont know')
+        }
+      }
+
+      const userUsdcAmount =
+        batchDepositEvents.length == 0
+          ? undefined
+          : formatAsNum(batchDepositEvents[0].args.userUsdcAmount, 6)
+      const userGlpAmount =
+        batchDepositEvents.length == 0
+          ? undefined
+          : formatAsNum(batchDepositEvents[0].args.userGlpAmount, 18)
+      const glpPrice = formatAsNum(vaultStateParsed[0].args.glpPrice, 18)
       return {
         blockNumber: blockTag,
         timestamp: block.timestamp,
+        // this
+        usdcAmount: userUsdcAmount ?? 0,
+        userGlpAmount,
+        glpAssetsDepositFunction: event.args.assets,
+        mintFee:
+          userGlpAmount !== undefined && userUsdcAmount !== undefined
+            ? userGlpAmount * glpPrice - userUsdcAmount
+            : 0,
+        // other
         slippageThresholdGmxBps,
         ethPrice,
         btcPrice,
         usdcPrice,
-        tokenSwapParsed: tokenSwapParsed.map((e) => {
+        tokenSwapParsed: tokenSwapParsed.reduce((acc, e) => {
           const { fromToken, toToken, fromQuantity, toQuantity } = e.args
-          return {
-            fromToken,
-            toToken,
-            fromQuantity: fromQuantity.toString(),
-            toQuantity: toQuantity.toString()
+
+          const fromPrice = getPrice_(fromToken)
+          const fromDecimals = decimals(fromToken, networkName)
+          const fromQuantityFormatted = formatAsNum(fromQuantity, fromDecimals)
+
+          const toPrice = getPrice_(toToken)
+          const toDecimals = decimals(toToken, networkName)
+          const toQuantityFormatted = formatAsNum(toQuantity, toDecimals)
+
+          // const fromDollar = fromPrice * formatAsNum(fromQuantity, fromDecimals)
+          // const toDollar = toPrice * formatAsNum(toQuantity, toDecimals)
+          const numerator =
+            toQuantityFormatted * toPrice - fromQuantityFormatted * fromPrice
+          const slippage =
+            (toQuantityFormatted * toPrice - fromQuantityFormatted * fromPrice) /
+            (formatAsNum(event.args.assets, 16) * usdcPrice) // todo change userUsdcAmount if needed
+          const slippage2 =
+            (toQuantityFormatted * toPrice - fromQuantityFormatted * fromPrice) /
+            (fromQuantityFormatted * fromPrice)
+
+          if (
+            // if anyone is btc then accept
+            fromToken.toLowerCase() === wbtc.address.toLowerCase() ||
+            toToken.toLowerCase() === wbtc.address.toLowerCase()
+          ) {
+            acc.push({
+              fromToken,
+              toToken,
+              fromQuantity: fromQuantity.toString(),
+              toQuantity: toQuantity.toString(),
+              numerator,
+              slippage,
+              slippage2
+            })
+            return acc
           }
-        }),
-        assetSlippageParsed: assetSlippageParsed.map((e) => {
-          const { user, slippage } = e.args
-          return { user, slippage: slippage.toString() }
-        }),
-        vaultStateParsed: vaultStateParsed.map((e) => {
-          const {
-            eventType,
-            btcBorrows,
-            ethBorrows,
-            btcPoolAmount,
-            ethPoolAmount,
-            btcTraderOIHedge,
-            ethTraderOIHedge,
-            glpPrice,
-            glpBalance,
-            totalAssets,
-            dnUsdcDeposited,
-            unhedgedGlpInUsdc,
-            juniorVaultAusdc,
-            seniorVaultAusdc
-          } = e.args
-          return {
-            eventType: eventType.toString(),
-            btcBorrows: btcBorrows.toString(),
-            ethBorrows: ethBorrows.toString(),
-            btcPoolAmount: btcPoolAmount.toString(),
-            ethPoolAmount: ethPoolAmount.toString(),
-            btcTraderOIHedge: btcTraderOIHedge.toString(),
-            ethTraderOIHedge: ethTraderOIHedge.toString(),
-            glpPrice: glpPrice.toString(),
-            glpBalance: glpBalance.toString(),
-            totalAssets: totalAssets.toString(),
-            dnUsdcDeposited: dnUsdcDeposited.toString(),
-            unhedgedGlpInUsdc: unhedgedGlpInUsdc.toString(),
-            juniorVaultAusdc: juniorVaultAusdc.toString(),
-            seniorVaultAusdc: seniorVaultAusdc.toString()
+
+          if (
+            // if anyone is eth then select highest one
+            fromToken.toLowerCase() === weth.address.toLowerCase()
+          ) {
+            let found = acc.find(
+              (e) => e.fromToken.toLowerCase() === weth.address.toLowerCase()
+            )
+            if (found && BigNumber.from(found.fromQuantity).lt(fromQuantity)) {
+              // we found something that has fromQuantity less, so overwrite it with current data
+              found.fromToken = fromToken
+              found.toToken = toToken
+              found.fromQuantity = fromQuantity.toString()
+              found.toQuantity = toQuantity.toString()
+              found.numerator = numerator
+              found.slippage = slippage
+              found.slippage2 = slippage2
+            } else {
+              acc.push({
+                fromToken,
+                toToken,
+                fromQuantity: fromQuantity.toString(),
+                toQuantity: toQuantity.toString(),
+                numerator,
+                slippage,
+                slippage2
+              })
+            }
           }
-        }),
-        glpSwapParsed: glpSwapParsed.map((e) => {
-          const { glpQuantity, usdcQuantity, fromGlpToUsdc } = e.args
-          return {
-            glpQuantity: glpQuantity.toString(),
-            usdcQuantity: usdcQuantity.toString(),
-            fromGlpToUsdc
-          }
-        })
+          return acc
+        }, [] as any[])
+
+        // vaultStateParsed: vaultStateParsed.map((e) => {
+        //   const {
+        //     eventType,
+        //     btcBorrows,
+        //     ethBorrows,
+        //     btcPoolAmount,
+        //     ethPoolAmount,
+        //     btcTraderOIHedge,
+        //     ethTraderOIHedge,
+        //     glpPrice,
+        //     glpBalance,
+        //     totalAssets,
+        //     dnUsdcDeposited,
+        //     unhedgedGlpInUsdc,
+        //     juniorVaultAusdc,
+        //     seniorVaultAusdc
+        //   } = e.args
+        //   return {
+        //     eventType: eventType.toString(),
+        //     btcBorrows: btcBorrows.toString(),
+        //     ethBorrows: ethBorrows.toString(),
+        //     btcPoolAmount: btcPoolAmount.toString(),
+        //     ethPoolAmount: ethPoolAmount.toString(),
+        //     btcTraderOIHedge: btcTraderOIHedge.toString(),
+        //     ethTraderOIHedge: ethTraderOIHedge.toString(),
+        //     glpPrice: glpPrice.toString(),
+        //     glpBalance: glpBalance.toString(),
+        //     totalAssets: totalAssets.toString(),
+        //     dnUsdcDeposited: dnUsdcDeposited.toString(),
+        //     unhedgedGlpInUsdc: unhedgedGlpInUsdc.toString(),
+        //     juniorVaultAusdc: juniorVaultAusdc.toString(),
+        //     seniorVaultAusdc: seniorVaultAusdc.toString()
+        //   }
+        // }),
+        // glpSwapParsed: glpSwapParsed.map((e) => {
+        //   const { glpQuantity, usdcQuantity, fromGlpToUsdc } = e.args
+        //   return {
+        //     glpQuantity: glpQuantity.toString(),
+        //     usdcQuantity: usdcQuantity.toString(),
+        //     fromGlpToUsdc
+        //   }
+        // })
       }
     }
   )
 
-  return data
+  // return data
+
+  const total_usdc_deposit = data.reduce((acc, cur) => acc + cur.usdcAmount, 0)
+  const total_mint_fee_dollar = data.reduce((acc, cur) => acc + cur.mintFee, 0)
+
+  const sum_numerator = data.reduce(
+    (acc, cur) =>
+      acc + cur.tokenSwapParsed.reduce((acc2, cur2) => acc2 + cur2.numerator, 0),
+    0
+  )
+  const sum_slippage2 = data.reduce(
+    (acc, cur) =>
+      acc + cur.tokenSwapParsed.reduce((acc2, cur2) => acc2 + cur2.slippage2, 0),
+    0
+  )
+  const count_slippage2 = data.reduce(
+    (acc, cur) => acc + cur.tokenSwapParsed.reduce((acc2, cur2) => acc2 + 1, 0),
+    0
+  )
+  const max_slippage2 = data.reduce(
+    (acc, cur) =>
+      Math.max(
+        acc,
+        cur.tokenSwapParsed.reduce(
+          (acc2, cur2) => Math.max(acc2, cur2.slippage2),
+          Number.MIN_SAFE_INTEGER
+        )
+      ),
+    0
+  )
+  const min_slippage2 = data.reduce(
+    (acc, cur) =>
+      Math.min(
+        acc,
+        cur.tokenSwapParsed.reduce(
+          (acc2, cur2) => Math.min(acc2, cur2.slippage2),
+          Number.MAX_SAFE_INTEGER
+        )
+      ),
+    0
+  )
+
+  return {
+    total_usdc_deposit,
+    total_mint_fee_dollar,
+    total_mint_fee_percentage: total_mint_fee_dollar / total_usdc_deposit,
+    total_swap_fee_dollar: sum_numerator,
+    slippage_as_a_percent_of_swap_amount: {
+      avg: sum_slippage2 / count_slippage2,
+      max: max_slippage2,
+      min: min_slippage2
+    }
+  }
 }
