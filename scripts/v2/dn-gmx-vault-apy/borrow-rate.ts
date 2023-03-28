@@ -1,7 +1,12 @@
 import 'isomorphic-unfetch'
 
-import type { NetworkName } from '@ragetrade/sdk'
-import { aave, deltaNeutralGmxVaults, typechain } from '@ragetrade/sdk'
+import {
+  aave,
+  chainlink,
+  deltaNeutralGmxVaults,
+  typechain,
+  NetworkName
+} from '@ragetrade/sdk'
 import { formatUnits } from 'ethers/lib/utils'
 
 import { getProvider } from '../../../providers'
@@ -15,29 +20,15 @@ const idWbtc =
 const dataUrl = 'https://aave-api-v2.aave.com/data/markets-data'
 
 const getBtcPrice = async (networkName: NetworkName) => {
-  const btcPrice =
-    networkName == 'arbmain'
-      ? (
-          await fetchJsonRetry(
-            'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd'
-          )
-        ).bitcoin.usd
-      : 15_000
-
-  return btcPrice
+  const { btcUsdAggregator } = chainlink.getContractsSync(networkName)
+  const { answer } = await btcUsdAggregator.latestRoundData()
+  return Number(formatUnits(answer, 8))
 }
 
 const getETHPrice = async (networkName: NetworkName) => {
-  const ethPrice =
-    networkName == 'arbmain'
-      ? (
-          await fetchJsonRetry(
-            'https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd'
-          )
-        ).ethereum.usd
-      : 2_000
-
-  return ethPrice
+  const { ethUsdAggregator } = chainlink.getContractsSync(networkName)
+  const { answer } = await ethUsdAggregator.latestRoundData()
+  return Number(formatUnits(answer, 8))
 }
 
 export const getBorrowApy = async (networkName: NetworkName) => {
