@@ -1,6 +1,9 @@
 import { getRedisClient } from './get-client'
 
-export async function listKeysContaining(str: string) {
+export async function listKeysContaining(
+  match: (key: string) => boolean,
+  _onlyTemporary: boolean | 'true' | 'false' = true
+) {
   let cursor: string | number = 0
   let keys = []
   const result = []
@@ -8,7 +11,7 @@ export async function listKeysContaining(str: string) {
   while (cursor !== '0') {
     ;[cursor, keys] = await client.scan(cursor)
     for (const key of keys) {
-      if (key.includes(str)) {
+      if (match(key)) {
         result.push(key)
       }
     }
