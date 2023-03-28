@@ -4,7 +4,7 @@ import { BigNumber, Contract } from 'ethers'
 import { formatEther, formatUnits } from 'ethers/lib/utils'
 
 import { getProvider } from '../../../providers'
-import { fetchRetry } from '../../../utils'
+import { fetchJsonRetry } from '../../../utils'
 import RewardTracker from './RewardTracker.json'
 
 const provMain = getProvider('arbmain')
@@ -20,11 +20,11 @@ const ONE_ETHER = BigNumber.from(10).pow(18)
 const PRICE_PRECISION = BigNumber.from(10).pow(30)
 
 const getGmxPrice = async () => {
-  const res = await fetchRetry(
+  const res = await fetchJsonRetry(
     'https://api.coingecko.com/api/v3/simple/price?ids=gmx&vs_currencies=usd'
   )
 
-  const gmxPrice = (await res.json()).gmx.usd
+  const gmxPrice = res.gmx.usd
   return gmxPrice
 }
 

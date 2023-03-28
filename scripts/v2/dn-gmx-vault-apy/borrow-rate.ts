@@ -5,7 +5,7 @@ import { deltaNeutralGmxVaults, typechain } from '@ragetrade/sdk'
 import { formatUnits } from 'ethers/lib/utils'
 
 import { getProvider } from '../../../providers'
-import { fetchRetry } from '../../../utils'
+import { fetchJsonRetry, fetchRetry } from '../../../utils'
 
 const idWeth =
   '42161-0x82af49447d8a07e3bd95bd0d56f35241523fbab1-0xa97684ead0e402dc232d5a977953df7ecbab3cdb'
@@ -18,11 +18,9 @@ const getBtcPrice = async (networkName: NetworkName) => {
   const btcPrice =
     networkName == 'arbmain'
       ? (
-          await (
-            await fetchRetry(
-              'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd'
-            )
-          ).json()
+          await fetchJsonRetry(
+            'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd'
+          )
         ).bitcoin.usd
       : 15_000
 
@@ -33,11 +31,9 @@ const getETHPrice = async (networkName: NetworkName) => {
   const ethPrice =
     networkName == 'arbmain'
       ? (
-          await (
-            await fetchRetry(
-              'https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd'
-            )
-          ).json()
+          await fetchJsonRetry(
+            'https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd'
+          )
         ).ethereum.usd
       : 2_000
 
