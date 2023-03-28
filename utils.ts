@@ -181,6 +181,14 @@ export function getPageNumber(req: Request): number | undefined {
   return getOptionalParamAsInteger(req, 'pageNumber')
 }
 
+export function getStartBlock(req: Request): number | undefined {
+  return getOptionalParamAsInteger(req, 'startBlock')
+}
+
+export function getEndBlock(req: Request): number | undefined {
+  return getOptionalParamAsInteger(req, 'endBlock')
+}
+
 export async function pagination(
   req: Request,
   response:
@@ -197,6 +205,8 @@ export async function pagination(
   const includeFullRawData = getIncludeFullRawData(req)
   const pageSize = getPageSize(req)
   const pageNumber = getPageNumber(req)
+  const startBlock = getStartBlock(req)
+  const endBlock = getEndBlock(req)
 
   if (excludeRawData) {
     delete response.result?.data
@@ -218,6 +228,24 @@ export async function pagination(
       pageSize * (pageNumber - 1),
       pageSize * pageNumber
     )
+  } else if (startBlock !== undefined) {
+    if (!Array.isArray(response?.result?.data)) {
+      throw new Error('data array not available for pagination')
+    }
+
+    response.result.data = response.result.data.filter((d) => d.blockNumber >= startBlock)
+
+    if (endBlock !== undefined) {
+      response.result.data = response.result.data.filter((d) => d.blockNumber <= endBlock)
+    } else if (pageSize !== undefined) {
+      response.result.data = response.result.data.slice(0, pageSize)
+    }
+
+    if (response.result.data.length > 5000) {
+      throw new Error(
+        'data length upto 5000 is allowed, kindly reduce the block range or you can also pass pageSize along with startBlock'
+      )
+    }
   }
 
   // reduce the data size
