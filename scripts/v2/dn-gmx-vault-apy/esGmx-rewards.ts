@@ -1,4 +1,4 @@
-import type { NetworkName } from '@ragetrade/sdk'
+import { chainlink, NetworkName } from '@ragetrade/sdk'
 import { deltaNeutralGmxVaults, gmxProtocol, tokens, typechain } from '@ragetrade/sdk'
 import { BigNumber, Contract } from 'ethers'
 import { formatEther, formatUnits } from 'ethers/lib/utils'
@@ -20,12 +20,10 @@ const ONE_ETHER = BigNumber.from(10).pow(18)
 const PRICE_PRECISION = BigNumber.from(10).pow(30)
 
 const getGmxPrice = async () => {
-  const res = await fetchJsonRetry(
-    'https://api.coingecko.com/api/v3/simple/price?ids=gmx&vs_currencies=usd'
-  )
-
-  const gmxPrice = res.gmx.usd
-  return gmxPrice
+  const gmxAggregator = '0xdb98056fecfff59d032ab628337a4887110df3db'
+  const { btcUsdAggregator } = chainlink.getContractsSync('arbmain')
+  const { answer } = await btcUsdAggregator.attach(gmxAggregator).latestRoundData()
+  return Number(formatUnits(answer, 8))
 }
 
 export const getEsgmxRewards = async (networkName: NetworkName) => {
