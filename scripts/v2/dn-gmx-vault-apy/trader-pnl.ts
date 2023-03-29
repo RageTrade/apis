@@ -39,7 +39,7 @@ export const getTraderPnl = async (networkName: NetworkName) => {
 
       return {
         Day,
-        totalTraderPnL: (glpPnlObj?.glpPnlNet || 0) - (mktMoveObj?.pnlNet || 0)
+        totalTraderPnL: (glpPnlObj?.glpPnlNet || 0) - (mktMoveObj?.unhedgedTraderPnl || 0)
       }
     }
   )

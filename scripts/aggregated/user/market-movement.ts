@@ -1,7 +1,7 @@
 import type { NetworkName, ResultWithMetadata } from '@ragetrade/sdk'
 import { fetchJson } from 'ethers/lib/utils'
 
-import { days, safeDivNumer, timestampRoundDown } from '../../../utils'
+import { days, timestampRoundDown } from '../../../utils'
 import type { GlobalMarketMovementResult } from '../market-movement'
 import { combine } from '../util/combine'
 import type { Entry } from '../util/types'
@@ -72,26 +72,11 @@ export async function getUserMarketMovement(
     (marketMovementData, userSharesData) => ({
       ...userSharesData, // some of this data can get overriden by the next line
       ...marketMovementData,
-      userEthPnl: safeDivNumer(
-        marketMovementData.ethPnl * userSharesData.userJuniorVaultShares,
-        userSharesData.totalJuniorVaultShares
-      ),
-      userBtcPnl: safeDivNumer(
-        marketMovementData.btcPnl * userSharesData.userJuniorVaultShares,
-        userSharesData.totalJuniorVaultShares
-      ),
-      userLinkPnl: safeDivNumer(
-        marketMovementData.linkPnl * userSharesData.userJuniorVaultShares,
-        userSharesData.totalJuniorVaultShares
-      ),
-      userUniPnl: safeDivNumer(
-        marketMovementData.uniPnl * userSharesData.userJuniorVaultShares,
-        userSharesData.totalJuniorVaultShares
-      ),
-      userPnl: safeDivNumer(
-        marketMovementData.pnl * userSharesData.userJuniorVaultShares,
-        userSharesData.totalJuniorVaultShares
-      )
+      userEthPnl: 0,
+      userBtcPnl: 0,
+      userLinkPnl: 0,
+      userUniPnl: 0,
+      userPnl: 0
     })
   )
 
