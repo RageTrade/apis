@@ -62,11 +62,7 @@ export type GlobalMarketMovementEntry = Entry<{
   linkShortAveragePrice: number
   uniShortAveragePrice: number
 
-  ethPnl: number
-  btcPnl: number
-  linkPnl: number
-  uniPnl: number
-  pnl: number
+  unhedgedTraderPnl: number
 
   wethMaxPrice: number
   wethMinPrice: number
@@ -92,11 +88,7 @@ export type GlobalMarketMovementEntry = Entry<{
   ExtraEntry
 
 export type ExtraEntry = Entry<{
-  ethPnl: number
-  btcPnl: number
-  uniPnl: number
-  linkPnl: number
-  pnl: number
+  unhedgedTraderPnl: number
   ethUnhedgedTraderPnl: number
   btcUnhedgedTraderPnl: number
   uniUnhedgedTraderPnl: number
@@ -106,11 +98,7 @@ export type ExtraEntry = Entry<{
 export interface GlobalMarketMovementDailyEntry {
   startTimestamp: number
   endTimestamp: number
-  ethPnlNet: number
-  btcPnlNet: number
-  linkPnlNet: number
-  uniPnlNet: number
-  pnlNet: number
+  unhedgedTraderPnl: number
   ethUnhedgedTraderPnlNet: number
   btcUnhedgedTraderPnlNet: number
   uniUnhedgedTraderPnlNet: number
@@ -121,11 +109,7 @@ export interface GlobalMarketMovementResult {
   data: GlobalMarketMovementEntry[]
   dailyData: GlobalMarketMovementDailyEntry[]
   dataLength: number
-  totalEthPnl: number
-  totalBtcPnl: number
-  totalLinkPnl: number
-  totalUniPnl: number
-  totalPnl: number
+  totalUnhedgedTraderPnl: number
 }
 
 export async function getMarketMovement(
@@ -539,70 +523,65 @@ export async function getMarketMovement(
 
   const extraData: ExtraEntry[] = []
 
-  let last
-  for (const current of data) {
-    if (last) {
-      const ethPnl = last.wethCurrentToken * (current.wethMinPrice - last.wethMinPrice)
-      const btcPnl = last.wbtcCurrentToken * (current.wbtcMinPrice - last.wbtcMinPrice)
-      const uniPnl = last.uniCurrentToken * (current.uniMinPrice - last.uniMinPrice)
-      const linkPnl = last.linkCurrentToken * (current.linkMinPrice - last.linkMinPrice)
+  for (let i = 0; i < data.length; i++) {
+    const current = data[i]
+    const next = data[i + 1]
 
+    if (next) {
       const ethUnhedgedTraderPnl =
         ((((current.wethReservedAmounts -
           current.wethShortSizes / current.wethShortAveragePrice) *
           (10000 - current.traderOIHedgeBps)) /
           10000) *
-          (current.wethAvgPrice - last.wethAvgPrice) *
+          (next.wethAvgPrice - current.wethAvgPrice) *
           current.vaultGlp) /
         current.glp_totalSupply
+
       const btcUnhedgedTraderPnl =
         ((((current.wbtcReservedAmounts -
           current.wbtcShortSizes / current.wbtcShortAveragePrice) *
           (10000 - current.traderOIHedgeBps)) /
           10000) *
-          (current.wbtcAvgPrice - last.wbtcAvgPrice) *
+          (next.wbtcAvgPrice - current.wbtcAvgPrice) *
           current.vaultGlp) /
         current.glp_totalSupply
+
       const uniUnhedgedTraderPnl =
         ((current.uniReservedAmounts -
           current.uniShortSizes / current.uniShortAveragePrice) *
-          (current.uniAvgPrice - last.uniAvgPrice) *
+          (next.uniAvgPrice - current.uniAvgPrice) *
           current.vaultGlp) /
         current.glp_totalSupply
+
       const linkUnhedgedTraderPnl =
         ((current.linkReservedAmounts -
           current.linkShortSizes / current.linkShortAveragePrice) *
-          (current.linkAvgPrice - last.linkAvgPrice) *
+          (next.linkAvgPrice - current.linkAvgPrice) *
           current.vaultGlp) /
         current.glp_totalSupply
 
       extraData.push({
         blockNumber: current.blockNumber,
-        ethPnl,
-        btcPnl,
-        uniPnl,
-        linkPnl,
         ethUnhedgedTraderPnl,
         btcUnhedgedTraderPnl,
         uniUnhedgedTraderPnl,
         linkUnhedgedTraderPnl,
-        pnl: ethPnl + btcPnl + uniPnl + linkPnl
+        unhedgedTraderPnl:
+          ethUnhedgedTraderPnl +
+          btcUnhedgedTraderPnl +
+          uniUnhedgedTraderPnl +
+          linkUnhedgedTraderPnl
       })
     } else {
       extraData.push({
         blockNumber: current.blockNumber,
-        ethPnl: 0,
-        btcPnl: 0,
-        uniPnl: 0,
-        linkPnl: 0,
         ethUnhedgedTraderPnl: 0,
         btcUnhedgedTraderPnl: 0,
         uniUnhedgedTraderPnl: 0,
         linkUnhedgedTraderPnl: 0,
-        pnl: 0
+        unhedgedTraderPnl: 0
       })
     }
-    last = current
   }
 
   const combinedData = intersection(data, extraData, (a, b) => ({
@@ -616,11 +595,7 @@ export async function getMarketMovement(
       (acc: GlobalMarketMovementDailyEntry[], cur: GlobalMarketMovementEntry) => {
         let lastEntry = acc[acc.length - 1]
         if (lastEntry && cur.timestamp <= lastEntry.endTimestamp) {
-          lastEntry.btcPnlNet += cur.btcPnl
-          lastEntry.ethPnlNet += cur.ethPnl
-          lastEntry.uniPnlNet += cur.uniPnl
-          lastEntry.linkPnlNet += cur.linkPnl
-          lastEntry.pnlNet += cur.pnl
+          lastEntry.unhedgedTraderPnl += cur.unhedgedTraderPnl
           lastEntry.ethUnhedgedTraderPnlNet += cur.ethUnhedgedTraderPnl
           lastEntry.btcUnhedgedTraderPnlNet += cur.btcUnhedgedTraderPnl
           lastEntry.uniUnhedgedTraderPnlNet += cur.uniUnhedgedTraderPnl
@@ -633,11 +608,7 @@ export async function getMarketMovement(
             acc.push({
               startTimestamp: lastEntry.startTimestamp + 1 * days,
               endTimestamp: lastEntry.startTimestamp + 2 * days - 1,
-              btcPnlNet: 0,
-              ethPnlNet: 0,
-              uniPnlNet: 0,
-              linkPnlNet: 0,
-              pnlNet: 0,
+              unhedgedTraderPnl: 0,
               ethUnhedgedTraderPnlNet: 0,
               btcUnhedgedTraderPnlNet: 0,
               uniUnhedgedTraderPnlNet: 0,
@@ -648,11 +619,7 @@ export async function getMarketMovement(
           acc.push({
             startTimestamp: timestampRoundDown(cur.timestamp),
             endTimestamp: timestampRoundDown(cur.timestamp) + 1 * days - 1,
-            btcPnlNet: cur.btcPnl,
-            ethPnlNet: cur.ethPnl,
-            uniPnlNet: cur.uniPnl,
-            linkPnlNet: cur.linkPnl,
-            pnlNet: cur.pnl,
+            unhedgedTraderPnl: cur.unhedgedTraderPnl,
             ethUnhedgedTraderPnlNet: cur.ethUnhedgedTraderPnl,
             btcUnhedgedTraderPnlNet: cur.btcUnhedgedTraderPnl,
             uniUnhedgedTraderPnlNet: cur.uniUnhedgedTraderPnl,
@@ -664,10 +631,9 @@ export async function getMarketMovement(
       []
     ),
     dataLength: data.length,
-    totalBtcPnl: combinedData.reduce((acc, cur) => acc + cur.btcPnl, 0),
-    totalEthPnl: combinedData.reduce((acc, cur) => acc + cur.ethPnl, 0),
-    totalUniPnl: combinedData.reduce((acc, cur) => acc + cur.uniPnl, 0),
-    totalLinkPnl: combinedData.reduce((acc, cur) => acc + cur.linkPnl, 0),
-    totalPnl: combinedData.reduce((acc, cur) => acc + cur.pnl, 0)
+    totalUnhedgedTraderPnl: combinedData.reduce(
+      (acc, cur) => acc + cur.unhedgedTraderPnl,
+      0
+    )
   }
 }
