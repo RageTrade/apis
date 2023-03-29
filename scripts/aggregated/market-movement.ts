@@ -529,19 +529,17 @@ export async function getMarketMovement(
 
     if (next) {
       const ethUnhedgedTraderPnl =
-        ((((current.wethReservedAmounts -
+        ((current.wethReservedAmounts -
           current.wethShortSizes / current.wethShortAveragePrice) *
-          (10000 - current.traderOIHedgeBps)) /
-          10000) *
+          (1 - current.traderOIHedgeBps) *
           (next.wethAvgPrice - current.wethAvgPrice) *
           current.vaultGlp) /
         current.glp_totalSupply
 
       const btcUnhedgedTraderPnl =
-        ((((current.wbtcReservedAmounts -
+        ((current.wbtcReservedAmounts -
           current.wbtcShortSizes / current.wbtcShortAveragePrice) *
-          (10000 - current.traderOIHedgeBps)) /
-          10000) *
+          (1 - current.traderOIHedgeBps) *
           (next.wbtcAvgPrice - current.wbtcAvgPrice) *
           current.vaultGlp) /
         current.glp_totalSupply
