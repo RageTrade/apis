@@ -8,6 +8,7 @@ import Debugger from 'debug'
 import http from 'http'
 
 import { app } from './app'
+import { connectMongo } from './db'
 import { ENV } from './env'
 
 const debug = Debugger('apis:server')
@@ -18,9 +19,13 @@ app.set('port', port)
 
 const server = http.createServer(app)
 
-server.listen(port)
-server.on('error', onError)
-server.on('listening', onListening)
+connectMongo()
+  .then(() => {
+    server.listen(port)
+    server.on('error', onError)
+    server.on('listening', onListening)
+  })
+  .catch((e) => console.error('Failled to connect to mongo', e))
 
 function onError(error: any) {
   if (error.syscall !== 'listen') {
