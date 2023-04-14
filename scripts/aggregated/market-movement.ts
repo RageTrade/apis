@@ -351,12 +351,12 @@ export async function getMarketMovement(
       const ethTraderOIHedge = await provider
         .getStorageAt(dnGmxJuniorVault.address, 252 + 35, blockNumber)
         .then((res) => hexDataSlice(res, 0, 16))
-        .then((res) => formatAsNum(BigNumber.from(res), 18))
+        .then((res) => formatAsNum(BigNumber.from(res).fromTwos(128), 18))
 
       const btcTraderOIHedge = await provider
         .getStorageAt(dnGmxJuniorVault.address, 252 + 35, blockNumber)
         .then((res) => hexDataSlice(res, 16, 32))
-        .then((res) => formatAsNum(BigNumber.from(res), 8))
+        .then((res) => formatAsNum(BigNumber.from(res).fromTwos(128), 8))
 
       const linkPrice = await linkUsdAggregator
         .latestRoundData({ blockTag: blockNumber })
