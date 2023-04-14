@@ -348,6 +348,16 @@ export async function getMarketMovement(
         .getPrice(false, { blockTag: blockNumber })
         .then((res) => formatAsNum(res, 18))
 
+      const ethPoolAmount = await provider
+        .getStorageAt(dnGmxJuniorVault.address, 252 + 34, blockNumber)
+        .then((res) => hexDataSlice(res, 0, 16))
+        .then((res) => formatAsNum(BigNumber.from(res), 18))
+
+      const btcPoolAmount = await provider
+        .getStorageAt(dnGmxJuniorVault.address, 252 + 34, blockNumber)
+        .then((res) => hexDataSlice(res, 16, 32))
+        .then((res) => formatAsNum(BigNumber.from(res), 18))
+
       const ethTraderOIHedge = await provider
         .getStorageAt(dnGmxJuniorVault.address, 252 + 35, blockNumber)
         .then((res) => hexDataSlice(res, 0, 16))
@@ -508,6 +518,8 @@ export async function getMarketMovement(
         uniShortAveragePrice,
         wethMaxPrice,
         wethMinPrice,
+        btcPoolAmount,
+        ethPoolAmount,
         btcTraderOIHedge,
         ethTraderOIHedge,
         wbtcMaxPrice,
