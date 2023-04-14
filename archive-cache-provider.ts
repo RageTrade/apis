@@ -5,7 +5,7 @@ import type {
 } from '@ethersproject/abstract-provider'
 import type { Networkish } from '@ethersproject/providers'
 import Debugger from 'debug'
-import type { ethers } from 'ethers'
+import { BigNumber, ethers } from 'ethers'
 import type { ConnectionInfo, Deferrable } from 'ethers/lib/utils'
 import { id } from 'ethers/lib/utils'
 
@@ -100,6 +100,39 @@ export class ArchiveCacheProvider extends RetryProvider {
     }
   }
 
+  async getStorageAt(
+    addressOrName: string | Promise<string>,
+    position: ethers.BigNumberish | Promise<ethers.BigNumberish>,
+    blockTag?: BlockTag | Promise<BlockTag> | undefined
+  ): Promise<string> {
+    if (typeof blockTag === 'number') {
+      const key = getKey([
+        this.network.name,
+        'getStorageAt',
+        String(blockTag),
+        await addressOrName,
+        BigNumber.from(await position).toHexString()
+      ])
+      return this.redisStore.getOrSet(
+        key,
+        async () => {
+          if (
+            this.forkBlockNumber &&
+            this.originalProvider &&
+            blockTag <= this.forkBlockNumber
+          ) {
+            return this.originalProvider.getStorageAt(addressOrName, position, blockTag)
+          } else {
+            return super.getStorageAt(addressOrName, position, blockTag)
+          }
+        },
+        -1
+      )
+    } else {
+      return super.getStorageAt(addressOrName, position, blockTag)
+    }
+  }
+
   async getLogs(filter: ethers.providers.Filter): Promise<Array<ethers.providers.Log>> {
     if (typeof filter.toBlock === 'number' && typeof filter.fromBlock === 'number') {
       const key = getKey([
@@ -135,6 +168,7 @@ export class ArchiveCacheProvider extends RetryProvider {
       const key = getKey([this.network.name, 'send', method, JSON.stringify(params)])
       return this.redisStore.getOrSet(key, async () => super.send(method, params), -1)
     } else {
+      // cache rpc errors which are persistent (do not cache temporary error like network fail)
       const key = getKey([
         this.network.name,
         'send',
