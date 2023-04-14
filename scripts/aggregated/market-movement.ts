@@ -7,7 +7,7 @@ import {
   tokens
 } from '@ragetrade/sdk'
 import { BigNumber, ethers } from 'ethers'
-import { fetchJson, formatEther, formatUnits } from 'ethers/lib/utils'
+import { fetchJson, formatEther, formatUnits, hexDataSlice } from 'ethers/lib/utils'
 
 import { ENV } from '../../env'
 import { getProviderAggregate } from '../../providers'
@@ -62,6 +62,8 @@ export type GlobalMarketMovementEntry = Entry<{
   linkShortAveragePrice: number
   uniShortAveragePrice: number
 
+  btcTraderOIHedge: number
+  ethTraderOIHedge: number
   unhedgedTraderPnl: number
 
   wethMaxPrice: number
@@ -346,6 +348,16 @@ export async function getMarketMovement(
         .getPrice(false, { blockTag: blockNumber })
         .then((res) => formatAsNum(res, 18))
 
+      const ethTraderOIHedge = await provider
+        .getStorageAt(dnGmxJuniorVault.address, 252 + 35, blockNumber)
+        .then((res) => hexDataSlice(res, 0, 16))
+        .then((res) => formatAsNum(BigNumber.from(res), 18))
+
+      const btcTraderOIHedge = await provider
+        .getStorageAt(dnGmxJuniorVault.address, 252 + 35, blockNumber)
+        .then((res) => hexDataSlice(res, 16, 32))
+        .then((res) => formatAsNum(BigNumber.from(res), 8))
+
       const linkPrice = await linkUsdAggregator
         .latestRoundData({ blockTag: blockNumber })
         .then((res) => formatAsNum(res.answer, 8))
@@ -496,6 +508,8 @@ export async function getMarketMovement(
         uniShortAveragePrice,
         wethMaxPrice,
         wethMinPrice,
+        btcTraderOIHedge,
+        ethTraderOIHedge,
         wbtcMaxPrice,
         wbtcMinPrice,
         linkMaxPrice,
@@ -530,16 +544,16 @@ export async function getMarketMovement(
     if (next) {
       const ethUnhedgedTraderPnl =
         ((current.wethReservedAmounts -
-          current.wethShortSizes / current.wethShortAveragePrice) *
-          (1 - current.traderOIHedgeBps) *
+          current.wethShortSizes / current.wethShortAveragePrice -
+          current.ethTraderOIHedge) *
           (next.wethAvgPrice - current.wethAvgPrice) *
           current.vaultGlp) /
         current.glp_totalSupply
 
       const btcUnhedgedTraderPnl =
         ((current.wbtcReservedAmounts -
-          current.wbtcShortSizes / current.wbtcShortAveragePrice) *
-          (1 - current.traderOIHedgeBps) *
+          current.wbtcShortSizes / current.wbtcShortAveragePrice -
+          current.btcTraderOIHedge) *
           (next.wbtcAvgPrice - current.wbtcAvgPrice) *
           current.vaultGlp) /
         current.glp_totalSupply
