@@ -199,8 +199,37 @@ export async function parallelize<Data, Event extends ethers.Event>(
   }
 
   let redisPromise: Promise<any> = new Promise((res) => res(null))
+  let lastDoneTotal = 0
+  let doneArray: number[] = [] // stores number of resolved promises in every 5 seconds
+  function getLastDone(currentDoneTotal: number) {
+    const SLAB = 10
+    let thisDone = currentDoneTotal - lastDoneTotal
+    lastDoneTotal = currentDoneTotal
+    doneArray.push(thisDone)
+
+    let count = 0
+    let time = 0
+    for (let i = doneArray.length - 1; i >= 0; i--) {
+      const thatDone = doneArray[i]
+      count += thatDone
+      time += 5
+      if (count >= SLAB) {
+        break
+      }
+    }
+    if (count < SLAB) {
+      time = Math.floor((Date.now() - start) / 1000)
+    }
+    return {
+      count,
+      time
+    }
+  }
+
   const intr = setInterval(() => {
-    const speed = Number(((done * 1000) / (Date.now() - start)).toFixed(3))
+    const lastDone = getLastDone(done)
+    const speed = Number((lastDone.count / lastDone.time).toFixed(3)) // events per sec
+    const eta = (allEvents.length - done) / speed
     console.info(
       'retries',
       failed,
@@ -212,6 +241,8 @@ export async function parallelize<Data, Event extends ethers.Event>(
       done,
       'speed',
       speed,
+      'eta',
+      Math.floor(eta),
       `( ${label} )`
     )
 
