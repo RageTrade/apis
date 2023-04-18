@@ -3,12 +3,7 @@ import { gmxProtocol } from '@ragetrade/sdk'
 import { ethers } from 'ethers'
 
 import { getLogs } from '../../../../../utils'
-import {
-  GET_LOGS_INTERVAL,
-  getStartBlock,
-  oneInFiftyBlocks,
-  oneInTenBlocks
-} from './common'
+import { getStartBlock, oneInTwoBlocks } from './common'
 
 export async function decreasePoolAmount(
   networkName: NetworkName,
@@ -34,5 +29,5 @@ export async function decreasePoolAmount(
     _gmxUnderlyingVault
   )
 
-  return logs.filter(oneInTenBlocks)
+  return logs.filter(oneInTwoBlocks)
 }
