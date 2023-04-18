@@ -229,7 +229,7 @@ export async function parallelize<Data, Event extends ethers.Event>(
   const intr = setInterval(() => {
     const lastDone = getLastDone(done)
     const speed = Number((lastDone.count / lastDone.time).toFixed(3)) // events per sec
-    const eta = (allEvents.length - done) / speed
+    const eta = Math.floor((allEvents.length - done) / speed)
     console.info(
       'retries',
       failed,
@@ -242,7 +242,7 @@ export async function parallelize<Data, Event extends ethers.Event>(
       'speed',
       speed,
       'eta',
-      Math.floor(eta),
+      eta,
       `( ${label} )`
     )
 
@@ -252,7 +252,8 @@ export async function parallelize<Data, Event extends ethers.Event>(
         inflight,
         total: allEvents.length,
         done,
-        speed
+        speed,
+        eta
       })
     )
   }, 5000)
@@ -279,6 +280,7 @@ interface ProgressUpdate {
     total: number
     done: number
     speed: number
+    eta: number
   }
 }
 
@@ -304,7 +306,8 @@ async function updateProgress(
         inflight: 0,
         total: 0,
         done: 0,
-        speed: 0
+        speed: 0,
+        eta: -1
       }
     }
   } else if (type === 'update') {
@@ -315,7 +318,8 @@ async function updateProgress(
         inflight: 0,
         total: 0,
         done: 0,
-        speed: 0
+        speed: 0,
+        eta: -1
       }
     }
     progress.updateTime = currentTimestamp()
@@ -350,7 +354,8 @@ async function updateProgress(
       typeof val.currentProgress.inflight === 'number' &&
       typeof val.currentProgress.total === 'number' &&
       typeof val.currentProgress.done === 'number' &&
-      typeof val.currentProgress.speed === 'number'
+      typeof val.currentProgress.speed === 'number' &&
+      typeof val.currentProgress.eta === 'number'
     )
   }
 }
