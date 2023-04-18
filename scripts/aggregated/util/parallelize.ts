@@ -201,7 +201,7 @@ export async function parallelize<Data, Event extends ethers.Event>(
   let redisPromise: Promise<any> = new Promise((res) => res(null))
   let lastDoneTotal = 0
   let doneArray: number[] = [] // stores number of resolved promises in every 5 seconds
-  const SLAB = Math.max(Math.floor(allEvents.length / 100), 10)
+  const SLAB = Math.max(Math.floor(allEvents.length / 20), 10)
   function getLastDone(currentDoneTotal: number) {
     let thisDone = currentDoneTotal - lastDoneTotal
     lastDoneTotal = currentDoneTotal
