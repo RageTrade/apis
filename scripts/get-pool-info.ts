@@ -16,7 +16,7 @@ import { BigNumber, ethers } from 'ethers'
 import { parseUnits } from 'ethers/lib/utils'
 
 import { getProvider } from '../providers'
-import { currentTimestamp } from '../utils'
+import { currentTimestamp, fetchRetry } from '../utils'
 import { getBlockByTimestamp } from './get-block-by-timestamp'
 
 export async function getPoolInfo(networkName: NetworkName, poolId: BigNumberish) {
@@ -61,6 +61,19 @@ export async function _getPoolInfo(
   const { fundingRateX128 } = await vPoolWrapper.getFundingRateAndVirtualPrice()
   const sumAX128 = await vPoolWrapper.getExtrapolatedSumAX128()
 
+  let markPrice24HourOld = -1
+  try {
+    const timestamp = Math.floor(Date.now() / 1000) - 24 * 3600
+    const blockNumber24HourOld = await fetchRetry(
+      `https://coins.llama.fi/block/arbitrum/${timestamp}`
+    )
+      .then((r) => r.json())
+      .then((r) => Number(r.height))
+
+    const slot024HourOld = await vPool.slot0({ blockTag: blockNumber24HourOld })
+    markPrice24HourOld = await sqrtPriceX96ToPrice(slot024HourOld.sqrtPriceX96, 6, 18)
+  } catch {}
+
   return {
     // js number
     realPrice,
@@ -69,6 +82,7 @@ export async function _getPoolInfo(
     realTwapPrice,
     virtualTwapPrice,
     fundingRate: formatFundingRate(fundingRateX128),
+    markPrice24HourOld,
 
     // fixed point
     realSqrtPriceX96: priceX128ToSqrtPriceX96(realPriceX128).toString(),
