@@ -11,6 +11,7 @@ import { BigNumber, ethers } from 'ethers'
 import { parseUnits } from 'ethers/lib/utils'
 
 import { getProvider } from '../providers'
+import { fetchRetry } from '../utils'
 
 export async function getPrices(networkName: NetworkName, poolId: BigNumberish) {
   const provider = getProvider(networkName)
@@ -44,11 +45,26 @@ export async function _getPrices(
   const realTwapPrice = await priceX128ToPrice(realTwapPriceX128, 6, 18)
   const virtualTwapPrice = await priceX128ToPrice(virtualTwapPriceX128, 6, 18)
 
+  let markPrice24HourOld = -1
+
+  try {
+    const timestamp = Math.floor(Date.now() / 1000) - 24 * 3600
+    const blockNumber24HourOld = await fetchRetry(
+      `https://coins.llama.fi/block/arbitrum/${timestamp}`
+    )
+      .then((r) => r.json())
+      .then((r) => Number(r.height))
+
+    const slot024HourOld = await vPool.slot0({ blockTag: blockNumber24HourOld })
+    markPrice24HourOld = await sqrtPriceX96ToPrice(slot024HourOld.sqrtPriceX96, 6, 18)
+  } catch {}
+
   return {
     realPrice,
     virtualPrice,
     realTwapPrice,
     virtualTwapPrice,
+    markPrice24HourOld,
 
     realPriceD18: parseUnits(realPrice.toFixed(18), 18).toString(),
     virtualPriceD18: parseUnits(virtualPrice.toFixed(18), 18).toString(),
