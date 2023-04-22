@@ -3,7 +3,7 @@ import { gmxProtocol } from '@ragetrade/sdk'
 import { ethers } from 'ethers'
 
 import { getLogs } from '../../../../../utils'
-import { getStartBlock, oneInTwoBlocks } from './common'
+import { getStartBlock, oneInTenBlocks } from './common'
 
 export async function decreaseReservedAmount(
   networkName: NetworkName,
@@ -29,5 +29,5 @@ export async function decreaseReservedAmount(
     _gmxUnderlyingVault
   )
 
-  return logs.filter(oneInTwoBlocks)
+  return logs.filter(oneInTenBlocks)
 }
