@@ -356,7 +356,7 @@ export async function getMarketMovement(
       const btcPoolAmount = await provider
         .getStorageAt(dnGmxJuniorVault.address, 252 + 34, blockNumber)
         .then((res) => hexDataSlice(res, 16, 32))
-        .then((res) => formatAsNum(BigNumber.from(res), 18))
+        .then((res) => formatAsNum(BigNumber.from(res), 8))
 
       const ethTraderOIHedge = await provider
         .getStorageAt(dnGmxJuniorVault.address, 252 + 35, blockNumber)
