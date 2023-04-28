@@ -25,7 +25,7 @@ connectMongo()
     server.on('error', onError)
     server.on('listening', onListening)
   })
-  .catch((e) => console.error('Failled to connect to mongo', e))
+  .catch((e) => console.error('Failed to connect to mongo', e))
 
 function onError(error: any) {
   if (error.syscall !== 'listen') {

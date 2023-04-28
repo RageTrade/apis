@@ -1,7 +1,6 @@
 import type { NetworkName } from '@ragetrade/sdk'
 import { deltaNeutralGmxVaults, tokens } from '@ragetrade/sdk'
-import { ethers } from 'ethers'
-import { fetchJson, formatEther } from 'ethers/lib/utils'
+import { formatEther } from 'ethers/lib/utils'
 
 import { ENV } from '../../env'
 import { getProviderAggregate } from '../../providers'
@@ -28,37 +27,25 @@ export interface GlobalGlpPnlDailyEntry {
 export interface GlobalGlpPnlResult {
   data: GlobalGlpPnlEntry[]
   dailyData: GlobalGlpPnlDailyEntry[]
-  dataLength: number
-  totalGlpPnl: number
 }
 
-export async function getGlpPnl(
-  networkName: NetworkName,
-  excludeRawData: boolean
-): Promise<GlobalGlpPnlResult> {
-  if (excludeRawData) {
-    const resp: any = await fetchJson({
-      url: `http://localhost:3000/data/aggregated/get-glp-pnl?networkName=${networkName}`,
-      timeout: 1_000_000_000 // huge number
-    })
-    delete resp.result.data
-    return resp.result
-  }
+export async function getGlpPnl(networkName: NetworkName): Promise<GlobalGlpPnlResult> {
+  const data = await Indexer(networkName)
+}
 
+function Indexer(networkName: NetworkName) {
   const provider = getProviderAggregate(networkName)
 
   const { fsGLP } = tokens.getContractsSync(networkName, provider)
 
-  const { dnGmxJuniorVault, dnGmxBatchingManager } =
-    deltaNeutralGmxVaults.getContractsSync(networkName, provider)
+  const { dnGmxJuniorVault } = deltaNeutralGmxVaults.getContractsSync(
+    networkName,
+    provider
+  )
 
   const startBlock = ENV.START_BLOCK_NUMBER
-  const endBlock = 68048150
-  // const startBlock = 65567250
-  // const endBlock = await provider.getBlockNumber()
-  const interval = 500
 
-  const data = await parallelize(
+  return parallelize(
     {
       label: 'getGlpPnl',
       networkName,
@@ -71,19 +58,9 @@ export async function getGlpPnl(
         gmxVault.decreasePoolAmount,
         gmxVault.increaseReservedAmount,
         gmxVault.decreaseReservedAmount
-        // () => {
-        //   const events = []
-        //   for (let i = startBlock; i <= endBlock; i += interval) {
-        //     events.push({
-        //       blockNumber: i
-        //     })
-        //   }
-        //   return events as ethers.Event[]
-        // }
       ],
       ignoreMoreEventsInSameBlock: true, // to prevent reprocessing same data
       startBlockNumber: startBlock
-      // endBlockNumber: endBlock
     },
     async (_i, blockNumber, event) => {
       const block = await provider.getBlock(blockNumber)
@@ -96,14 +73,6 @@ export async function getGlpPnl(
           })
         )
       )
-
-      // const fsGlp_balanceOf_batchingManager = Number(
-      //   formatEther(
-      //     await dnGmxBatchingManager.dnGmxJuniorVaultGlpBalance({
-      //       blockTag: blockNumber
-      //     })
-      //   )
-      // )
 
       const glpPrice = Number(
         formatEther(
@@ -119,13 +88,17 @@ export async function getGlpPnl(
         timestamp: block.timestamp,
         transactionHash: event.transactionHash,
         fsGlp_balanceOf_juniorVault,
-        // fsGlp_balanceOf_batchingManager,
         glpPrice
       }
     }
   )
+}
 
+function Aggregator() {
   const extraData = []
+
+  // from: last processed block
+  // to: current block
 
   let last
   for (const current of data) {
@@ -186,11 +159,6 @@ export async function getGlpPnl(
         return acc
       },
       []
-    ),
-    dataLength: data.length,
-    totalGlpPnl: combinedData.reduce(
-      (acc: number, cur: GlobalGlpPnlEntry) => acc + cur.glpPnl,
-      0
     )
   }
 }
