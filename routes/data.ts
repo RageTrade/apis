@@ -26,6 +26,7 @@ import {
   secs
 } from '../utils'
 import AggregatedRouter from './aggregated'
+import { ENV } from '../env'
 
 const router = express.Router()
 
@@ -68,7 +69,9 @@ router.get(
  * Aggregated
  */
 
-router.use('/aggregated', AggregatedRouter)
+if (ENV.ACTIVATE_STATS_PAGE) {
+  router.use('/aggregated', AggregatedRouter)
+}
 
 /**
  * Network independent
