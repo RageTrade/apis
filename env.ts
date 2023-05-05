@@ -9,7 +9,13 @@ const schema = z.object({
   ARBISCAN_KEY: z.string(),
   MAX_INFLIGHT_LOOPS: z.coerce.number(),
   PORT: z.coerce.number().optional(),
-  ACTIVATE_STATS_PAGE: z.coerce.boolean().optional().default(true)
+  ACTIVATE_STATS_PAGE: z
+    .enum(['true', 'false'])
+    .transform((val) => (val === 'true' ? true : false))
+    .optional()
+    .default('false')
 })
 
 export const ENV = schema.parse(process.env)
+
+console.log(ENV.ACTIVATE_STATS_PAGE)
