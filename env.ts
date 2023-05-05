@@ -17,5 +17,3 @@ const schema = z.object({
 })
 
 export const ENV = schema.parse(process.env)
-
-console.log(ENV.ACTIVATE_STATS_PAGE)
